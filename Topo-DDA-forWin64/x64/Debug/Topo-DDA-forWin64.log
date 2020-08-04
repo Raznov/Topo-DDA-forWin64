@@ -1,0 +1,2 @@
+﻿  test.cpp
+E:\Topo-DDA-forWin64\eigen-eigen-94875feeeeb9\Eigen\src\Core\arch\Default\Half.h(1,1): warning C4819: The file contains a character that cannot be represented in the current code page (936). Save the file in Unicode format to prevent data loss
