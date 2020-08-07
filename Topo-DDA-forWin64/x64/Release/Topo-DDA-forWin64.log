@@ -1,8 +1,0 @@
-﻿  test.cpp
-E:\Topo-DDA-forWin64\eigen-eigen-94875feeeeb9\Eigen\src\Core\arch\Default\Half.h(1,1): warning C4819: The file contains a character that cannot be represented in the current code page (936). Save the file in Unicode format to prevent data loss
-  Generating code
-  2 of 3022 functions (<0.1%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    74 functions had inline decision re-evaluated but remain unchanged
-  Finished generating code
-  Topo-DDA-forWin64.vcxproj -> E:\Topo-DDA-forWin64\x64\Release\Topo-DDA-forWin64.exe

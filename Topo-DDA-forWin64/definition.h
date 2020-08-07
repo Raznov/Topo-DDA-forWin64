@@ -55,6 +55,7 @@ class Structure{
         Structure(VectorXi *total_space, string initial_diel, double r, Vector3i center, Vector3i direction, int para_); //build a circle, direction is its normalized direction in Cart. coord.
         Structure(VectorXi *total_space, string initial_diel, Vector3d l, Vector3d center, int para_);    //Ractangular(both 2D and 3D). 
         Structure(VectorXi *total_space, Structure *s, Vector3i direction, int times, int para_);                     //Initializa a Structure by duplicating a existing structure along a certain direction for several times. Direction is normalized and can only be alone x, y or z.
+                                                                                                                      //The original structure is not concluded. original structure + new structure = times * original structure
         Structure(VectorXi *total_space, string FileName, int para_);                                                    //Read a structure from txt file
         VectorXi *get_geometry();
         VectorXd *get_diel();

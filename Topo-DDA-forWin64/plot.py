@@ -12,7 +12,7 @@ import matplotlib.animation as ani
 from mpl_toolkits.mplot3d import Axes3D
 import time
 
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 
 def Shape(geometry,diel,d,iteration=-1,position="./",decimal=0,FullLattice=False):
     """Plot the shape of object as dot matrix.
@@ -208,7 +208,7 @@ EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot)
 """
 
 
-"""
+
 #Code used for taking a look at the geometry you built
                                    
 data=np.genfromtxt("Space.txt",dtype=complex)
@@ -218,9 +218,9 @@ diel=np.real(data[(3*N+4):(6*N+4)])
 para=0.5*np.real(data[(6*N+4):(9*N+4)])
 d=1
 Shape(geometry,para, d)
+
+
 """
-
-
 #Code used for optimization
 
 #final, pos=input().split()
@@ -270,5 +270,6 @@ if __name__ == "__main__":
                 EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
             it += 1
 
+"""
 
 

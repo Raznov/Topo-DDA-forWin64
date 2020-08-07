@@ -21,7 +21,8 @@ int Structure::get_geometry_size(){
     }
 }
 
-MatrixXi find_scope_3_dim(VectorXi *x){
+//Find the Max and Min of the input geometry in each direction
+MatrixXi find_scope_3_dim(VectorXi *x){                          
     int N=round((*x).size()/3);
     MatrixXi result(3,2);
     result(0,0)=(*x)(0);
@@ -252,9 +253,9 @@ Structure::Structure(VectorXi *total_space, Structure *s, Vector3i direction, in
             geometry_tmp(3*(j+i*N)+1)=(*geometry_)(3*j+1)+periody*(i+1)*direction(1);
             geometry_tmp(3*(j+i*N)+2)=(*geometry_)(3*j+2)+periodz*(i+1)*direction(2);
 
-            diel_tmp(3*(j+i*N))=(*diel_)(3*j)+periodx*(i+1)*direction(0);
-            diel_tmp(3*(j+i*N)+1)=(*diel_)(3*j+1)+periody*(i+1)*direction(1);
-            diel_tmp(3*(j+i*N)+2)=(*diel_)(3*j+2)+periodz*(i+1)*direction(2);
+            diel_tmp(3*(j+i*N))=(*diel_)(3*j);
+            diel_tmp(3*(j+i*N)+1)=(*diel_)(3*j+1);
+            diel_tmp(3*(j+i*N)+2)=(*diel_)(3*j+2);
         }
     }
     //cout<<geometry_tmp<<endl;

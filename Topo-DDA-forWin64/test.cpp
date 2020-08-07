@@ -28,18 +28,21 @@ int main(){
     Vector3i direction;
     Vector3d l;
     Vector3d center;
-    l << 79.0, 79.0, 11.0;
-    center << 39.5, 39.5, 5.5;
-    //direction<<0,0,1;
+    l << 79.0, 79.0, 0.0;
+    center << 39.5, 39.5, 11.0;
+    direction<<0,0,-1;
+    int times = 12;
     Structure s1(S.get_total_space(), "ONES", l, center, 1);
-    
+    Structure s2(S.get_total_space(), &s1, direction, times, 2);
 
 
 
     S = S + s1;
+    S = S + s2;
     //S=S+s0;
+    //S.show_something_about_Structures();
 
-
+    
     double d = 25;
 
     double lam = 500;
@@ -52,7 +55,7 @@ int main(){
     //Model test_model(&S, d, lam, n_K, E0, n_E0, material);
     double epsilon = 100;
 
-    double focus = 1600;   //nm       
+    double focus = 500;   //nm       
 
     //Vector3d r;
     //r<<center(0)*d, center(1)*d, focus;
@@ -60,7 +63,7 @@ int main(){
 
     int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 200;
+    int MAX_ITERATION_EVO = 5;
 
     list<string> ObjectFunctionNames{ "ExtSurfaceEExp_CPU" };
 
@@ -84,9 +87,9 @@ int main(){
 
 
      
-
+    
     return 0;
-
+    
 }
 
 

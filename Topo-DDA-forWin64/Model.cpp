@@ -746,6 +746,11 @@ void Model::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     std::complex<double> eta;
     std::complex<double> zeta;
     
+    
+
+
+
+
     VectorXcd Ax0 = this->Aproduct(P);
     
     r = E-Ax0;
@@ -757,6 +762,7 @@ void Model::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     alpha = r0.dot(r)/r0.dot(Ap0);
     t = r-alpha*Ap0;
     VectorXcd At0 = this->Aproduct(t);
+
 
     zeta = At0.dot(t)/At0.dot(At0);
     u = zeta*Ap0;
@@ -1035,6 +1041,7 @@ void Model::solve_E(){
 
 void Model::update_E_in_structure(){
     for(int i=0;i<=3*N-1;i++){
+
         Einternal(i)=al(i)*P(i);
     }
 }

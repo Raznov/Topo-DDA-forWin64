@@ -361,6 +361,7 @@ void EvoModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITER
         this->bicgstab(MAX_ITERATION, MAX_ERROR);  
         //this->solve_E(); 
 
+
         this->update_E_in_structure();
         if(iteration==MAX_ITERATION_EVO-1){                                    //useless fix, not gonna to use RResultswithc = true feature in the future
             this->solve_E(); 
@@ -371,8 +372,9 @@ void EvoModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITER
 
         high_resolution_clock::time_point t0 = high_resolution_clock::now();
         
-        
+
         double obj = objective->GetVal();
+      
         convergence << obj << " ";
         cout << "objective function at iteration " << iteration << " is " << obj << endl;
 
@@ -459,11 +461,11 @@ void EvoModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITER
         this->reset_E();                                  //reset E to initial value
 
 
-
+        
         //times lambdaT and Adevxp together
         VectorXcd mult_result;
-        list<int> para_nums, para_starts, para_dep_nums, para_dep_starts;
-        tie(para_nums, para_starts, para_dep_nums, para_dep_starts)=this->get_para_info();
+        //list<int> para_nums, para_starts, para_dep_nums, para_dep_starts;
+        //tie(para_nums, para_starts, para_dep_nums, para_dep_starts)=this->get_para_info();
         int para_size=para_nums.size();
         int para_dep_size=para_dep_nums.size();
         int n_para=0;
@@ -484,10 +486,10 @@ void EvoModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITER
             list<int>::iterator it4=para_dep_starts.begin();
             int position=0;
             for(int i=0;i<=para_size-1;i++){
-                int times=round((*it3)/(*it1));
-                int para_begin=round((*it2)/3);
-                int para_number=round((*it1)/3);
-                int para_dep_begin=round((*it4)/3);
+                int times=int(round((*it3)/(*it1)));
+                int para_begin=int(round((*it2)/3));
+                int para_number=int(round((*it1)/3));
+                int para_dep_begin=int(round((*it4)/3));
                 for(int j=0;j<=para_number-1;j++){
                     int position1=(j+para_begin);
                     mult_result(position)+=lambdaT(3*position1)*Adevxp(3*position1);

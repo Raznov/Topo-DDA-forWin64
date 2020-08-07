@@ -254,9 +254,11 @@ ObjectiveExtSurfaceEExp_CPU::ObjectiveExtSurfaceEExp_CPU(list<double> parameters
 
 void ObjectiveExtSurfaceEExp_CPU::SingleResponse(int idx, bool deduction){
     for(int i=0; i<=Nobj-1; i++){
+        
         int rnx=Robj(3*i)-(*R)(3*idx)+(Nx-1);                  //R has no d in it, so needs to time d
         int rny=Robj(3*i+1)-(*R)(3*idx+1)+(Ny-1);
         int rnz=Robj(3*i+2)-(*R)(3*idx+2)-distance0;
+
         //cout<<"distance0"<<distance0<<endl;
         //cout<<"Robjx"<<Robj(3*i)<<endl;
         //cout<<"Robjy"<<Robj(3*i+1)<<endl;
