@@ -55,7 +55,7 @@ int main(){
     //Model test_model(&S, d, lam, n_K, E0, n_E0, material);
     double epsilon = 100;
 
-    double focus = 500;   //nm       
+    double focus = 300;   //nm       
 
     //Vector3d r;
     //r<<center(0)*d, center(1)*d, focus;
@@ -63,7 +63,7 @@ int main(){
 
     int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 5;
+    int MAX_ITERATION_EVO = 200;
 
     list<string> ObjectFunctionNames{ "ExtSurfaceEExp_CPU" };
 
