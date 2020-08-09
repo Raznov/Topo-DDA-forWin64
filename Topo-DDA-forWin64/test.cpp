@@ -19,7 +19,7 @@ int main(){
 
     
     int Nx, Ny, Nz;
-    Nx = 81; Ny = 81; Nz = 12;
+    Nx = 83; Ny = 83; Nz = 12;
     int N = 0;
     VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
     list<Structure> ln;
@@ -28,17 +28,29 @@ int main(){
     Vector3i direction;
     Vector3d l;
     Vector3d center;
-    l << 79.0, 79.0, 0.0;
-    center << 39.5, 39.5, 11.0;
+    l << 39.0, 39.0, 0.0;
+    center << 19.5, 19.5, 11.0;
     direction<<0,0,-1;
     int times = 12;
     Structure s1(S.get_total_space(), "ONES", l, center, 1);
-    Structure s2(S.get_total_space(), &s1, direction, times, 2);
+    Structure s2(S.get_total_space(), &s1, 1);
+    Structure s3(S.get_total_space(), &s1, 2);
+    Structure s4(S.get_total_space(), &s1, 3);
+    Structure s5(S.get_total_space(), &s1, direction, 12, 2);
+    Structure s6(S.get_total_space(), &s2, direction, 12, 2);
+    Structure s7(S.get_total_space(), &s3, direction, 12, 2);
+    Structure s8(S.get_total_space(), &s4, direction, 12, 2);
 
 
 
     S = S + s1;
     S = S + s2;
+    S = S + s3;
+    S = S + s4;
+    S = S + s5;
+    S = S + s6;
+    S = S + s7;
+    S = S + s8;
     //S=S+s0;
     //S.show_something_about_Structures();
 
