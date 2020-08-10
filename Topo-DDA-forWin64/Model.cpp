@@ -87,6 +87,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     int n1 = 0;
     it = (*ln).begin();
     int PositionParaPos = 0;
+    VectorXi RPara = VectorXi::Zero(3 * N);
     for(int i=0;i<=int((*ln).size())-1;i++){
         int n2=((*((*it).get_geometry())).size());
         if((*it).get_para()==1){
@@ -105,6 +106,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
             R(n1+j)=(*((*it).get_geometry()))(j);
             diel_tmp(n1+j)=(*((*it).get_diel()))(j);
             RDep(n1+j)= (*((*it).get_geometry_dep()))(j);
+            RPara(n1 + j) = (*it).get_para();
         }
         it++;
         n1=n1+n2;
@@ -113,9 +115,9 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
 
     for (int i = 0; i <= PositionPara.size() - 1; i++) {
         list<int> tmpPos;
-        int Parax = R(3 * i);
-        int Paray = R(3 * i + 1);
-        int Paraz = R(3 * i + 2);
+        int Parax = R(3 * PositionPara(i));
+        int Paray = R(3 * PositionPara(i) + 1);
+        int Paraz = R(3 * PositionPara(i) + 2);
         for (int j = 0; j <= N - 1; j++) {
             int jx = R(3 * j);
             int jy = R(3 * j + 1);
@@ -123,7 +125,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
             int Depx = RDep(3 * j);
             int Depy = RDep(3 * j + 1);
             int Depz = RDep(3 * j + 2);
-            if (jx != Parax || jy != Paray || jz != Paraz) {
+            if (RPara(3 * j) == 2) {
                 if (Depx == Parax && Depy == Paray && Depz == Paraz) {
                     tmpPos.push_back(j);
                 }
@@ -139,6 +141,8 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
         it1PositionDep++;
     }
     if (PositionDepN + PositionParaN != N) {
+        cout << "PositionDepN = " << PositionDepN << endl;
+        cout << "PositionParaN = " << PositionParaN << endl;
         cout << "In Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_) : PositionDepN + PositionParaN! = N" << endl;
     }
     

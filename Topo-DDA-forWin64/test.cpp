@@ -28,18 +28,18 @@ int main(){
     Vector3i direction;
     Vector3d l;
     Vector3d center;
-    l << 39.0, 39.0, 0.0;
-    center << 19.5, 19.5, 11.0;
+    l << 39.0, 39.0, 11.0;
+    center << 19.5, 19.5, 5.5;
     direction<<0,0,-1;
-    int times = 12;
+    int times = 10;
     Structure s1(S.get_total_space(), "ONES", l, center, 1);
     Structure s2(S.get_total_space(), &s1, 1);
     Structure s3(S.get_total_space(), &s1, 2);
     Structure s4(S.get_total_space(), &s1, 3);
-    Structure s5(S.get_total_space(), &s1, direction, 12, 2);
-    Structure s6(S.get_total_space(), &s2, direction, 12, 2);
-    Structure s7(S.get_total_space(), &s3, direction, 12, 2);
-    Structure s8(S.get_total_space(), &s4, direction, 12, 2);
+    //Structure s5(S.get_total_space(), &s1, direction, 12, 2);
+    //Structure s6(S.get_total_space(), &s2, direction, 12, 2);
+    //Structure s7(S.get_total_space(), &s3, direction, 12, 2);
+    //Structure s8(S.get_total_space(), &s4, direction, 12, 2);
 
 
 
@@ -47,10 +47,10 @@ int main(){
     S = S + s2;
     S = S + s3;
     S = S + s4;
-    S = S + s5;
-    S = S + s6;
-    S = S + s7;
-    S = S + s8;
+    //S = S + s5;
+    //S = S + s6;
+    //S = S + s7;
+    //S = S + s8;
     //S=S+s0;
     //S.show_something_about_Structures();
 
@@ -67,7 +67,7 @@ int main(){
     //Model test_model(&S, d, lam, n_K, E0, n_E0, material);
     double epsilon = 100;
 
-    double focus = 500;   //nm       
+    double focus = 300;   //nm       
 
     //Vector3d r;
     //r<<center(0)*d, center(1)*d, focus;
@@ -75,7 +75,7 @@ int main(){
 
     int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 5;
+    int MAX_ITERATION_EVO = 10;
 
     list<string> ObjectFunctionNames{ "ExtSurfaceEExp_CPU" };
 

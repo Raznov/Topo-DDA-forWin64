@@ -534,6 +534,7 @@ void EvoModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITER
         //double step_len = this->get_step_length(gradients,epsilon);
         VectorXd step=epsilon*gradients;               //Find the maximum. If -1 find minimum
         cout << "epsilon = " << epsilon << endl;
+        cout << "step = "<< step.mean() << endl;
         //cout<<"devp1"<<devp<<endl;
         //cout<<"lambdaT1"<<endl<<lambdaT<<endl;
         //cout<<"Adevxp1"<<endl<<Adevxp<<endl;
