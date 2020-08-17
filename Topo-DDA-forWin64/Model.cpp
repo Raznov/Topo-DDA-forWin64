@@ -838,7 +838,7 @@ void Model::bicgstab(int MAX_ITERATION,double MAX_ERROR){
 
     //fftw_init_threads();                                                       //////////Initialize the multi-thread
     //fftw_plan_with_nthreads(NUM_THREADS);
-    cout<<"Threads"<<NUM_THREADS<<endl;;
+    //cout<<"Threads"<<NUM_THREADS<<endl;;
     VectorXcd p=VectorXcd::Zero(N*3); 
     VectorXcd t = VectorXcd::Zero(N*3);
     VectorXcd w = VectorXcd::Zero(N*3);
@@ -855,7 +855,8 @@ void Model::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     std::complex<double> zeta;
     
     
-
+    //Always starts with P=0 to avoid strange behaviour
+    P = VectorXcd::Zero(N * 3);
 
 
 

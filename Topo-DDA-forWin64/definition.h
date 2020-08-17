@@ -228,6 +228,7 @@ class EvoModel : public Model{
         VectorXcd devp(double epsilon);                       //partial derivative of obj to P. Size of P
         
         void EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method);
+        double CalTheObjForSingleStr(int MAX_ITERATION, double MAX_ERROR, int Name);                    //If you want to calculate the objective for single DDA structure.
 
         //The objective choosing function:
         double MajorObjective();

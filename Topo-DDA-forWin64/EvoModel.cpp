@@ -552,6 +552,14 @@ void EvoModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITER
 
 }
 
+double EvoModel::CalTheObjForSingleStr(int MAX_ITERATION, double MAX_ERROR, int Name) {
+    this->bicgstab(MAX_ITERATION, MAX_ERROR);
+    this->update_E_in_structure();
+    this->output_to_file(save_position + "Model_output\\", Name);
+    double obj = objective->GetVal();
+    return obj;
+}
+
 double EvoModel::MajorObjective(){
     if(MajorObjectFunctionName == "PointE"){
         return this -> PointEWithPenalty(MajorObjectParameters);
