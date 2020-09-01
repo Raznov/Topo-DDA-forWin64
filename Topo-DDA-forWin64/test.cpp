@@ -71,11 +71,7 @@ int main() {
     //Model test_model(&S, d, lam, n_K, E0, n_E0, material);
     double epsilon = 100;
 
-<<<<<<< HEAD
-    double focus = 300;   //nm       
-=======
     double focus = 350;   //nm       
->>>>>>> Add-symmetry
 
     //Vector3d r;
     //r<<center(0)*d, center(1)*d, focus;
