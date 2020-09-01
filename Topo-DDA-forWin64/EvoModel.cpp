@@ -589,8 +589,14 @@ Objective* EvoModel::ObjectiveFactory(string ObjectName, list<double> ObjectPara
     if (MajorObjectFunctionName == "ExtSurfaceEExp_CPU") {
         return new ObjectiveExtSurfaceEExp_CPU(ObjectParameters, this, HavePenalty);
     }
+    if (MajorObjectFunctionName == "ExtSurfaceEMax") {
+        return new ObjectiveExtSurfaceEMax(ObjectParameters, this, HavePenalty);
+    }
     if (MajorObjectFunctionName == "ExtSurfaceEExp_CPU_Old") {
         return new ObjectiveExtSurfaceEExp_CPU_Old(ObjectParameters, this, HavePenalty);
+    }
+    if (MajorObjectFunctionName == "ObjectiveG") {
+        return new ObjectiveG(ObjectParameters, this, HavePenalty);
     }
     else{
         // NOT FINALIZED. SHOULD RAISE AN EXCEPTION HERE.

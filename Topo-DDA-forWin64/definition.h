@@ -41,6 +41,8 @@ complex<double> Get_Alpha_FLTRCD(double lam,double K,double d,complex<double> di
 complex<double> Get_material(string mat, double wl, string unit);                  //name of mat to get its diel function at certain wavlength              
 Vector2cd Get_2_material(string sub, string mat, double wl, string unit);          //a wrapper for Get_material
 double Average(VectorXcd* E, int N, double exponent);
+double Get_Max(VectorXcd* E, int N);
+double G(VectorXcd* E, int N, double exponent, double E0);
 //ArrayXcd FFT(int nx,int ny,int nz,ArrayXcd in,int _direction);
 VectorXi build_a_bulk(int Nx, int Ny, int Nz);
 
@@ -346,6 +348,37 @@ class ObjectiveExtSurfaceEExp_CPU : public Objective{
       void Reset();
 };
 
+class ObjectiveExtSurfaceEMax : public Objective {
+private:
+    bool Have_Devx;
+    bool Have_Penalty;
+    double d;
+    int N;
+    int Nobj;
+    double exponent;                              //2, 4 or something else for E^?
+    double ExtSurfaceEExpRz;
+    int Nx;
+    int Ny;
+    int Nz;                                       //The entire(as big as focus in Nz, which is bigger then the str length)
+    int ratio;                                 //Nx_obj = Nx/ratio; Ny_obj = Ny/ratio;
+    vector<vector<vector<Matrix3cd>>> A_dic;
+
+    VectorXcd* P;
+    VectorXi* R;
+    VectorXi Robj;
+    EvoModel* model;
+    VectorXcd E_sum;
+    VectorXcd E_ext;
+    double distance0;                                  //shortest distance between the plane and the str(corresponds to nz=0 in the A_dic (longest z corresponds to nz=max(nz)))
+
+public:
+    ObjectiveExtSurfaceEMax(list<double> parameters, EvoModel* model_, bool HavePenalty_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
+};
+
 class ObjectiveExtSurfaceEExp_CPU_Old : public Objective {
 private:
     bool Have_Devx;
@@ -418,6 +451,38 @@ class ObjectiveExtSurfaceEExp : public Objective{
       double GroupResponse();
       double GetVal();
       void Reset();
+};
+
+class ObjectiveG : public Objective {
+private:
+    bool Have_Devx;
+    bool Have_Penalty;
+    double d;
+    double E0;                                    //input electric field
+    int N;
+    int Nobj;
+    double exponent;                              //2, 4 or something else for E^?
+    double ExtSurfaceEExpRz;
+    int Nx;
+    int Ny;
+    int Nz;                                       //The entire(as big as focus in Nz, which is bigger then the str length)
+    int ratio;                                 //Nx_obj = Nx/ratio; Ny_obj = Ny/ratio;
+    vector<vector<vector<Matrix3cd>>> A_dic;
+
+    VectorXcd* P;
+    VectorXi* R;
+    VectorXi Robj;
+    EvoModel* model;
+    VectorXcd E_sum;
+    VectorXcd E_ext;
+    double distance0;                                  //shortest distance between the plane and the str(corresponds to nz=0 in the A_dic (longest z corresponds to nz=max(nz)))
+
+public:
+    ObjectiveG(list<double> parameters, EvoModel* model_, bool HavePenalty_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
 };
 
 
