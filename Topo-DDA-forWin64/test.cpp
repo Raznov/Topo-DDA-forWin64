@@ -61,7 +61,7 @@ int main() {
 
     double d = 25;
 
-    double lam = 500;
+    double lam = 800;
     Vector3d n_K;
     n_K << 0.0, 0.0, 1.0;
     double E0 = 1.0;
@@ -81,18 +81,18 @@ int main() {
     double MAX_ERROR = 0.00001;
     int MAX_ITERATION_EVO = 200;
 
-    list<string> ObjectFunctionNames{ "ObjectiveG" };
+    list<string> ObjectFunctionNames{ "PointE" };
 
     double exponent = 2;
     double ratio = 4;
 
-    list<double> ObjectParameter1{ focus, exponent, ratio };
-    //list<double> ObjectParameter2{center(0)*d,center(1)*d,focus};
+    //list<double> ObjectParameter1{ focus, exponent, ratio };
+    list<double> ObjectParameter2{center(0)*d,center(1)*d,focus};
 
     bool HavePathRecord = true;
     bool HavePenalty = false;
     double PenaltyFactor = 0.0001;
-    list<list<double>*> ObjectParameters{ &ObjectParameter1 };
+    list<list<double>*> ObjectParameters{ &ObjectParameter2 };
     string save_position = "";
 
 

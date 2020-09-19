@@ -43,8 +43,9 @@ complex<double> Get_material(string mat, double wl, string unit){
     string mat_real_name=diel_dic[mat]+real;
     string mat_imag_name=diel_dic[mat]+imag; 
     double mat_real,mat_imag,a,b,up,down,up_value,down_value;
+    
     up=1.0;
-    down=-1.0;
+    down=0.0;
 
     ifstream mat_real_file;
     mat_real_file.open(mat_real_name);
@@ -65,9 +66,10 @@ complex<double> Get_material(string mat, double wl, string unit){
     }
     else{
         mat_real=down_value+(wl-down)*(up_value-down_value)/(up-down); 
+        cout << "real:" << mat_real << endl;
     }
     up=1.0;
-    down=-1.0;
+    down=0.0;
 
     ifstream mat_imag_file;
     mat_imag_file.open(mat_imag_name);
@@ -88,6 +90,7 @@ complex<double> Get_material(string mat, double wl, string unit){
     }
     else{
         mat_imag=down_value+(wl-down)*(up_value-down_value)/(up-down); 
+        cout << "imag:" << mat_imag << endl;
     }
     
     complex<double> result=mat_real+1.0i*mat_imag;

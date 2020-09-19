@@ -147,11 +147,19 @@ class Model{
         VectorXd diel_old_max;
         VectorXcd P_max;
         VectorXcd al_max;
+
+        int MAXm;                            //-MAXm<=m<=MAXm
+        int MAXn;                             //-MAXn<=n<=MAXn
+        double Lm;                         //desplacement vector for one period, Currently should only be in x and y direction; d included do not need to time d
+        double Ln;
+        
     public:
         Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_);
         Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi *RResult_);
+        Model(Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_);
         ~Model();
         Matrix3cd A_dic_generator(double x,double y,double z);
+        Matrix3cd A_dic_generator(double x, double y, double z, int m, int n);
         VectorXcd Aproduct(VectorXcd &b);
         void bicgstab(int MAX_ITERATION,double MAX_ERROR);
         void change_E(VectorXcd E_);
@@ -223,7 +231,7 @@ class EvoModel : public Model{
     public:
         EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_);
         EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi* RResult_);
-        
+        EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_);
         
         //functions used to calculate partial derivatives                                 
         tuple<VectorXd, VectorXcd> devx_and_Adevxp(double epsilon);                       //partial derivative of obj to parameter and A to x times p
