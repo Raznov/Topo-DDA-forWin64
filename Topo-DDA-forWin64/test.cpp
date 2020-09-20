@@ -58,13 +58,17 @@ int main() {
     //S=S+s0;
     //S.show_something_about_Structures();
 
+    //double ratioESItoG = 1 / (2.998 * pow(10, 4));
+    //double rationmtocm = 1 / (pow(10, 7));
+    double ratioESItoGnm = (1 / (2.998 * pow(10, 4))) / (pow(10, 7));
 
     double d = 25;
 
     double lam = 500;
     Vector3d n_K;
     n_K << 0.0, 0.0, 1.0;
-    double E0 = 1.0;
+    //double E0 = 1.0;
+    double E0 = 2.998 * pow(10, 11);
     Vector3d n_E0;
     n_E0 << 1.0, 0.0, 0.0;
     Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
@@ -79,9 +83,15 @@ int main() {
 
     int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 200;
+    int MAX_ITERATION_EVO = 100;
 
-    list<string> ObjectFunctionNames{ "ObjectiveG" };
+    //d = rationmtocm * d;
+    //lam = rationmtocm * lam;
+    E0 = ratioESItoGnm * E0;
+    //focus = rationmtocm * focus;
+
+
+    list<string> ObjectFunctionNames{ "PointEratio" };
 
     double exponent = 2;
     double ratio = 4;
@@ -94,9 +104,9 @@ int main() {
     double PenaltyFactor = 0.0001;
     list<list<double>*> ObjectParameters{ &ObjectParameter1 };
     string save_position = "";
+    string AMatrixMethod = "LDR";
 
-
-    EvoModel TestModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, PenaltyFactor, save_position, &S, d, lam, n_K, E0, n_E0, material);
+    EvoModel TestModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, PenaltyFactor, save_position, &S, d, lam, n_K, E0, n_E0, material, AMatrixMethod);
 
     TestModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
 

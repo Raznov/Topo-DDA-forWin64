@@ -1,6 +1,6 @@
 #include "definition.h"
 
-EvoModel::EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_) : Model(space_, d_, lam_, n_K_, E0_, n_E0_, material_) {
+EvoModel::EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, string AMatrixMethod_) : Model(space_, d_, lam_, n_K_, E0_, n_E0_, material_, AMatrixMethod_) {
     ObjectFunctionNames = ObjectFunctionNames_;
     save_position = save_position_;
     ObjectParameters = ObjectParameters_;
@@ -56,7 +56,7 @@ EvoModel::EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* Obje
     objective = ObjectiveFactory(MajorObjectFunctionName, MajorObjectParameters);
     
 }
-EvoModel::EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi* RResult_) : Model(space_, d_, lam_, n_K_, E0_, n_E0_, material_, RResult_) {
+EvoModel::EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi* RResult_, string AMatrixMethod_) : Model(space_, d_, lam_, n_K_, E0_, n_E0_, material_, RResult_, AMatrixMethod_) {
     ObjectFunctionNames = ObjectFunctionNames_;
     save_position = save_position_;
     ObjectParameters = ObjectParameters_;
@@ -156,9 +156,9 @@ tuple<VectorXd, VectorXcd> EvoModel::devx_and_Adevxp(double epsilon){
 
             if (objective->Have_Devx) objective->SingleResponse(position1, false);
 
-            Adevxp(3 * position1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1))) - al(3 * position1)) / (sign * epsilon);
-            Adevxp(3 * position1 + 1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 1))) - al(3 * position1 + 1)) / (sign * epsilon);
-            Adevxp(3 * position1 + 2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 2))) - al(3 * position1 + 2)) / (sign * epsilon);
+            Adevxp(3 * position1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1), n_E0, n_K)) - al(3 * position1)) / (sign * epsilon);
+            Adevxp(3 * position1 + 1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 1), n_E0, n_K)) - al(3 * position1 + 1)) / (sign * epsilon);
+            Adevxp(3 * position1 + 2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 2), n_E0, n_K)) - al(3 * position1 + 2)) / (sign * epsilon);
             
             list<int>::iterator it2 = (*it1).begin();
 
@@ -176,9 +176,9 @@ tuple<VectorXd, VectorXcd> EvoModel::devx_and_Adevxp(double epsilon){
 
                 if (objective->Have_Devx) objective->SingleResponse(position2, false);
 
-                Adevxp(3 * position2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2))) - al(3 * position2)) / (sign * epsilon);
-                Adevxp(3 * position2 + 1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 1))) - al(3 * position2 + 1)) / (sign * epsilon);
-                Adevxp(3 * position2 + 2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 2))) - al(3 * position2 + 2)) / (sign * epsilon);
+                Adevxp(3 * position2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2), n_E0, n_K)) - al(3 * position2)) / (sign * epsilon);
+                Adevxp(3 * position2 + 1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 1), n_E0, n_K)) - al(3 * position2 + 1)) / (sign * epsilon);
+                Adevxp(3 * position2 + 2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 2), n_E0, n_K)) - al(3 * position2 + 2)) / (sign * epsilon);
                
                 it2++;
             }
@@ -255,9 +255,9 @@ tuple<VectorXd, VectorXcd> EvoModel::devx_and_Adevxp(double epsilon){
                 
                 if(objective->Have_Devx) objective->SingleResponse(position1, false);
                 
-                Adevxp(3*position1)=((1.0/Get_Alpha(lam,K,d,diel(3*position1)))-al(3*position1))/(sign*epsilon);
-                Adevxp(3*position1+1)=((1.0/Get_Alpha(lam,K,d,diel(3*position1+1)))-al(3*position1+1))/(sign*epsilon);
-                Adevxp(3*position1+2)=((1.0/Get_Alpha(lam,K,d,diel(3*position1+2)))-al(3*position1+2))/(sign*epsilon);
+                Adevxp(3*position1)=((1.0/Get_Alpha(lam,K,d,diel(3*position1), n_E0, n_K))-al(3*position1))/(sign*epsilon);
+                Adevxp(3*position1+1)=((1.0/Get_Alpha(lam,K,d,diel(3*position1+1), n_E0, n_K))-al(3*position1+1))/(sign*epsilon);
+                Adevxp(3*position1+2)=((1.0/Get_Alpha(lam,K,d,diel(3*position1+2), n_E0, n_K))-al(3*position1+2))/(sign*epsilon);
                 //cout<<"diel"<<diel(3*position1)<<endl;
                 //cout<<"lam"<<lam<<"K"<<K<<"d"<<d<<endl;
                 //cout<<"1/alpha"<<(1.0/Get_Alpha(lam,K,d,diel(3*position1)))<<endl;
@@ -577,8 +577,8 @@ Objective* EvoModel::ObjectiveFactory(string ObjectName, list<double> ObjectPara
     if (HavePenalty) {
         cout << "Using L1 Penalty with Penalty Factor " << PenaltyFactor << endl;
     }
-    if (MajorObjectFunctionName == "PointE"){
-        return new ObjectivePointE(ObjectParameters, this, HavePenalty);
+    if (MajorObjectFunctionName == "PointEratio"){
+        return new ObjectivePointEratio(ObjectParameters, this, HavePenalty);
     }
     if (MajorObjectFunctionName == "SurfaceEExp"){
         return new ObjectiveSurfaceEExp(ObjectParameters, this, HavePenalty);
@@ -601,7 +601,7 @@ Objective* EvoModel::ObjectiveFactory(string ObjectName, list<double> ObjectPara
     else{
         // NOT FINALIZED. SHOULD RAISE AN EXCEPTION HERE.
         cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;
-        return new ObjectivePointE(ObjectParameters, this, HavePenalty);
+        return new ObjectivePointEratio(ObjectParameters, this, HavePenalty);
     }
 
 }

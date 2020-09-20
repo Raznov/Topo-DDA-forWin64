@@ -2,7 +2,7 @@
 
 
 
-ObjectivePointE::ObjectivePointE(list<double> parameters, EvoModel *model_, bool HavePenalty_){
+ObjectivePointEratio::ObjectivePointEratio(list<double> parameters, EvoModel *model_, bool HavePenalty_){
     VectorXd PointEParameters = VectorXd::Zero((parameters).size());
     list<double>::iterator it=(parameters).begin();
     for(int i=0;i<=int((parameters).size()-1);i++){
@@ -21,7 +21,7 @@ ObjectivePointE::ObjectivePointE(list<double> parameters, EvoModel *model_, bool
     R = model->get_R();    
     Vector3d n_E0 = model->get_nE0();
     Vector3d n_K = model->get_nK();
-    double E0 = model->get_E0();
+    E0 = model->get_E0();
     double lam = model->get_wl();
     double K = 2*M_PI/lam;
     E_sum = Vector3cd::Zero();
@@ -32,7 +32,7 @@ ObjectivePointE::ObjectivePointE(list<double> parameters, EvoModel *model_, bool
     // cout << R(3*5444+2) << "this" << endl;
 }
 
-void ObjectivePointE::SingleResponse(int idx, bool deduction){
+void ObjectivePointEratio::SingleResponse(int idx, bool deduction){
     //VectorXcd P = model->get_P();
     //VectorXi R = model->get_R();
     double rx=x-d*(*R)(3*idx);                  //R has no d in it, so needs to time d
@@ -52,17 +52,17 @@ void ObjectivePointE::SingleResponse(int idx, bool deduction){
     }
 }
 
-double ObjectivePointE::GroupResponse(){
+double ObjectivePointEratio::GroupResponse(){
     if (Have_Penalty){
-        return (E_sum).norm()-model->L1Norm();
+        return (E_sum).norm()/E0-model->L1Norm();
     }
     else{
-        return (E_sum).norm();
+        return (E_sum).norm()/E0;
     }
     
 }
 
-double ObjectivePointE::GetVal(){
+double ObjectivePointEratio::GetVal(){
     Reset();
     for (int idx=0;idx<N;idx++){
         SingleResponse(idx, false);
@@ -71,7 +71,7 @@ double ObjectivePointE::GetVal(){
     return GroupResponse();
 }
 
-void ObjectivePointE::Reset(){
+void ObjectivePointEratio::Reset(){
     E_sum(0) = E_ext(0);
     E_sum(1) = E_ext(1);
     E_sum(2) = E_ext(2);
@@ -993,13 +993,14 @@ double Average(VectorXcd* E, int N, double exponent){
 }
 
 double G(VectorXcd* E, int N, double exponent, double E0) {
+    double ratioESItoG = 1 / (2.998 * pow(10, 4));
     VectorXd x = VectorXd::Zero(N);
     for (int i = 0; i <= N - 1; i++) {
         Vector3cd tmp = Vector3cd::Zero();
-        tmp(0) = (*E)(3 * i);
-        tmp(1) = (*E)(3 * i + 1);
-        tmp(2) = (*E)(3 * i + 2);
-        x(i) = exp(pow(E0, exponent)*((pow(tmp.norm(), exponent)/pow(E0, exponent)) - 1.0));
+        tmp(0) = (*E)(3 * i) / ratioESItoG;
+        tmp(1) = (*E)(3 * i + 1) / ratioESItoG;;
+        tmp(2) = (*E)(3 * i + 2) / ratioESItoG;;
+        x(i) = exp(pow(E0 / ratioESItoG, exponent)*((pow(tmp.norm(), exponent)/pow(E0 / ratioESItoG, exponent)) - 1.0));
     }
     double avg = x.sum() / N;
     return log(avg);

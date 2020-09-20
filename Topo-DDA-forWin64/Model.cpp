@@ -1,6 +1,24 @@
 #include "definition.h"
 #define NUM_THREADS 6
 
+double Si(double x) {
+    double dis = 0.1;
+    double sum = 0.0;
+    for (int i = 1; i <= int(round(x / dis)); i++) {
+        sum += dis * sin(i * dis) / (i * dis);
+    }
+    return sum;
+}
+double Ci(double x) {
+    double gamma = 0.577216;
+    double dis = 0.1;
+    double sum = 0.0;
+    for (int i = 1; i <= int(round(x / dis)); i++) {
+        sum += dis * (1 - cos(i * dis)) / (i * dis);
+    }
+    return gamma + log(x) - sum;
+}
+
 int Model::get_N(){
     return N;
 }
@@ -46,7 +64,7 @@ VectorXcd* Model::get_Einternal(){
     return &Einternal;
 }
 
-Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_){
+Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, string AMatrixMethod_){
     
 
     time=0;
@@ -59,6 +77,13 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     n_K=n_K_;
     n_E0=n_E0_;
     material=material_;
+    AMatrixMethod = AMatrixMethod_;
+
+    cout << "d" << d << "cm" << endl;
+    cout << "lam" << lam << "cm" << endl;
+    cout << "K" << K << "cm-1" << endl;
+    cout << "E0" << E0 << "statV/cm"<< endl;
+
 
     tie(Nx, Ny, Nz, N)=(*space_).get_Ns();
     list<Structure> *ln=(*space_).get_ln();
@@ -170,7 +195,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     }
     al = VectorXcd::Zero(N*3);
     for (int i=0;i<N*3;i++) {
-        al(i)=1.0/Get_Alpha(lam,K,d,diel(i));
+        al(i) = 1.0 / Get_Alpha(lam, K, d, diel(i), n_E0, n_K);  
     }  
     al_max = al;
     verbose = true;
@@ -380,7 +405,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     
 }
 
-Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi *RResult_){
+Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi *RResult_, string AMatrixMethod_){
     time=0;
     ITERATION=0;
     Error=0.0;
@@ -391,6 +416,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     n_K=n_K_;
     n_E0=n_E0_;
     material=material_;
+    AMatrixMethod = AMatrixMethod_;
 
     tie(Nx, Ny, Nz, N)=(*space_).get_Ns();
     list<Structure> *ln=(*space_).get_ln();
@@ -501,9 +527,9 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
         E(3*i+2) = E0*n_E0(2)*(cos(K*d*(n_K(0)*R(3*i)+n_K(1)*R(3*i+1)+n_K(2)*R(3*i+2)))+sin(K*d*(n_K(0)*R(3*i)+n_K(1)*R(3*i+1)+n_K(2)*R(3*i+2)))*1i);                                           
     }
     al = VectorXcd::Zero(N*3);
-    for (int i=0;i<N*3;i++) {
-        al(i)=1.0/Get_Alpha(lam,K,d,diel(i));
-    }  
+    for (int i = 0; i < N * 3; i++) {
+        al(i) = 1.0 / Get_Alpha(lam, K, d, diel(i), n_E0, n_K);
+    }
     al_max = al;
     verbose = true;
     
@@ -730,7 +756,25 @@ Model::~Model(){
         
 }
 
-Matrix3cd Model::A_dic_generator(double x,double y,double z){
+complex<double> Model::Get_Alpha(double lam, double K, double d, complex<double> diel, Vector3d n_E0, Vector3d n_K) {
+    if (AMatrixMethod == "FCD") {
+        return 1.0 / Get_Alpha_FCD(lam, K, d, diel);
+    }
+    else {
+        return 1.0 / Get_Alpha_LDR(lam, K, d, diel, n_E0, n_K);
+    }
+}
+
+Matrix3cd Model::A_dic_generator(double x, double y, double z) {
+    if (AMatrixMethod == "FCD") {
+        return this->FCD_inter(x, y, z);
+    }
+    else {
+        return this->LDR_inter(x, y, z);
+    }
+}
+
+Matrix3cd Model::LDR_inter(double x,double y,double z){
     Matrix3cd result(3,3);
     double xsquare = x*x; double ysquare = y*y; double zsquare = z*z;
     double rnorm = sqrt(xsquare+ysquare+zsquare);
@@ -764,6 +808,68 @@ Matrix3cd Model::A_dic_generator(double x,double y,double z){
 
         result = const1*result;
         return result;
+    }
+}
+
+Matrix3cd Model::FCD_inter(double x, double y, double z) {
+    Matrix3cd result(3, 3);
+    double xsquare = x * x; double ysquare = y * y; double zsquare = z * z;
+    double rnorm = sqrt(xsquare + ysquare + zsquare);
+
+    if (rnorm == 0.0) {
+        result(0, 0) = 0.0;
+        result(1, 1) = 0.0;
+        result(2, 2) = 0.0;
+        return result;
+    }
+    else {
+        double xy = x * y; double yz = y * z; double zx = z * x;
+        double rsquare = rnorm * rnorm;
+        double rcubic = rnorm * rnorm * rnorm;
+        double Kf = M_PI / d;
+        double Cz = Ci((Kf + K) * rnorm);
+        double Cf = Ci((Kf - K) * rnorm);
+        double Sz = Si((Kf + K) * rnorm);
+        double Sf = Si((Kf - K) * rnorm);
+        double Cz1 = cos((Kf + K) * rnorm) / ((Kf + K) * rnorm);
+        double Cf1 = cos((Kf - K) * rnorm) / ((Kf - K) * rnorm);
+        double Sz1 = sin((Kf + K) * rnorm) / ((Kf + K) * rnorm);
+        double Sf1 = sin((Kf - K) * rnorm) / ((Kf - K) * rnorm);
+        double Cz2 = (-((Kf + K) * rnorm) * sin((Kf + K) * rnorm) - cos((Kf + K) * rnorm)) / pow(((Kf + K) * rnorm), 2);
+        double Cf2 = (-((Kf - K) * rnorm) * sin((Kf - K) * rnorm) - cos((Kf - K) * rnorm)) / pow(((Kf - K) * rnorm), 2);
+        double Sz2 = (((Kf + K) * rnorm) * cos((Kf + K) * rnorm) - sin((Kf + K) * rnorm)) / pow(((Kf + K) * rnorm), 2);
+        double Sf2 = (((Kf - K) * rnorm) * cos((Kf - K) * rnorm) - sin((Kf - K) * rnorm)) / pow(((Kf - K) * rnorm), 2);
+        double kr = K * rnorm;
+        double sikr = sin(kr);
+        double cskr = cos(kr);
+        complex<double> CC = M_PI * 1i + Cf - Cz;
+        double C1C1 = Cf1 - Cz1;
+        double C2C2 = Cf2 - Cz2;
+        double SS = Sz + Sf;
+        double S1S1 = Sz1 + Sf1;
+        double S2S2 = Sz2 + Sf2;
+        complex<double> gf = (sikr * CC + cskr * SS) / (M_PI * rnorm);
+        complex<double> const1 = (kr * cskr - sikr) * CC - (kr * sikr + cskr) * SS + rnorm * sikr * C1C1 + rnorm * cskr * S1S1;
+        complex<double> const2 = (-K * kr * sikr - K * cskr) * CC - (K * kr * cskr - K * sikr) * SS + (2 * kr * cskr - sikr) * C1C1 - (2 * kr * sikr + cskr) * S1S1 + rnorm * sikr * C2C2 + rnorm * cskr * S2S2;
+        complex<double> gf1 = const1 / (M_PI * rsquare);
+        complex<double> gf2 = (rnorm * const2 - 2.0 * const1) / (M_PI * rcubic);
+        double hr = (sin(Kf * rnorm) - Kf * rnorm * cos(Kf * rnorm)) / (2 * M_PI * M_PI * rcubic);
+        complex<double> term1 = K * K * gf + gf1 / rnorm + (4 * M_PI / 3) * hr;
+        complex<double> term2 = (gf2 - gf1 / rnorm) / rsquare;
+
+        result(0, 0) = term1 + xsquare * term2;
+        result(0, 1) = xy * term2;
+        result(0, 2) = zx * term2;
+        result(1, 1) = term1 + ysquare * term2;
+        result(1, 2) = yz * term2;
+        result(2, 2) = term1 + zsquare * term2;
+
+        result(1, 0) = result(0, 1);
+        result(2, 0) = result(0, 2);
+        result(2, 1) = result(1, 2);
+
+        return result;
+
     }
 }
 
@@ -1036,9 +1142,9 @@ void Model::change_para_diel(VectorXd step){
             diel(3 * position1 + 1) = diel(3 * position1);
             diel(3 * position1 + 2) = diel(3 * position1);
 
-            al(3 * position1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1));
-            al(3 * position1 + 1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 1));
-            al(3 * position1 + 2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 2));
+            al(3 * position1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1), n_E0, n_K);
+            al(3 * position1 + 1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 1), n_E0, n_K);
+            al(3 * position1 + 2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 2), n_E0, n_K);
 
             list<int>::iterator it2 = (*it1).begin();
             for (int j = 0; j <= (*it1).size()-1; j++) {
@@ -1051,9 +1157,9 @@ void Model::change_para_diel(VectorXd step){
                 diel(3 * position2 + 1) = diel(3 * position2);
                 diel(3 * position2 + 2) = diel(3 * position2);
 
-                al(3 * position2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2));
-                al(3 * position2 + 1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 1));
-                al(3 * position2 + 2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 2));
+                al(3 * position2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2), n_E0, n_K);
+                al(3 * position2 + 1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 1), n_E0, n_K);
+                al(3 * position2 + 2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 2), n_E0, n_K);
                 it2++;
             }
             it1++;
@@ -1086,9 +1192,9 @@ void Model::change_para_diel(VectorXd step){
                 diel(3*position1+1)=diel(3*position1);
                 diel(3*position1+2)=diel(3*position1);
                 
-                al(3*position1)=1.0/Get_Alpha(lam,K,d,diel(3*position1));
-                al(3*position1+1)=1.0/Get_Alpha(lam,K,d,diel(3*position1+1));
-                al(3*position1+2)=1.0/Get_Alpha(lam,K,d,diel(3*position1+2));
+                al(3*position1)=1.0/Get_Alpha(lam,K,d,diel(3*position1), n_E0, n_K);
+                al(3*position1+1)=1.0/Get_Alpha(lam,K,d,diel(3*position1+1), n_E0, n_K);
+                al(3*position1+2)=1.0/Get_Alpha(lam,K,d,diel(3*position1+2), n_E0, n_K);
 
                 position=position+1;
 

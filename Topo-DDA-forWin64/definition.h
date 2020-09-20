@@ -36,8 +36,8 @@ void Conv(cufftDoubleComplex *Convx, cufftDoubleComplex *Convy, cufftDoubleCompl
 void Conv2B(cufftDoubleComplex *Convx, cufftDoubleComplex *Convy, cufftDoubleComplex *Convz, double *bDev, int NxFFT, int NyFFT, int NzFFT);
 void APtoESum(cufftDoubleComplex *A00, cufftDoubleComplex *A01, cufftDoubleComplex *A02, cufftDoubleComplex *A11, cufftDoubleComplex *A12, cufftDoubleComplex *A22, cufftDoubleComplex *PxDev, cufftDoubleComplex *PyDev, cufftDoubleComplex *PzDev, cufftDoubleComplex *ESumxDev, cufftDoubleComplex *ESumyDev, cufftDoubleComplex *ESumzDev, int NxFFT, int NyFFT, int NzFFT, int NxA, int NyA, int NzA, int index1, int index2, int index3, int deduction);
 
-complex<double> Get_Alpha(double lam,double K,double d,complex<double> diel);
-complex<double> Get_Alpha_FLTRCD(double lam,double K,double d,complex<double> diel);
+complex<double> Get_Alpha_LDR(double lam, double K, double d, complex<double> diel, Vector3d n_E0, Vector3d n_K);
+complex<double> Get_Alpha_FCD(double lam,double K,double d,complex<double> diel);
 complex<double> Get_material(string mat, double wl, string unit);                  //name of mat to get its diel function at certain wavlength              
 Vector2cd Get_2_material(string sub, string mat, double wl, string unit);          //a wrapper for Get_material
 double Average(VectorXcd* E, int N, double exponent);
@@ -110,13 +110,14 @@ class ObjectiveSurfaceEExp;
 
 class Model{
     protected:
+        //------------------Units of all physical values should be input with standard gussian-cgs unit---------
         int N;                        //Number of dipoles
         int Nx;                       //scope of space. Nx*Ny*Nz!=N
         int Ny;
         int Nz;
         int time;
         int ITERATION;
-        double d;
+        double d;                        
         double E0;
         double K;
         double lam;
@@ -142,16 +143,20 @@ class Model{
         Vector2cd material;
         VectorXcd al;                       // 1 over alpha instead of alpha.
         bool verbose;
+        string AMatrixMethod;
 
         VectorXcd diel_max;                         //corresponds to the previous maximum obj
         VectorXd diel_old_max;
         VectorXcd P_max;
         VectorXcd al_max;
     public:
-        Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_);
-        Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi *RResult_);
+        Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, string AMatrixMethod_);
+        Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi *RResult_, string AMatrixMethod_);
         ~Model();
+        complex<double> Get_Alpha(double lam, double K, double d, complex<double> diel, Vector3d n_E0, Vector3d n_K);
         Matrix3cd A_dic_generator(double x,double y,double z);
+        Matrix3cd LDR_inter(double x, double y, double z);
+        Matrix3cd FCD_inter(double x, double y, double z);
         VectorXcd Aproduct(VectorXcd &b);
         void bicgstab(int MAX_ITERATION,double MAX_ERROR);
         void change_E(VectorXcd E_);
@@ -221,8 +226,8 @@ class EvoModel : public Model{
         bool HavePathRecord;
         int Stephold;
     public:
-        EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_);
-        EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi* RResult_);
+        EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, string AMatrixMethod_);
+        EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi* RResult_, string AMatrixMethod_);
         
         
         //functions used to calculate partial derivatives                                 
@@ -272,20 +277,21 @@ class Objective{
 //Child classes for objective function
 
 
-class ObjectivePointE : public Objective{
+class ObjectivePointEratio : public Objective{
     private:
       double x;
       double y;
       double z;      // Here x, y, z are absolute coordinates. (No need to multiply d).
       double d;
       int N;
+      double E0;      //Input field(in statV/cm)
       VectorXcd* P;
       VectorXi* R;
       EvoModel* model;
       Vector3cd E_sum;
       Vector3cd E_ext;
     public:
-      ObjectivePointE(list<double> parameters, EvoModel* model_, bool HavePenalty_);
+      ObjectivePointEratio(list<double> parameters, EvoModel* model_, bool HavePenalty_);
       void SingleResponse(int idx, bool deduction);
       double GroupResponse();
       double GetVal();
