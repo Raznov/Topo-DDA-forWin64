@@ -60,6 +60,11 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     n_E0=n_E0_;
     material=material_;
 
+    cout << "d" << d << endl;
+    cout << "lam" << lam << endl;
+    cout << "K" << K << endl;
+    cout << "E0" << E0 << endl;
+
     tie(Nx, Ny, Nz, N)=(*space_).get_Ns();
     list<Structure> *ln=(*space_).get_ln();
     R=VectorXi::Zero(3*N);
@@ -172,6 +177,9 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     for (int i=0;i<N*3;i++) {
         al(i)=1.0/Get_Alpha(lam,K,d,diel(i));
     }  
+
+    cout << "al" << al(0) << endl;
+
     al_max = al;
     verbose = true;
 

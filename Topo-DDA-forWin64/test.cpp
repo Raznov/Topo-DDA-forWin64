@@ -81,7 +81,7 @@ int main() {
     double MAX_ERROR = 0.00001;
     int MAX_ITERATION_EVO = 200;
 
-    list<string> ObjectFunctionNames{ "ObjectiveG" };
+    list<string> ObjectFunctionNames{ "PointE" };
 
     double exponent = 2;
     double ratio = 4;
