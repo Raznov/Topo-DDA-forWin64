@@ -79,10 +79,10 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     material=material_;
     AMatrixMethod = AMatrixMethod_;
 
-    cout << "d" << d << "cm" << endl;
-    cout << "lam" << lam << "cm" << endl;
-    cout << "K" << K << "cm-1" << endl;
-    cout << "E0" << E0 << "statV/cm"<< endl;
+    cout << "d" << d << endl;
+    cout << "lam" << lam << endl;
+    cout << "K" << K << endl;
+    cout << "E0" << E0 << endl;
 
 
     tie(Nx, Ny, Nz, N)=(*space_).get_Ns();
@@ -91,7 +91,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     RDep = VectorXi::Zero(3 * N);
 
     RResultSwitch = false;
-    RResult = R;
+    
 
     VectorXd diel_tmp=VectorXd::Zero(3*N);
     // Why not directly use diel_old?
@@ -137,6 +137,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
         n1=n1+n2;
     }
 
+    RResult = R;
 
     for (int i = 0; i <= PositionPara.size() - 1; i++) {
         list<int> tmpPos;
@@ -197,6 +198,9 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     for (int i=0;i<N*3;i++) {
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel(i), n_E0, n_K);  
     }  
+
+    cout << "al" << al(0) << endl;
+
     al_max = al;
     verbose = true;
 
@@ -758,10 +762,10 @@ Model::~Model(){
 
 complex<double> Model::Get_Alpha(double lam, double K, double d, complex<double> diel, Vector3d n_E0, Vector3d n_K) {
     if (AMatrixMethod == "FCD") {
-        return 1.0 / Get_Alpha_FCD(lam, K, d, diel);
+        return Get_Alpha_FCD(lam, K, d, diel);
     }
     else {
-        return 1.0 / Get_Alpha_LDR(lam, K, d, diel, n_E0, n_K);
+        return Get_Alpha_LDR(lam, K, d, diel, n_E0, n_K);
     }
 }
 

@@ -183,10 +183,10 @@ def EField(geometry,diel,d,wl,k_dir,E_dir,E_tot,iteration=-1,position="./",decim
         plt.savefig(position+"{}E_field.png".format(str(iteration).zfill(decimal)))
     #plt.show()
 
-"""
+
 #Code used for single DDA calculation or if you only wants to see the final results for Evooptimization
 
-data=np.genfromtxt("Model_results54.txt",dtype=complex)
+data=np.genfromtxt("Model_results.txt",dtype=complex)
 N=int(np.real(data[3]))
 #print(np.real(data[(3*N+4):(6*N+4)]))
 geometry=np.real(data[4:(3*N+4)]).astype(int)
@@ -205,7 +205,7 @@ E_tot=(data[(9*N+13+N_plot):(9*N+13+2*N_plot)])
 Shape(geometry, diel, d)
 
 EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot)
-"""
+
 
 
 """
@@ -272,7 +272,7 @@ if __name__ == "__main__":
 
 """
 
-
+"""
 ##tmp:
 name = '55'
 
@@ -285,3 +285,4 @@ polarization=data[(3*N+4):(6*N+4)]
 np.savetxt(name+'Diel.txt', diel, '%f')
 np.savetxt(name+'Geometry.txt', geometry, '%d')
 np.savetxt(name+'polarization.txt', polarization, '%f')
+"""
