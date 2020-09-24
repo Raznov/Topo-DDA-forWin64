@@ -2,6 +2,8 @@
 
 
 
+
+
 int main() {
 
     /*
@@ -43,7 +45,7 @@ int main() {
     double rationmtocm = 1 / (pow(10, 7));
     double ratioESItoGnm = (1 / (2.998 * pow(10, 4))) / (pow(10, 7));
 
-   
+
 
     double lam = 525;
     Vector3d n_K;
@@ -51,8 +53,8 @@ int main() {
     double E0 = 1.0;
     Vector3d n_E0;
     n_E0 << 1.0, 0.0, 0.0;
-    Vector2cd material = Get_2_material("Air", "Au", lam, "nm");
-  
+    Vector2cd material = Get_2_material("Air", "4.0", lam, "nm");
+
     double epsilon = 100;
 
     double focus = 350;   //nm       
@@ -81,7 +83,7 @@ int main() {
     double PenaltyFactor = 0.0001;
     list<list<double>*> ObjectParameters{ &ObjectParameter2 };
     string save_position = "";
-    string AMatrixMethod = "LDR";
+    string AMatrixMethod = "FCD";
 
     Model TestModel(&S, d, lam, n_K, E0, n_E0, material, AMatrixMethod);
     TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
@@ -92,19 +94,19 @@ int main() {
     double x, y, z;
     y = center(1) * d;
     z = center(2) * d;
-    
+
 
     N = TestModel.get_N();
-    VectorXcd *P = TestModel.get_P();
-    VectorXi *R = TestModel.get_R();
+    VectorXcd* P = TestModel.get_P();
+    VectorXi* R = TestModel.get_R();
     double K = 2 * M_PI / lam;
     Vector3cd E_sum = Vector3cd::Zero();
     Vector3cd E_ext = Vector3cd::Zero();
 
     string name = "Efieldscand=" + to_string(d) + ".txt";
     ofstream fout(name);
-    for (x = center(0) * d; x <= center(0) * d + 350; x += 2.5) {
-        cout << "x" << x-center(0)*d << endl;
+    for (x = center(0) * d; x <= center(0) * d + 350; x += 2) {
+        cout << "x" << x - center(0) * d << endl;
         E_ext(0) = E0 * n_E0(0) * (cos(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
         E_ext(1) = E0 * n_E0(1) * (cos(K * (n_K(0) * y + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
         E_ext(2) = E0 * n_E0(2) * (cos(K * (n_K(0) * z + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
@@ -115,7 +117,7 @@ int main() {
             double rx = x - d * (*R)(3 * i);                  //R has no d in it, so needs to time d
             double ry = y - d * (*R)(3 * i + 1);
             double rz = z - d * (*R)(3 * i + 2);
-            Matrix3cd A = TestModel.A_dic_generator(rx, ry, rz);     
+            Matrix3cd A = TestModel.A_dic_generator(rx, ry, rz);
             E_sum(0) -= (A(0, 0) * (*P)(3 * i) + A(0, 1) * (*P)(3 * i + 1) + A(0, 2) * (*P)(3 * i + 2));
             E_sum(1) -= (A(1, 0) * (*P)(3 * i) + A(1, 1) * (*P)(3 * i + 1) + A(1, 2) * (*P)(3 * i + 2));
             E_sum(2) -= (A(2, 0) * (*P)(3 * i) + A(2, 1) * (*P)(3 * i + 1) + A(2, 2) * (*P)(3 * i + 2));
@@ -125,7 +127,7 @@ int main() {
         fout << x - center(0) * d << " " << normE << endl;
     }
     fout.close();
-    
+
     //EvoModel TestModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, PenaltyFactor, save_position, &S, d, lam, n_K, E0, n_E0, material, AMatrixMethod);
 
     //TestModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
@@ -137,7 +139,6 @@ int main() {
     return 0;
 
 }
-
 
 
 

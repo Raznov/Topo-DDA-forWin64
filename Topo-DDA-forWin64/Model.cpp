@@ -79,10 +79,9 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     material=material_;
     AMatrixMethod = AMatrixMethod_;
 
-    cout << "d" << d << endl;
-    cout << "lam" << lam << endl;
-    cout << "K" << K << endl;
-    cout << "E0" << E0 << endl;
+    if (AMatrixMethod == "FCD") {
+        SiCiValue = new SiCi();
+    }
 
 
     tie(Nx, Ny, Nz, N)=(*space_).get_Ns();
@@ -421,6 +420,10 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     n_E0=n_E0_;
     material=material_;
     AMatrixMethod = AMatrixMethod_;
+
+    if (AMatrixMethod == "FCD") {
+        SiCiValue = new SiCi();
+    }
 
     tie(Nx, Ny, Nz, N)=(*space_).get_Ns();
     list<Structure> *ln=(*space_).get_ln();
@@ -827,14 +830,15 @@ Matrix3cd Model::FCD_inter(double x, double y, double z) {
         return result;
     }
     else {
+        
         double xy = x * y; double yz = y * z; double zx = z * x;
         double rsquare = rnorm * rnorm;
         double rcubic = rnorm * rnorm * rnorm;
         double Kf = M_PI / d;
-        double Cz = Ci((Kf + K) * rnorm);
-        double Cf = Ci((Kf - K) * rnorm);
-        double Sz = Si((Kf + K) * rnorm);
-        double Sf = Si((Kf - K) * rnorm);
+        double Cz = (*SiCiValue).get_Ci((Kf + K) * rnorm);
+        double Cf = (*SiCiValue).get_Ci((Kf - K) * rnorm);
+        double Sz = (*SiCiValue).get_Si((Kf + K) * rnorm);
+        double Sf = (*SiCiValue).get_Si((Kf - K) * rnorm);
         double Cz1 = cos((Kf + K) * rnorm) / ((Kf + K) * rnorm);
         double Cf1 = cos((Kf - K) * rnorm) / ((Kf - K) * rnorm);
         double Sz1 = sin((Kf + K) * rnorm) / ((Kf + K) * rnorm);

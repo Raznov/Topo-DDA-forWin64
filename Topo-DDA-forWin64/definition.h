@@ -108,6 +108,20 @@ class Objective;
 class ObjectivePointE;
 class ObjectiveSurfaceEExp;
 
+class SiCi {
+public:
+    int numberSi;
+    int numberCi;
+    double disSi;
+    double disCi;
+    VectorXd Si;
+    VectorXd Ci;
+    SiCi();
+    double get_Si(double x);
+    double get_Ci(double y);
+
+};
+
 class Model{
     protected:
         //------------------Units of all physical values should be input with standard gussian-cgs unit---------
@@ -144,6 +158,7 @@ class Model{
         VectorXcd al;                       // 1 over alpha instead of alpha.
         bool verbose;
         string AMatrixMethod;
+        SiCi* SiCiValue;
 
         VectorXcd diel_max;                         //corresponds to the previous maximum obj
         VectorXd diel_old_max;

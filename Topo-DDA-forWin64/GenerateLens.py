@@ -100,9 +100,9 @@ epsilon2 = np.imag(epsilon)
 
 n2 = math.sqrt((abs(epsilon1)+epsilon1)/2)        #actual refractive index of the high index material,  the output would be normalized between the low and high value and would be between 0~1
 n2 = np.real(n2)                                  #now use only the real part for dielectric material
+print(n2)
 
-
-focus = 1600                                     #distance from the bottom (including thickness)
+focus = 1300                                   #distance from the bottom (including thickness)
 #thickness = 275
 d = 25         #discrete interval
 n1 = 1         #actual refractive index of the low index material
@@ -111,12 +111,13 @@ ncenter = n2  #actual refractive index in the middle of the lens
 
 
 # For fixed n len and n1 must be 1
-Dmax = 1975
+Dmax = 2000
 #Dmax = 2*math.sqrt((2*n2-2)*focus*thickness + (n2**2-3*n2+2)*(thickness**2))
 print("Diameter of the len is: {}".format(Dmax))
 thickness = ((2-2*n2)*focus+math.sqrt(((2*n2-2)**2)*(focus**2)+4*(n2**2-3*n2+2)*(Dmax/2)**2))/(2*(n2**2-3*n2+2))
 print("thickness of the len is {}.".format(thickness))
 print("focus of the len(from the buttom) is {}".format(focus))
+
 
 D = Dmax
 xscale = int(np.ceil(D/d) + 1)
