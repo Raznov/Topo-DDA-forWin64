@@ -156,9 +156,9 @@ tuple<VectorXd, VectorXcd> EvoModel::devx_and_Adevxp(double epsilon){
 
             if (objective->Have_Devx) objective->SingleResponse(position1, false);
 
-            Adevxp(3 * position1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1))) - al(3 * position1)) / (sign * epsilon);
-            Adevxp(3 * position1 + 1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 1))) - al(3 * position1 + 1)) / (sign * epsilon);
-            Adevxp(3 * position1 + 2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 2))) - al(3 * position1 + 2)) / (sign * epsilon);
+            Adevxp(3 * position1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1), n_E0, n_K)) - al(3 * position1)) / (sign * epsilon);
+            Adevxp(3 * position1 + 1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 1), n_E0, n_K)) - al(3 * position1 + 1)) / (sign * epsilon);
+            Adevxp(3 * position1 + 2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 2), n_E0, n_K)) - al(3 * position1 + 2)) / (sign * epsilon);
             
             list<int>::iterator it2 = (*it1).begin();
 
@@ -176,9 +176,9 @@ tuple<VectorXd, VectorXcd> EvoModel::devx_and_Adevxp(double epsilon){
 
                 if (objective->Have_Devx) objective->SingleResponse(position2, false);
 
-                Adevxp(3 * position2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2))) - al(3 * position2)) / (sign * epsilon);
-                Adevxp(3 * position2 + 1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 1))) - al(3 * position2 + 1)) / (sign * epsilon);
-                Adevxp(3 * position2 + 2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 2))) - al(3 * position2 + 2)) / (sign * epsilon);
+                Adevxp(3 * position2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2), n_E0, n_K)) - al(3 * position2)) / (sign * epsilon);
+                Adevxp(3 * position2 + 1) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 1), n_E0, n_K)) - al(3 * position2 + 1)) / (sign * epsilon);
+                Adevxp(3 * position2 + 2) = ((1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 2), n_E0, n_K)) - al(3 * position2 + 2)) / (sign * epsilon);
                
                 it2++;
             }
@@ -255,9 +255,9 @@ tuple<VectorXd, VectorXcd> EvoModel::devx_and_Adevxp(double epsilon){
                 
                 if(objective->Have_Devx) objective->SingleResponse(position1, false);
                 
-                Adevxp(3*position1)=((1.0/Get_Alpha(lam,K,d,diel(3*position1)))-al(3*position1))/(sign*epsilon);
-                Adevxp(3*position1+1)=((1.0/Get_Alpha(lam,K,d,diel(3*position1+1)))-al(3*position1+1))/(sign*epsilon);
-                Adevxp(3*position1+2)=((1.0/Get_Alpha(lam,K,d,diel(3*position1+2)))-al(3*position1+2))/(sign*epsilon);
+                Adevxp(3*position1)=((1.0/Get_Alpha(lam,K,d,diel(3*position1), n_E0, n_K))-al(3*position1))/(sign*epsilon);
+                Adevxp(3*position1+1)=((1.0/Get_Alpha(lam,K,d,diel(3*position1+1), n_E0, n_K))-al(3*position1+1))/(sign*epsilon);
+                Adevxp(3*position1+2)=((1.0/Get_Alpha(lam,K,d,diel(3*position1+2), n_E0, n_K))-al(3*position1+2))/(sign*epsilon);
                 //cout<<"diel"<<diel(3*position1)<<endl;
                 //cout<<"lam"<<lam<<"K"<<K<<"d"<<d<<endl;
                 //cout<<"1/alpha"<<(1.0/Get_Alpha(lam,K,d,diel(3*position1)))<<endl;

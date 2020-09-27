@@ -36,15 +36,25 @@
     <ClCompile Include="tools.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="kernel.cu">
+    <ClCompile Include="AProductCore.cpp">
       <Filter>资源文件</Filter>
-    </None>
+    </ClCompile>
+    <ClCompile Include="DDAModel.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EvoDDAModel.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectiveDDAModel.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definition.h">
       <Filter>头文件</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="kernel.cu" />
   </ItemGroup>
 </Project>

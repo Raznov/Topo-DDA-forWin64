@@ -175,7 +175,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     }
     al = VectorXcd::Zero(N*3);
     for (int i=0;i<N*3;i++) {
-        al(i)=1.0/Get_Alpha(lam,K,d,diel(i));
+        al(i) = 1.0 / Get_Alpha(lam, K, d, diel(i), n_E0, n_K);
     }  
 
     cout << "al" << al(0) << endl;
@@ -510,7 +510,7 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     }
     al = VectorXcd::Zero(N*3);
     for (int i=0;i<N*3;i++) {
-        al(i)=1.0/Get_Alpha(lam,K,d,diel(i));
+        al(i) = 1.0 / Get_Alpha(lam, K, d, diel(i), n_E0, n_K);
     }  
     al_max = al;
     verbose = true;
@@ -1044,9 +1044,9 @@ void Model::change_para_diel(VectorXd step){
             diel(3 * position1 + 1) = diel(3 * position1);
             diel(3 * position1 + 2) = diel(3 * position1);
 
-            al(3 * position1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1));
-            al(3 * position1 + 1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 1));
-            al(3 * position1 + 2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 2));
+            al(3 * position1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1), n_E0, n_K);
+            al(3 * position1 + 1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 1), n_E0, n_K);
+            al(3 * position1 + 2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position1 + 2), n_E0, n_K);
 
             list<int>::iterator it2 = (*it1).begin();
             for (int j = 0; j <= (*it1).size()-1; j++) {
@@ -1059,9 +1059,9 @@ void Model::change_para_diel(VectorXd step){
                 diel(3 * position2 + 1) = diel(3 * position2);
                 diel(3 * position2 + 2) = diel(3 * position2);
 
-                al(3 * position2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2));
-                al(3 * position2 + 1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 1));
-                al(3 * position2 + 2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 2));
+                al(3 * position2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2), n_E0, n_K);
+                al(3 * position2 + 1) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 1), n_E0, n_K);
+                al(3 * position2 + 2) = 1.0 / Get_Alpha(lam, K, d, diel(3 * position2 + 2), n_E0, n_K);
                 it2++;
             }
             it1++;
@@ -1094,9 +1094,9 @@ void Model::change_para_diel(VectorXd step){
                 diel(3*position1+1)=diel(3*position1);
                 diel(3*position1+2)=diel(3*position1);
                 
-                al(3*position1)=1.0/Get_Alpha(lam,K,d,diel(3*position1));
-                al(3*position1+1)=1.0/Get_Alpha(lam,K,d,diel(3*position1+1));
-                al(3*position1+2)=1.0/Get_Alpha(lam,K,d,diel(3*position1+2));
+                al(3*position1)=1.0/Get_Alpha(lam,K,d,diel(3*position1), n_E0, n_K);
+                al(3*position1+1)=1.0/Get_Alpha(lam,K,d,diel(3*position1+1), n_E0, n_K);
+                al(3*position1+2)=1.0/Get_Alpha(lam,K,d,diel(3*position1+2), n_E0, n_K);
 
                 position=position+1;
 

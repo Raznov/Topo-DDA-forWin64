@@ -145,9 +145,13 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AProductCore.cpp" />
     <ClCompile Include="EvoModel.cpp" />
+    <ClCompile Include="EvoDDAModel.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="DDAModel.cpp" />
     <ClCompile Include="Objective.cpp" />
+    <ClCompile Include="ObjectiveDDAModel.cpp" />
     <ClCompile Include="Space.cpp" />
     <ClCompile Include="Structure.cpp" />
     <ClCompile Include="test.cpp" />
