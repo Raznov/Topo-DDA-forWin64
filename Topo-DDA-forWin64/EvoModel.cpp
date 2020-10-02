@@ -114,7 +114,62 @@ EvoModel::EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* Obje
     }
     
 }
+EvoModel::EvoModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_) : Model(space_, d_, lam_, n_K_, E0_, n_E0_, material_, MAXm_, MAXn_, Lm_, Ln_) {
+    ObjectFunctionNames = ObjectFunctionNames_;
+    save_position = save_position_;
+    ObjectParameters = ObjectParameters_;
+    HavePenalty = HavePenalty_;
+    PenaltyFactor = PenaltyFactor_;
+    origin = 0;
+    epsilon_fix = epsilon_fix_;
+    epsilon_tmp = epsilon_fix;
+    HavePathRecord = HavePathRecord_;
+    MaxObj = 0.0;
+    Stephold = 0;
 
+
+    list<string>::iterator it0 = (*ObjectFunctionNames).begin();
+    MajorObjectFunctionName = (*it0);
+    it0++;
+
+    for (int i = 1; i <= (*ObjectFunctionNames).size() - 1; i++) {
+        MinorObjectFunctionNames.push_back(*it0);
+        it0++;
+
+    }
+
+    list<list<double>*>::iterator it1 = (*ObjectParameters).begin();
+    for (int i = 0; i <= (*ObjectParameters).size() - 1; i++) {
+        if (i == 0) {
+            MajorObjectParameters = *(*it1);
+        }
+        else {
+            MinorObjectParameters.push_back(*(*it1));
+        }
+        it1++;
+    }
+
+    list<double>::iterator it2 = MajorObjectParameters.begin();
+    for (int i = 0; i <= MajorObjectParameters.size() - 1; i++) {
+        cout << " " << *it2 << " ";
+        it2++;
+    }
+    cout << endl;
+    list<list<double>>::iterator it3 = MinorObjectParameters.begin();
+
+    for (int i = 1; i <= (*ObjectParameters).size() - 1; i++) {
+
+        list<double>::iterator it4 = (*it3).begin();
+        for (int j = 0; j <= (*it3).size() - 1; j++) {
+            cout << " " << *it4 << " ";
+            it4++;
+        }
+        it3++;
+        cout << endl;
+    }
+    objective = ObjectiveFactory(MajorObjectFunctionName, MajorObjectParameters);
+
+}
 
 
 tuple<VectorXd, VectorXcd> EvoModel::devx_and_Adevxp(double epsilon){

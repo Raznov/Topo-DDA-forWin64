@@ -716,6 +716,385 @@ Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     
 }
 
+Model::Model(Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_) {
+
+    Lm = Lm_;
+    Ln = Ln_;
+    MAXm = MAXm_;
+    MAXn = MAXn_;
+
+    time = 0;
+    ITERATION = 0;
+    Error = 0.0;
+    d = d_;
+    lam = lam_;
+    K = 2 * M_PI / lam;
+    E0 = E0_;
+    n_K = n_K_;
+    n_E0 = n_E0_;
+    material = material_;
+
+    tie(Nx, Ny, Nz, N) = (*space_).get_Ns();
+    list<Structure>* ln = (*space_).get_ln();
+    R = VectorXi::Zero(3 * N);
+    RDep = VectorXi::Zero(3 * N);
+
+    RResultSwitch = false;
+    RResult = R;
+
+    VectorXd diel_tmp = VectorXd::Zero(3 * N);
+    // Why not directly use diel_old?
+    //-----------------------------------------------------------------Input strs-------------------------------------------------------------
+    list<Structure>::iterator it = (*ln).begin();
+
+    int PositionParaN = 0;
+    for (int i = 0; i <= int((*ln).size()) - 1; i++) {
+        int n2 = ((*((*it).get_geometry())).size());
+        if ((*it).get_para() == 1) {
+            PositionParaN += int(round(n2 / 3));
+        }
+        it++;
+    }
+    PositionPara = VectorXi::Zero(PositionParaN);
+
+    //Build R, RDep
+    int n1 = 0;
+    it = (*ln).begin();
+    int PositionParaPos = 0;
+    VectorXi RPara = VectorXi::Zero(3 * N);
+    for (int i = 0; i <= int((*ln).size()) - 1; i++) {
+        int n2 = ((*((*it).get_geometry())).size());
+        if ((*it).get_para() == 1) {
+            para_nums.push_back(n2);
+            para_starts.push_back(n1);
+            for (int i = int(round(n1 / 3)); i <= int(round(n1 / 3)) + int(round(n2 / 3)) - 1; i++) {
+                PositionPara(PositionParaPos) = i;
+                PositionParaPos += 1;
+            }
+        }
+        if ((*it).get_para() == 2) {
+            para_dep_nums.push_back(n2);
+            para_dep_starts.push_back(n1);
+        }
+        for (int j = 0; j <= n2 - 1; j++) {
+            R(n1 + j) = (*((*it).get_geometry()))(j);
+            diel_tmp(n1 + j) = (*((*it).get_diel()))(j);
+            RDep(n1 + j) = (*((*it).get_geometry_dep()))(j);
+            RPara(n1 + j) = (*it).get_para();
+        }
+        it++;
+        n1 = n1 + n2;
+    }
+
+
+    for (int i = 0; i <= PositionPara.size() - 1; i++) {
+        list<int> tmpPos;
+        int Parax = R(3 * PositionPara(i));
+        int Paray = R(3 * PositionPara(i) + 1);
+        int Paraz = R(3 * PositionPara(i) + 2);
+        for (int j = 0; j <= N - 1; j++) {
+            int jx = R(3 * j);
+            int jy = R(3 * j + 1);
+            int jz = R(3 * j + 2);
+            int Depx = RDep(3 * j);
+            int Depy = RDep(3 * j + 1);
+            int Depz = RDep(3 * j + 2);
+            if (RPara(3 * j) == 2) {
+                if (Depx == Parax && Depy == Paray && Depz == Paraz) {
+                    tmpPos.push_back(j);
+                }
+            }
+        }
+        PositionDep.push_back(tmpPos);
+    }
+
+    int PositionDepN = 0;
+    list<list<int>>::iterator it1PositionDep = PositionDep.begin();
+    for (int i = 0; i <= int(PositionDep.size()) - 1; i++) {
+        PositionDepN += (*it1PositionDep).size();
+        it1PositionDep++;
+    }
+    if (PositionDepN + PositionParaN != N) {
+        cout << "PositionDepN = " << PositionDepN << endl;
+        cout << "PositionParaN = " << PositionParaN << endl;
+        cout << "In Model::Model(Space *space_, double d_, double lam_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_) : PositionDepN + PositionParaN! = N" << endl;
+    }
+
+    //---------------------------------------------------initial diel------------------------------------
+    diel = VectorXcd::Zero(3 * N);
+    diel_old = VectorXd::Zero(3 * N);
+
+    diel_old_max = diel_old;
+    diel_max = diel;
+
+    for (int i = 0; i <= 3 * N - 1; i++) {
+        diel(i) = material(0) + diel_tmp(i) * (material(1) - material(0));
+        diel_old(i) = diel_tmp(i);
+    }
+
+    P = VectorXcd::Zero(N * 3);
+    P_max = P;
+    E = VectorXcd::Zero(N * 3);
+    Einternal = VectorXcd::Zero(N * 3);
+    EResult = VectorXcd::Zero(N * 3);
+    for (int i = 0; i < N; i++) {
+        E(3 * i) = E0 * n_E0(0) * (cos(K * d * (n_K(0) * R(3 * i) + n_K(1) * R(3 * i + 1) + n_K(2) * R(3 * i + 2))) + sin(K * d * (n_K(0) * R(3 * i) + n_K(1) * R(3 * i + 1) + n_K(2) * R(3 * i + 2))) * 1i);
+        E(3 * i + 1) = E0 * n_E0(1) * (cos(K * d * (n_K(0) * R(3 * i) + n_K(1) * R(3 * i + 1) + n_K(2) * R(3 * i + 2))) + sin(K * d * (n_K(0) * R(3 * i) + n_K(1) * R(3 * i + 1) + n_K(2) * R(3 * i + 2))) * 1i);
+        E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * R(3 * i) + n_K(1) * R(3 * i + 1) + n_K(2) * R(3 * i + 2))) + sin(K * d * (n_K(0) * R(3 * i) + n_K(1) * R(3 * i + 1) + n_K(2) * R(3 * i + 2))) * 1i);
+    }
+    al = VectorXcd::Zero(N * 3);
+    for (int i = 0; i < N * 3; i++) {
+        al(i) = 1.0 / Get_Alpha(lam, K, d, diel(i));
+    }
+    al_max = al;
+    verbose = true;
+
+
+    //Allocation and part of initialization for FFT
+    //NFFT:
+    NxFFT = 2 * Nx - 1;
+    NyFFT = 2 * Ny - 1;
+    NzFFT = 2 * Nz - 1;
+    NFFT = NxFFT * NyFFT * NzFFT;
+
+    //Plan:
+    if (cufftPlan3d(&Plan, NxFFT, NyFFT, NzFFT, CUFFT_Z2Z) != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: Plan creation failed");
+    }
+
+    high_resolution_clock::time_point t_init = high_resolution_clock::now();
+    //A_dic:
+    AHos = new double[2 * 6 * NFFT];
+    for (int i = 0; i <= Nx - 1; i++) {
+        for (int j = 0; j <= Ny - 1; j++) {
+            for (int k = 0; k <= Nz - 1; k++) {
+                double x = d * i; double y = d * j; double z = d * k;
+                Matrix3cd Atmp = Matrix3cd::Zero();
+                for (int m = -MAXm; m <= MAXm; m++) {
+                    for (int n = -MAXn; n <= MAXn; n++) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                
+                int first[6] = { 0, 0, 0, 1, 1, 2 };
+                int second[6] = { 0, 1, 2, 1, 2, 2 };
+                for (int l = 0; l <= 5; l++) {
+                    int index_real = 0 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    int index_imag = 1 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    AHos[index_real] = Atmp(first[l], second[l]).real();
+                    AHos[index_imag] = Atmp(first[l], second[l]).imag();
+
+                }
+            }
+        }
+    }
+    for (int i = Nx; i <= 2 * Nx - 2; i++) {
+        for (int j = 0; j <= Ny - 1; j++) {
+            for (int k = 0; k <= Nz - 1; k++) {
+                double x = d * (i - (2 * Nx - 1)); double y = d * j; double z = d * k;
+                Matrix3cd Atmp = Matrix3cd::Zero();
+                for (int m = -MAXm; m <= MAXm; m++) {
+                    for (int n = -MAXn; n <= MAXn; n++) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[6] = { 0, 0, 0, 1, 1, 2 };
+                int second[6] = { 0, 1, 2, 1, 2, 2 };
+                for (int l = 0; l <= 5; l++) {
+                    int index_real = 0 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    int index_imag = 1 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    AHos[index_real] = Atmp(first[l], second[l]).real();
+                    AHos[index_imag] = Atmp(first[l], second[l]).imag();
+
+                }
+            }
+        }
+    }
+    for (int i = 0; i <= Nx - 1; i++) {
+        for (int j = Ny; j <= 2 * Ny - 2; j++) {
+            for (int k = 0; k <= Nz - 1; k++) {
+                double x = d * i; double y = d * (j - (2 * Ny - 1)); double z = d * k;
+                Matrix3cd Atmp = Matrix3cd::Zero();
+                for (int m = -MAXm; m <= MAXm; m++) {
+                    for (int n = -MAXn; n <= MAXn; n++) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[6] = { 0, 0, 0, 1, 1, 2 };
+                int second[6] = { 0, 1, 2, 1, 2, 2 };
+                for (int l = 0; l <= 5; l++) {
+                    int index_real = 0 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    int index_imag = 1 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    AHos[index_real] = Atmp(first[l], second[l]).real();
+                    AHos[index_imag] = Atmp(first[l], second[l]).imag();
+
+                }
+            }
+        }
+    }
+    for (int i = 0; i <= Nx - 1; i++) {
+        for (int j = 0; j <= Ny - 1; j++) {
+            for (int k = Nz; k <= 2 * Nz - 2; k++) {
+                double x = d * i; double y = d * j; double z = d * (k - (2 * Nz - 1));
+                Matrix3cd Atmp = Matrix3cd::Zero();
+                for (int m = -MAXm; m <= MAXm; m++) {
+                    for (int n = -MAXn; n <= MAXn; n++) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[6] = { 0, 0, 0, 1, 1, 2 };
+                int second[6] = { 0, 1, 2, 1, 2, 2 };
+                for (int l = 0; l <= 5; l++) {
+                    int index_real = 0 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    int index_imag = 1 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    AHos[index_real] = Atmp(first[l], second[l]).real();
+                    AHos[index_imag] = Atmp(first[l], second[l]).imag();
+
+                }
+            }
+        }
+    }
+    for (int i = Nx; i <= 2 * Nx - 2; i++) {
+        for (int j = Ny; j <= 2 * Ny - 2; j++) {
+            for (int k = 0; k <= Nz - 1; k++) {
+                double x = d * (i - (2 * Nx - 1)); double y = d * (j - (2 * Ny - 1)); double z = d * k;
+                Matrix3cd Atmp = Matrix3cd::Zero();
+                for (int m = -MAXm; m <= MAXm; m++) {
+                    for (int n = -MAXn; n <= MAXn; n++) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[6] = { 0, 0, 0, 1, 1, 2 };
+                int second[6] = { 0, 1, 2, 1, 2, 2 };
+                for (int l = 0; l <= 5; l++) {
+                    int index_real = 0 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    int index_imag = 1 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    AHos[index_real] = Atmp(first[l], second[l]).real();
+                    AHos[index_imag] = Atmp(first[l], second[l]).imag();
+
+                }
+            }
+        }
+    }
+    for (int i = Nx; i <= 2 * Nx - 2; i++) {
+        for (int j = 0; j <= Ny - 1; j++) {
+            for (int k = Nz; k <= 2 * Nz - 2; k++) {
+                double x = d * (i - (2 * Nx - 1)); double y = d * j; double z = d * (k - (2 * Nz - 1));
+                Matrix3cd Atmp = Matrix3cd::Zero();
+                for (int m = -MAXm; m <= MAXm; m++) {
+                    for (int n = -MAXn; n <= MAXn; n++) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[6] = { 0, 0, 0, 1, 1, 2 };
+                int second[6] = { 0, 1, 2, 1, 2, 2 };
+                for (int l = 0; l <= 5; l++) {
+                    int index_real = 0 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    int index_imag = 1 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    AHos[index_real] = Atmp(first[l], second[l]).real();
+                    AHos[index_imag] = Atmp(first[l], second[l]).imag();
+
+                }
+            }
+        }
+    }
+    for (int i = 0; i <= Nx - 1; i++) {
+        for (int j = Ny; j <= 2 * Ny - 2; j++) {
+            for (int k = Nz; k <= 2 * Nz - 2; k++) {
+                double x = d * i; double y = d * (j - (2 * Ny - 1)); double z = d * (k - (2 * Nz - 1));
+                Matrix3cd Atmp = Matrix3cd::Zero();
+                for (int m = -MAXm; m <= MAXm; m++) {
+                    for (int n = -MAXn; n <= MAXn; n++) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[6] = { 0, 0, 0, 1, 1, 2 };
+                int second[6] = { 0, 1, 2, 1, 2, 2 };
+                for (int l = 0; l <= 5; l++) {
+                    int index_real = 0 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    int index_imag = 1 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    AHos[index_real] = Atmp(first[l], second[l]).real();
+                    AHos[index_imag] = Atmp(first[l], second[l]).imag();
+
+                }
+            }
+        }
+    }
+    for (int i = Nx; i <= 2 * Nx - 2; i++) {
+        for (int j = Ny; j <= 2 * Ny - 2; j++) {
+            for (int k = Nz; k <= 2 * Nz - 2; k++) {
+                double x = d * (i - (2 * Nx - 1)); double y = d * (j - (2 * Ny - 1)); double z = d * (k - (2 * Nz - 1));
+                Matrix3cd Atmp = Matrix3cd::Zero();
+                for (int m = -MAXm; m <= MAXm; m++) {
+                    for (int n = -MAXn; n <= MAXn; n++) {
+                        Atmp = Atmp + this->A_dic_generator(x, y, z, m, n);
+                    }
+                }
+                int first[6] = { 0, 0, 0, 1, 1, 2 };
+                int second[6] = { 0, 1, 2, 1, 2, 2 };
+                for (int l = 0; l <= 5; l++) {
+                    int index_real = 0 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    int index_imag = 1 + 2 * l + 12 * (k + NzFFT * j + NzFFT * NyFFT * i);
+                    AHos[index_real] = Atmp(first[l], second[l]).real();
+                    AHos[index_imag] = Atmp(first[l], second[l]).imag();
+
+                }
+            }
+        }
+    }
+
+    cudaMalloc((void**)&ADev, sizeof(double) * 2 * 6 * NFFT);
+    cudaMemcpy(ADev, AHos, sizeof(double) * 2 * 6 * NFFT, cudaMemcpyHostToDevice);
+    cudaMalloc((void**)&A00, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc((void**)&A01, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc((void**)&A02, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc((void**)&A11, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc((void**)&A12, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc((void**)&A22, sizeof(cufftDoubleComplex) * NFFT);
+    A2As(ADev, A00, A01, A02, A11, A12, A22, NxFFT, NyFFT, NzFFT);
+    high_resolution_clock::time_point t_init_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_init_end - t_init).count();
+    cout << "Cost " << duration << "ms to build and allocate A from host to device" << endl;
+
+    //FFT of As:
+    if (cufftExecZ2Z(Plan, A00, A00, CUFFT_FORWARD) != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    if (cufftExecZ2Z(Plan, A01, A01, CUFFT_FORWARD) != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    if (cufftExecZ2Z(Plan, A02, A02, CUFFT_FORWARD) != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    if (cufftExecZ2Z(Plan, A11, A11, CUFFT_FORWARD) != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    if (cufftExecZ2Z(Plan, A12, A12, CUFFT_FORWARD) != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+    if (cufftExecZ2Z(Plan, A22, A22, CUFFT_FORWARD) != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed");
+    }
+
+
+
+    //b:
+    bHos = new double[2 * 3 * NFFT];
+    cudaMalloc((void**)&bDev, sizeof(double) * 2 * 3 * NFFT);
+    cudaMalloc((void**)&bxDev, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc((void**)&byDev, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc((void**)&bzDev, sizeof(cufftDoubleComplex) * NFFT);
+
+
+
+    //Conv:
+    cudaMalloc((void**)&Convx, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc((void**)&Convy, sizeof(cufftDoubleComplex) * NFFT);
+    cudaMalloc((void**)&Convz, sizeof(cufftDoubleComplex) * NFFT);
+
+
+}
+
 Model::~Model(){
         delete [] AHos;
         cudaFree(ADev);
@@ -773,6 +1152,12 @@ Matrix3cd Model::A_dic_generator(double x,double y,double z){
         result = const1*result;
         return result;
     }
+}
+
+Matrix3cd Model::A_dic_generator(double x, double y, double z, int m, int n) {
+    x = x + m * Lm;
+    y = y + n * Ln;
+    return this->A_dic_generator(x, y, z);
 }
 
 VectorXcd Model::Aproduct(VectorXcd &b){
