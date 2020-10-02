@@ -111,7 +111,7 @@ ncenter = n2  #actual refractive index in the middle of the lens
 
 
 # For fixed n len and n1 must be 1
-Dmax = 1975
+Dmax = 2000
 #Dmax = 2*math.sqrt((2*n2-2)*focus*thickness + (n2**2-3*n2+2)*(thickness**2))
 print("Diameter of the len is: {}".format(Dmax))
 thickness = ((2-2*n2)*focus+math.sqrt(((2*n2-2)**2)*(focus**2)+4*(n2**2-3*n2+2)*(Dmax/2)**2))/(2*(n2**2-3*n2+2))

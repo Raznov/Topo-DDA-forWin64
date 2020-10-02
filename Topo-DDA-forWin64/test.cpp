@@ -1,7 +1,5 @@
 ﻿#include "definition.h"
 
-
-
 int main() {
 
     /*
@@ -61,7 +59,7 @@ int main() {
 
     double d = 25;
 
-    double lam = 800;
+    double lam = 500;
     Vector3d n_K;
     n_K << 0.0, 0.0, 1.0;
     double E0 = 1.0;
@@ -87,7 +85,7 @@ int main() {
     double ratio = 4;
 
     //list<double> ObjectParameter1{ focus, exponent, ratio };
-    list<double> ObjectParameter2{center(0)*d,center(1)*d,focus};
+    list<double> ObjectParameter2{ center(0) * d,center(1) * d,focus };
 
     bool HavePathRecord = true;
     bool HavePenalty = false;
