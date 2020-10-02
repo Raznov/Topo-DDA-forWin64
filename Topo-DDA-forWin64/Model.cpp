@@ -844,7 +844,7 @@ Model::Model(Space* space_, double d_, double lam_, Vector3d n_K_, double E0_, V
     }
     al = VectorXcd::Zero(N * 3);
     for (int i = 0; i < N * 3; i++) {
-        al(i) = 1.0 / Get_Alpha(lam, K, d, diel(i));
+        al(i) = 1.0 / Get_Alpha(lam, K, d, diel(i), n_E0, n_K);
     }
     al_max = al;
     verbose = true;

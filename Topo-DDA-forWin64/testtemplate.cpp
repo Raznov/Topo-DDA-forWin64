@@ -317,7 +317,7 @@ int main() {
     double E0 = 1.0;
     Vector3d n_E0;
     n_E0 << 1.0, 0.0, 0.0;
-    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
+    Vector2cd material = Get_2_material("Air", "Au", lam, "nm");
 
     double epsilon = 100;
 
@@ -441,7 +441,7 @@ int main() {
     double E0 = 1.0;
     Vector3d n_E0;
     n_E0 << 1.0, 0.0, 0.0;
-    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
+    Vector2cd material = Get_2_material("Air", "Au", lam, "nm");
 
     double epsilon = 100;
 

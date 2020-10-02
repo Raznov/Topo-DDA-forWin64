@@ -286,6 +286,13 @@ private:
 
     //FFT plan for all
     cufftHandle Plan;
+
+    //---------------------------------------Necessary for periodic A matrix----------------------------------------
+    int MAXm;                            //-MAXm<=m<=MAXm
+    int MAXn;                             //-MAXn<=n<=MAXn
+    double Lm;                         //desplacement vector for one period, Currently should only be in x and y direction; d included do not need to time d
+    double Ln;
+
     //--------------------------------Not necessary for A matrix but should be the same for diff DDAModel using the same A matrix------------------------------
     VectorXi RDep;                   //Position of the dependent para points in space of the points in the same position as R
     list<list<int>> PositionDep;    //First D has the D of para(para=1). Second D is the positions of other points dependent on the para in the 1stD.
@@ -302,8 +309,10 @@ private:
 
 public:
     AProductCore(Space* space_, double d_, double lam_, Vector2cd material_);
+    AProductCore(Space* space_, double d_, double lam_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_);
     ~AProductCore();
     Matrix3cd A_dic_generator(double x, double y, double z);
+    Matrix3cd A_dic_generator(double x, double y, double z, int m, int n);
     VectorXcd Aproduct(VectorXcd& b);                                          //without al*b because al is in DDAModel and can be diff for the same AMatrix
     void UpdateStr(VectorXd step);                                      //alpha not updated because in DDAModel, do not forget!
     void output_to_file();
