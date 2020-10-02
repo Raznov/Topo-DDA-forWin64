@@ -3,7 +3,7 @@
 
 
 
-DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_) {
+DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_) {
     
     Core = AProductCore_;
     time=0;
@@ -13,7 +13,9 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     n_K=n_K_;
     n_E0=n_E0_;
 
-    cout << "(E0=" << E0 << ") " << "(n_K=" << n_K << ") " << "(n_E0=" << n_E0 << ") " << endl;
+    cout << "E0=" << E0 << endl;
+    cout << "n_K" << endl << n_K << endl;
+    cout << "n_E0" << endl << n_E0 << endl;
     int N = (*Core).get_N();
     int Nx = (*Core).get_Nx();
     int Ny = (*Core).get_Ny();
@@ -48,7 +50,7 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     verbose = true;
 }
 
-DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi* RResult_) {
+DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_) {
     
     Core = AProductCore_;
     time = 0;
@@ -58,7 +60,9 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     n_K = n_K_;
     n_E0 = n_E0_;
 
-    cout << "(E0=" << E0 << ") " << "(n_K=" << n_K << ") " << "(n_E0=" << n_E0 << ") " << endl;
+    cout << "E0=" << E0 << endl;
+    cout << "n_K" << n_K << endl;
+    cout << "n_E0" << n_E0 << endl;
     int N = (*Core).get_N();
     int Nx = (*Core).get_Nx();
     int Ny = (*Core).get_Ny();

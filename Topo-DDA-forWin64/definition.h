@@ -349,8 +349,8 @@ private:
     double Error;
 
 public:
-    DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_);
-    DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, Vector2cd material_, VectorXi* RResult_);
+    DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_);
+    DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_);
     void bicgstab(int MAX_ITERATION, double MAX_ERROR);
     void change_E(VectorXcd E_);
     void reset_E();             //reset E to E0                                

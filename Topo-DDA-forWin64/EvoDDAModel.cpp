@@ -305,9 +305,9 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
     double epsilon_partial=0.001;
     for(int iteration=0;iteration<=MAX_ITERATION_EVO-1;iteration++){
         //solve DDA
-        cout<<"###EVO ITERATION "<<iteration<<endl;
+        cout << "######################EVO ITERATION " << iteration << "#######################" << endl;
         //get object function value
-        cout<<"###START ORIGINAL PROBLEM"<<endl;
+        cout<<"-----------------------------START ORIGINAL PROBLEM---------------------------"<<endl;
 
         double obj;
         VectorXd objarray = VectorXd::Zero(ModelNum);
@@ -321,7 +321,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             if (iteration == MAX_ITERATION_EVO - 1) {                                    //useless fix, not gonna to use RResultswithc = true feature in the future
                 (*(*it_ModelList)).solve_E();
             }
-            (*(*it_ModelList)).output_to_file(save_position + "Model_output\\", iteration, i);
+            //(*(*it_ModelList)).output_to_file(save_position + "Model_output\\", iteration, i);
             objarray(i) = (*(*it_ObjList)).GetVal();
             it_ModelList++;
             it_ObjList++;
@@ -441,7 +441,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             devp = this->devp(epsilon_partial, *it_ModelList, *it_ObjList, Originarray(i));
             high_resolution_clock::time_point t2 = high_resolution_clock::now();
             auto duration = duration_cast<milliseconds>(t2 - t1).count();
-            cout << "------------------------finished in " << duration / 1000 << " s-------------------------" << endl;
+            cout << "------------------------PARTIAL DERIVATIVE finished in " << duration / 1000 << " s-------------------------" << endl;
 
             //------------------------------------Solving adjoint problem-----------------------------------------
             cout << "---------------------------START ADJOINT PROBLEM of Model" << i << " ----------------------" << endl;
@@ -512,7 +512,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         
 
         if(method == "Adam"){
-            cout << "#####################Using Adam Optimizer.###################" << endl;
+            cout << "Using Adam Optimizer." << endl;
             if(iteration == 0){
                 V = (1-beta1)*gradients/(1-pow(beta1,iteration+1));
                 S = (1-beta2)*(gradients.array().pow(2).matrix())/(1-pow(beta2,iteration+1));
@@ -532,16 +532,14 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         VectorXd step=epsilon*gradients;               //Find the maximum. If -1 find minimum
         cout << "epsilon = " << epsilon << endl;
         cout << "step = "<< step.mean() << endl;
-        //cout<<"devp1"<<devp<<endl;
-        //cout<<"lambdaT1"<<endl<<lambdaT<<endl;
-        //cout<<"Adevxp1"<<endl<<Adevxp<<endl;
-        //cout<<"devx"<<endl<<devx<<endl;
-        //cout<<"mult_result_real"<<endl<<mult_result_real<<endl;
-        //cout<<"gradients"<<endl<<gradients<<endl;
-        //cout<<"step"<<endl<<step<<endl;
 
            
         (*Core).UpdateStr(step); 
+        it_ModelList = ModelList.begin();
+        for (int i = 0; i <= ModelNum - 1; i++) {
+            (*(*it_ModelList)).UpdateAlpha();                  //Dont forget this, otherwise bicgstab wont change
+            it_ModelList++;
+        }
         
     }
     

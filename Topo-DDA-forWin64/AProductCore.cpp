@@ -432,6 +432,8 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b){
 
 void AProductCore::UpdateStr(VectorXd step) {
 
+    cout << "step in UpdateStr" << step.mean() << endl;
+
     int para_size = para_nums.size();
     int para_dep_size = para_dep_nums.size();
     //cout << para_size << ' ' << para_dep_size << endl;
