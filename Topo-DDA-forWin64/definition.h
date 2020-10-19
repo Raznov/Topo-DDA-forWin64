@@ -45,6 +45,8 @@ double Get_Max(VectorXcd* E, int N);
 double G(VectorXcd* E, int N, double exponent, double E0);
 //ArrayXcd FFT(int nx,int ny,int nz,ArrayXcd in,int _direction);
 VectorXi build_a_bulk(int Nx, int Ny, int Nz);
+bool CheckPerp(Vector3d v1, Vector3d v2);
+Vector3d nEPerpinXZ(double theta, double phi);
 
 class Structure{
     private:
@@ -412,6 +414,8 @@ private:
     double PenaltyFactor;
 
     double MaxObj;                                //Record the historical maximum obj func
+    double PreviousObj;                            //The previous obj
+    int CutoffHold;
     VectorXd MaxObjarray;                         //the individual objs for each model when the average obj is maximum(not necessaily the maximum individual objs)
     double epsilon_fix;
     double epsilon_tmp;                         //The epsilon used for calculation (can be different from the fixed input epsilon)

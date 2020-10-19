@@ -3,119 +3,126 @@
 int main() {
 
     int Nx, Ny, Nz;
-    Nx = 56; Ny = 56; Nz = 56;
+    //Nx = 103; Ny = 103; Nz = 16;
+    Nx = 83; Ny = 83; Nz = 17;
 
     int N = 0;
     VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
     list<Structure> ln;
     Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
-    double d;
-    double r;
+    Vector3i direction;
+    Vector3d l;
     Vector3d center;
-
-    d = 2;
-    r = 55 / d;
-    center << Nx / 2, Ny / 2, Nz / 2;
-
-    Structure s1(S.get_total_space(), "ONES", r, center, 1);
+    l << 80.0, 80.0, 16.0;
+    center << 40.0, 40.0, 8.0;
+    Structure s1(S.get_total_space(), "ONES", l, center, 1);
 
 
 
     S = S + s1;
 
-    double ratioESItoG = 1 / (2.998 * pow(10, 4));
-    double rationmtocm = 1 / (pow(10, 7));
-    double ratioESItoGnm = (1 / (2.998 * pow(10, 4))) / (pow(10, 7));
 
+    double d = 25;
 
+    double lam = 500;
 
-    double lam = 525;
-    Vector3d n_K;
-    n_K << 0.0, 0.0, 1.0;
     double E0 = 1.0;
-    Vector3d n_E0;
-    n_E0 << 1.0, 0.0, 0.0;
-    Vector2cd material = Get_2_material("Air", "Au", lam, "nm");
 
+    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
     double epsilon = 100;
 
-    double focus = 350;   //nm       
+    double focus = 450;   //nm       
 
 
     int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 100;
+    int MAX_ITERATION_EVO = 30;
 
-    //d = rationmtocm * d;
-    //lam = rationmtocm * lam;
-    //E0 = ratioESItoGnm * E0;
-    //focus = rationmtocm * focus;
-
-
-    list<string> ObjectFunctionNames{ "PointEratio" };
+    list<string> ObjectFunctionNames{ "PointE" };
 
     double exponent = 2;
     double ratio = 4;
 
-    //list<double> ObjectParameter1{ focus, exponent, ratio };
-    list<double> ObjectParameter2{ center(0) * d,center(1) * d,focus };
+    list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };
 
     bool HavePathRecord = true;
     bool HavePenalty = false;
     double PenaltyFactor = 0.0001;
-    list<list<double>*> ObjectParameters{ &ObjectParameter2 };
+    list<list<double>*> ObjectParameters{ &ObjectParameter };
     string save_position = "";
+    
+    Vector3d n_K;
+    Vector3d n_E0;
 
     AProductCore Core(&S, d, lam, material);
-    DDAModel TestModel(&Core, n_K, E0, n_E0);
 
-    TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
-    TestModel.update_E_in_structure();
-    TestModel.solve_E();
-    TestModel.output_to_file();
+    list<DDAModel> ModelList;
+    list<DDAModel*> ModelpointerList;
 
-    double x, y, z;
-    y = center(1) * d;
-    z = center(2) * d;
+    ofstream AngleInfo("AngleInfo.txt");
+    ofstream nEInfo("nEInfo.txt");
+    
+    int theta_num = 4;
+    //int phi_num = 36;
+    VectorXd theta(theta_num);
+    //VectorXd phi=VectorXd::Zero(phi_num);
+    theta << 0, 10, 20, 30;
+    //for (int i = 0; i <= phi_num - 1; i++) {
+    //    phi(i) = i * 360 / phi_num;
+    //}
+    VectorXd phi(14);
+    phi << 0, 10, 20, 30, 150, 160, 170, 180, 190, 200, 210, 330, 340, 350;
+    int phi_num = 14;
 
-
-    N = Core.get_N();
-    VectorXcd* P = TestModel.get_P();
-    VectorXi* R = Core.get_R();
-    double K = 2 * M_PI / lam;
-    Vector3cd E_sum = Vector3cd::Zero();
-    Vector3cd E_ext = Vector3cd::Zero();
-
-    string name = "DDAModelEfieldscand=" + to_string(d) + ".txt";
-    ofstream fout(name);
-    for (x = center(0) * d; x <= center(0) * d + 350; x += 2) {
-        cout << "x" << x - center(0) * d << endl;
-        E_ext(0) = E0 * n_E0(0) * (cos(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
-        E_ext(1) = E0 * n_E0(1) * (cos(K * (n_K(0) * y + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
-        E_ext(2) = E0 * n_E0(2) * (cos(K * (n_K(0) * z + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
-        E_sum(0) = E_ext(0);
-        E_sum(1) = E_ext(1);
-        E_sum(2) = E_ext(2);
-        for (int i = 0; i <= N - 1; i++) {
-            double rx = x - d * (*R)(3 * i);                  //R has no d in it, so needs to time d
-            double ry = y - d * (*R)(3 * i + 1);
-            double rz = z - d * (*R)(3 * i + 2);
-            Matrix3cd A = Core.A_dic_generator(rx, ry, rz);
-            E_sum(0) -= (A(0, 0) * (*P)(3 * i) + A(0, 1) * (*P)(3 * i + 1) + A(0, 2) * (*P)(3 * i + 2));
-            E_sum(1) -= (A(1, 0) * (*P)(3 * i) + A(1, 1) * (*P)(3 * i + 1) + A(1, 2) * (*P)(3 * i + 2));
-            E_sum(2) -= (A(2, 0) * (*P)(3 * i) + A(2, 1) * (*P)(3 * i + 1) + A(2, 2) * (*P)(3 * i + 2));
+    for (int i = 0; i <= theta_num - 1; i++) {
+        for (int j = 0; j <= phi_num - 1; j++) {
+            if (theta(i) != 0) {
+                double theta_tmp = theta(i) * M_PI / 180;
+                double phi_tmp = phi(j) * M_PI / 180;
+                n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+                n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+                if (CheckPerp(n_E0, n_K) == false) {
+                    cout << "----------------------------------------theta" << theta[i] << "phi" << phi[j] << "Not perpendicular---------------------------------------" << endl;
+                }
+                AngleInfo << theta[i] << endl;
+                AngleInfo << phi[j] << endl;
+                nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+                DDAModel Model(&Core, n_K, E0, n_E0);
+                ModelList.push_back(Model);
+            }    
         }
-        double normE = E_sum.norm();
-        cout << "E" << normE << endl;
-        fout << x - center(0) * d << " " << normE << endl;
     }
-    fout.close();
 
-    //EvoModel TestModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, PenaltyFactor, save_position, &S, d, lam, n_K, E0, n_E0, material, AMatrixMethod);
+    double theta_tmp = 0 * M_PI / 180;
+    double phi_tmp = 0 * M_PI / 180;
+    n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+    n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+    if (CheckPerp(n_E0, n_K) == false) {
+        cout << "----------------------------------------theta" << 0 << "phi" << 0 << "Not perpendicular---------------------------------------" << endl;
+    }
+    AngleInfo << 0.0 << endl;
+    AngleInfo << 0.0 << endl;
+    nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+    DDAModel Model(&Core, n_K, E0, n_E0);
+    ModelList.push_back(Model);
 
-    //TestModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+    AngleInfo.close();
+    nEInfo.close();
+    cout << "Number of DDA Model : " << ModelList.size() << endl;
 
+    list<DDAModel>::iterator it = ModelList.begin();
+    for (int i = 0; i <= ModelList.size() - 1; i++) {
+        ModelpointerList.push_back(&(*it));
+        it++;
+    }
+
+
+    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, PenaltyFactor, save_position, &Core, ModelpointerList);
+
+
+    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+    
 
 
 

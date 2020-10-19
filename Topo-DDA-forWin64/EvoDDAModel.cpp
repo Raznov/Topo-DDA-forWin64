@@ -16,6 +16,8 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
     ModelNum = ModelList.size();
     MaxObjarray = VectorXd::Zero(ModelNum);
     Originarray = VectorXd::Zero(ModelNum);
+    PreviousObj = 0.0;
+    CutoffHold = 0;
 
     list<DDAModel*>::iterator it_ModelList = ModelList.begin();
     for (int i = 0; i <= ModelNum - 1; i++) {
@@ -75,6 +77,7 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
         it_ModelList++;
     }
     
+
 }
 
 tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin){
@@ -284,7 +287,7 @@ VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjectiveDDA
         
         objective->SingleResponse(position, false);
     }
-    cout << "Devp_sum: " << result.sum() << endl;
+    //cout << "Devp_sum: " << result.sum() << endl;
     return result;
 }
 
@@ -294,7 +297,6 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
     ofstream convergence;
     //convergence.open(save_position+"convergence.txt");
     convergence.open("convergence.txt");
-    
     //Parameters for Adam Optimizer.
     double beta1 = 0.9;
     double beta2 = 0.99;
@@ -311,7 +313,6 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
         double obj;
         VectorXd objarray = VectorXd::Zero(ModelNum);
-
         list<DDAModel*>::iterator it_ModelList = ModelList.begin();
         list<ObjectiveDDAModel*>::iterator it_ObjList = ObjList.begin();
         (*Core).output_to_file(save_position + "Model_output\\", iteration);
@@ -338,7 +339,25 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         VectorXcd* diel_max = (*Core).get_diel_max();
 
         double epsilon = epsilon_fix;
+        
+
         if (HavePathRecord) {
+
+            if ((abs(obj - PreviousObj)) / PreviousObj <= 0.0001 || epsilon <= 0.0001) {
+                CutoffHold += 1;
+            }
+            else {
+                if (CutoffHold > 0) {
+                    CutoffHold -= 1;
+                }
+            }
+            cout << "CutoffHold" << CutoffHold << endl;
+            PreviousObj = obj;
+            if (CutoffHold >= 3) {
+                cout << "Three times with small change in obj, break the iterations" << endl;
+                break;
+            }
+
             if (obj < MaxObj) {
                 epsilon_tmp = epsilon_tmp / 10;
                 Stephold = 0;
@@ -365,6 +384,16 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 */
             }
             else {
+
+                if ((abs(obj - PreviousObj)) / PreviousObj <= 0.0001) {
+                    CutoffHold += 1;
+                }
+                else {
+                    if (CutoffHold > 0) {
+                        CutoffHold -= 1;
+                    }
+                }
+
                 (*diel_old_max) = (*diel_old);
                 (*diel_max) = (*diel);
                 it_ModelList = ModelList.begin();
@@ -433,7 +462,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             VectorXcd* P = (*(*it_ModelList)).get_P();
             //----------------------------------------get partial derivative of current model---------------------------
             high_resolution_clock::time_point t1 = high_resolution_clock::now();
-            cout << "---------------------------START PARTIAL DERIVATIVE of Model" << i << " ----------------------" << endl;
+            //cout << "---------------------------START PARTIAL DERIVATIVE of Model" << i << " ----------------------" << endl;
             VectorXd devx;
             VectorXcd Adevxp;
             VectorXcd devp;
@@ -441,10 +470,10 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             devp = this->devp(epsilon_partial, *it_ModelList, *it_ObjList, Originarray(i));
             high_resolution_clock::time_point t2 = high_resolution_clock::now();
             auto duration = duration_cast<milliseconds>(t2 - t1).count();
-            cout << "------------------------PARTIAL DERIVATIVE finished in " << duration / 1000 << " s-------------------------" << endl;
+            //cout << "------------------------PARTIAL DERIVATIVE finished in " << duration / 1000 << " s-------------------------" << endl;
 
             //------------------------------------Solving adjoint problem-----------------------------------------
-            cout << "---------------------------START ADJOINT PROBLEM of Model" << i << " ----------------------" << endl;
+            //cout << "---------------------------START ADJOINT PROBLEM of Model" << i << " ----------------------" << endl;
             (*(*it_ModelList)).change_E(devp);
             (*(*it_ModelList)).bicgstab(MAX_ITERATION, MAX_ERROR);
             VectorXcd lambdaT = (*P);
@@ -525,13 +554,13 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 gradients(i) = V(i)/(sqrt(S(i))+0.00000001);
             } 
         } 
-        cout << "gradients: " << gradients.mean() << endl;
+        //cout << "gradients: " << gradients.mean() << endl;
         
         //cout<<"gradients1-3"<<endl<<gradients(0)<<endl<<gradients(1)<<endl<<gradients(2)<<endl;
         //double step_len = this->get_step_length(gradients,epsilon);
         VectorXd step=epsilon*gradients;               //Find the maximum. If -1 find minimum
-        cout << "epsilon = " << epsilon << endl;
-        cout << "step = "<< step.mean() << endl;
+        //cout << "epsilon = " << epsilon << endl;
+        //cout << "step = "<< step.mean() << endl;
 
            
         (*Core).UpdateStr(step); 

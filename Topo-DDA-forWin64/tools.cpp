@@ -153,3 +153,33 @@ ArrayXcd FFT(int nx,int ny,int nz,ArrayXcd in,int _direction){
 
 }
 */
+
+bool CheckPerp(Vector3d v1, Vector3d v2) {
+    if (abs(v1.dot(v2)) <= 0.0001) {
+        //cout << v1.dot(v2) << endl;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+Vector3d nEPerpinXZ(double theta, double phi) {
+    double tmp = cos(theta) / sqrt(pow(sin(theta), 2) * pow(cos(phi), 2) + pow(cos(theta), 2));
+    double x[2] = { -tmp,tmp };
+    double z[2] = { -sqrt(1 - tmp * tmp),sqrt(1 - tmp * tmp) };
+    Vector3d k, nE;
+    k << sin(theta) * cos(phi), sin(theta)* sin(phi), cos(theta);
+    for (int i = 0; i <= 1; i++) {
+        for (int j = 0; j <= 1; j++) {
+            nE << x[i], 0.0, z[j];
+            if (CheckPerp(k, nE) == true && x[i] >= 0.0) {
+                return nE;
+            }
+        }
+    }
+
+    cout << "ERROR : perp nE not found in Vector3d nEPerpinXZ(double theta, double phi)" << endl;
+
+    return nE;
+}

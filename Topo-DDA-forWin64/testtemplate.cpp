@@ -899,3 +899,115 @@ int main() {
     return 0;
 
 }
+
+//Template for list angle sweep
+
+int main() {
+
+    int Nx, Ny, Nz;
+    //Nx = 103; Ny = 103; Nz = 16;
+    Nx = 83; Ny = 83; Nz = 13;
+
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    Vector3i direction;
+    Vector3d l;
+    Vector3d center;
+    l << 80.0, 80.0, 12.0;
+    center << 40.0, 40.0, 6.0;
+    Structure s1(S.get_total_space(), "ONES", l, center, 1);
+
+
+
+    S = S + s1;
+
+
+    double d = 25;
+
+    double lam = 500;
+
+    double E0 = 1.0;
+
+    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
+    double epsilon = 100;
+
+    double focus = 350;   //nm       
+
+
+    int MAX_ITERATION_DDA = 10000;
+    double MAX_ERROR = 0.00001;
+    int MAX_ITERATION_EVO = 50;
+
+    list<string> ObjectFunctionNames{ "PointE" };
+
+    double exponent = 2;
+    double ratio = 4;
+
+    list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };
+
+    bool HavePathRecord = true;
+    bool HavePenalty = false;
+    double PenaltyFactor = 0.0001;
+    list<list<double>*> ObjectParameters{ &ObjectParameter };
+    string save_position = "";
+
+    Vector3d n_K;
+    Vector3d n_E0;
+
+    AProductCore Core(&S, d, lam, material);
+
+    list<DDAModel> ModelList;
+    list<DDAModel*> ModelpointerList;
+
+    double theta[4] = { 0,10,20,30 };
+    double phi[6] = { 0,10,170,180,190,350 };
+    for (int i = 0; i <= 3; i++) {
+        for (int j = 0; j <= 3; j++) {
+            n_K << sin(theta[i]) * cos(phi[j]), sin(theta[i])* sin(phi[j]), cos(theta[i]);
+            n_E0 << cos(theta[i]) * cos(phi[j]), cos(theta[i])* sin(phi[j]), -sin(theta[i]);
+            DDAModel Model(&Core, n_K, E0, n_E0);
+            ModelList.push_back(Model);
+        }
+    }
+
+    list<DDAModel>::iterator it = ModelList.begin();
+    for (int i = 0; i <= ModelList.size() - 1; i++) {
+        ModelpointerList.push_back(&(*it));
+        it++;
+    }
+
+
+    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, PenaltyFactor, save_position, &Core, ModelpointerList);
+
+
+    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+
+
+
+
+
+    return 0;
+
+}
+
+//test xz perp
+
+int main() {
+    Vector3d n_K;
+    Vector3d n_E0;
+    double theta[4] = { 0,10,20,30 };
+    double phi[6] = { 0,10,170,180,190,350 };
+    for (int i = 0; i <= 3; i++) {
+        for (int j = 0; j <= 3; j++) {
+            cout << "theta" << theta[i] << "phi" << phi[j] << endl;
+            n_K << sin(theta[i]) * cos(phi[j]), sin(theta[i])* sin(phi[j]), cos(theta[i]);
+            n_E0 = nEPerpinXZ(theta[i], phi[j]);
+            cout << "n_K" << n_K << endl;
+            cout << "n_E0" << n_E0 << endl;
+
+        }
+    }
+}
