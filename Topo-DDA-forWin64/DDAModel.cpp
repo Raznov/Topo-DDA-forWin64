@@ -24,7 +24,8 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     double K = 2 * M_PI / lam;
     double d = (*Core).get_d();
     VectorXi* R = (*Core).get_R();
-    VectorXcd* diel = (*Core).get_diel();
+    VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
+    Vector2cd* material = (*Core).get_material();
 
     RResultSwitch = false;
     RResult = *R;
@@ -40,8 +41,9 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
         E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
     }
     al = VectorXcd::Zero(N*3);
-    for (int i=0;i<N*3;i++) {
-        al(i) = 1.0 / Get_Alpha(lam, K, d, (*diel)(i), n_E0, n_K);
+    for (int i = 0; i < N * 3; i++) {
+        std::complex<double> diel_tmp = (*material)(0) + (*diel_old)(i) * ((*material)(1) - (*material)(0));
+        al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }  
 
     //cout << "al" << al(0) << endl;
@@ -71,7 +73,8 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     double K = 2 * M_PI / lam;
     double d = (*Core).get_d();
     VectorXi* R = (*Core).get_R();
-    VectorXcd* diel = (*Core).get_diel();
+    VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
+    Vector2cd* material = (*Core).get_material();
     RResultSwitch = true;
     RResult = *RResult_;
     if(RResult.size()%3 != 0){
@@ -94,7 +97,8 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     }
     al = VectorXcd::Zero(N * 3);
     for (int i = 0; i < N * 3; i++) {
-        al(i) = 1.0 / Get_Alpha(lam, K, d, (*diel)(i), n_E0, n_K);
+        std::complex<double> diel_tmp = (*material)(0) + (*diel_old)(i) * ((*material)(1) - (*material)(0));
+        al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }
     al_max = al;
     verbose = true;
@@ -218,12 +222,15 @@ void DDAModel::reset_E(){
 }
 
 void DDAModel::UpdateAlpha() {
+
+    VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
+    Vector2cd* material = (*Core).get_material();
     double lam = (*Core).get_lam();
     double K = 2 * M_PI / lam;
     double d = (*Core).get_d();
-    VectorXcd* diel = (*Core).get_diel();
-    for (int i = 0; i <= (*diel).size() - 1; i++) {
-        al(i) = 1.0 / Get_Alpha(lam, K, d, (*diel)(i), n_E0, n_K);
+    for (int i = 0; i <= (*diel_old).size() - 1; i++) {
+        std::complex<double> diel_tmp = (*material)(0) + (*diel_old)(i) * ((*material)(1) - (*material)(0));
+        al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }
 }
 
@@ -286,7 +293,7 @@ VectorXcd DDAModel::Aproductwithalb(VectorXcd& b) {
 
 void DDAModel::output_to_file(){
     
-    (*Core).output_to_file();
+    (*((*Core).get_CStr())).output_to_file();
     ofstream fout("Model_results.txt");
     for(int i=0;i<=P.size()-1;i++){
         if(P(i).imag()<0){
@@ -379,4 +386,78 @@ VectorXcd* DDAModel::get_al_max() {
 
 VectorXcd* DDAModel::get_P_max() {
     return &P_max;
+}
+
+//----------------------------------------heritage from AProductCore------------------------------------
+
+int DDAModel::get_N() {
+    return (*Core).get_N();
+}
+
+int DDAModel::get_Nx() {
+    return (*Core).get_Nx();
+}
+
+int DDAModel::get_Ny(){
+    return (*Core).get_Ny();
+}
+
+int DDAModel::get_Nz() {
+    return (*Core).get_Nz();
+}
+
+tuple<list<int>, list<int>, list<int>, list<int>> DDAModel::get_para_info() {
+    return (*Core).get_para_info();
+}
+
+VectorXi* DDAModel::get_R() {
+    return (*Core).get_R();
+}
+
+double DDAModel::get_d() {
+    return (*Core).get_d();
+}
+
+Space* DDAModel::get_space() {
+    return (*Core).get_space();
+}
+
+double DDAModel::get_lam() {
+    return (*Core).get_lam();
+}
+
+list<list<int>>* DDAModel::get_PositionDep() {
+    return (*Core).get_PositionDep();
+}
+
+VectorXi* DDAModel::get_PositionPara() {
+    return (*Core).get_PositionPara();
+}
+
+list<int>* DDAModel::get_para_nums() {
+    return (*Core).get_para_nums();
+}
+
+list<int>* DDAModel::get_para_starts() {
+    return (*Core).get_para_starts();
+}
+
+list<int>* DDAModel::get_para_dep_nums() {
+    return (*Core).get_para_dep_nums();
+}
+
+list<int>* DDAModel::get_para_dep_starts() {
+    return (*Core).get_para_dep_starts();
+}
+
+VectorXd* DDAModel::get_diel_old() {
+    return (*Core).get_diel_old();
+}
+
+Vector2cd* DDAModel::get_material() {
+    return (*Core).get_material();
+}
+
+VectorXd* DDAModel::get_diel_old_max() {
+    return (*Core).get_diel_old_max();
 }

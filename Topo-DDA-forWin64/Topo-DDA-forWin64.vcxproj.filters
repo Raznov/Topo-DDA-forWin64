@@ -48,6 +48,9 @@
     <ClCompile Include="ObjectiveDDAModel.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CoreStructure.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definition.h">

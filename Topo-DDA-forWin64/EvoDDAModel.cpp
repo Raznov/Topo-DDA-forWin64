@@ -1,6 +1,6 @@
 #include "definition.h"
 
-EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, AProductCore* Core_, list<DDAModel*> ModelList_){
+EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, CoreStructure* CStr_, list<DDAModel*> ModelList_){
     ObjectFunctionNames = ObjectFunctionNames_;
     save_position = save_position_;
     ObjectParameters = ObjectParameters_;
@@ -11,7 +11,7 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
     HavePathRecord = HavePathRecord_;
     MaxObj = 0.0;
     Stephold = 0;
-    Core = Core_;
+    CStr = CStr_;
     ModelList = ModelList_;
     ModelNum = ModelList.size();
     MaxObjarray = VectorXd::Zero(ModelNum);
@@ -21,8 +21,8 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
 
     list<DDAModel*>::iterator it_ModelList = ModelList.begin();
     for (int i = 0; i <= ModelNum - 1; i++) {
-        if ((*(*(it_ModelList))).get_Core() != Core) {
-            cout << "The DDAModel number: " << i << " does not share the same core" << endl;
+        if ((*(*(*(it_ModelList))).get_Core()).get_CStr() != CStr) {
+            cout << "The DDAModel number: " << i << " does not share the same CoreStructure" << endl;
         }
         it_ModelList++;
     }
@@ -81,18 +81,17 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
 }
 
 tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin){
-    int N = (*Core).get_N();
-    list<int>* para_nums = (*Core).get_para_nums();
-    list<int>* para_starts = (*Core).get_para_starts();
-    list<int>* para_dep_nums = (*Core).get_para_dep_nums();
-    VectorXi* PositionPara = (*Core).get_PositionPara();
-    list<list<int>>* PositionDep = (*Core).get_PositionDep();
-    VectorXd* diel_old = (*Core).get_diel_old();
-    VectorXcd* diel = (*Core).get_diel();
-    Vector2cd* material = (*Core).get_material();
-    double lam = (*Core).get_lam();
+    int N = (*CurrentModel).get_N();
+    list<int>* para_nums = (*CurrentModel).get_para_nums();
+    list<int>* para_starts = (*CurrentModel).get_para_starts();
+    list<int>* para_dep_nums = (*CurrentModel).get_para_dep_nums();
+    VectorXi* PositionPara = (*CurrentModel).get_PositionPara();
+    list<list<int>>* PositionDep = (*CurrentModel).get_PositionDep();
+    VectorXd* diel_old = (*CurrentModel).get_diel_old();
+    Vector2cd* material = (*CurrentModel).get_material();
+    double lam = (*CurrentModel).get_lam();
     double K = 2 * M_PI / lam;
-    double d = (*Core).get_d();
+    double d = (*CurrentModel).get_d();
     Vector3d n_E0 = (*CurrentModel).get_nE0();
     Vector3d n_K = (*CurrentModel).get_nK();
     VectorXcd* al = (*CurrentModel).get_al();
@@ -315,7 +314,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         VectorXd objarray = VectorXd::Zero(ModelNum);
         list<DDAModel*>::iterator it_ModelList = ModelList.begin();
         list<ObjectiveDDAModel*>::iterator it_ObjList = ObjList.begin();
-        (*Core).output_to_file(save_position + "Model_output\\", iteration);
+        (*CStr).output_to_file(save_position + "Model_output\\", iteration);
         for (int i = 0; i <= ModelNum - 1; i++) {
             (*(*it_ModelList)).bicgstab(MAX_ITERATION, MAX_ERROR);
             (*(*it_ModelList)).update_E_in_structure();
@@ -333,10 +332,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
         high_resolution_clock::time_point t0 = high_resolution_clock::now();
 
-        VectorXd* diel_old = (*Core).get_diel_old();
-        VectorXcd* diel = (*Core).get_diel();
-        VectorXd* diel_old_max = (*Core).get_diel_old_max();
-        VectorXcd* diel_max = (*Core).get_diel_max();
+        VectorXd* diel_old = (*CStr).get_diel_old();
+        VectorXd* diel_old_max = (*CStr).get_diel_old_max();
 
         double epsilon = epsilon_fix;
         
@@ -362,7 +359,6 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 epsilon_tmp = epsilon_tmp / 10;
                 Stephold = 0;
                 (*diel_old) = (*diel_old_max);
-                (*diel) = (*diel_max);
                 it_ModelList = ModelList.begin();
                 for (int i = 0; i <= ModelNum - 1; i++) {
                     VectorXcd* P = (*(*it_ModelList)).get_P();
@@ -395,7 +391,6 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 }
 
                 (*diel_old_max) = (*diel_old);
-                (*diel_max) = (*diel);
                 it_ModelList = ModelList.begin();
                 for (int i = 0; i <= ModelNum - 1; i++) {
                     VectorXcd* P = (*(*it_ModelList)).get_P();
@@ -444,11 +439,11 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         
         
 
-        list<int>* para_nums = (*Core).get_para_nums();
-        list<int>* para_starts = (*Core).get_para_starts();
-        list<int>* para_dep_nums = (*Core).get_para_dep_nums();
-        VectorXi* PositionPara = (*Core).get_PositionPara();
-        list<list<int>>* PositionDep = (*Core).get_PositionDep();
+        list<int>* para_nums = (*CStr).get_para_nums();
+        list<int>* para_starts = (*CStr).get_para_starts();
+        list<int>* para_dep_nums = (*CStr).get_para_dep_nums();
+        VectorXi* PositionPara = (*CStr).get_PositionPara();
+        list<list<int>>* PositionDep = (*CStr).get_PositionDep();
         int para_size = (*para_nums).size();
         int para_dep_size = (*para_dep_nums).size();
         int n_para;
@@ -563,7 +558,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         //cout << "step = "<< step.mean() << endl;
 
            
-        (*Core).UpdateStr(step); 
+        (*CStr).UpdateStr(step); 
         it_ModelList = ModelList.begin();
         for (int i = 0; i <= ModelNum - 1; i++) {
             (*(*it_ModelList)).UpdateAlpha();                  //Dont forget this, otherwise bicgstab wont change
@@ -613,8 +608,8 @@ ObjectiveDDAModel* EvoDDAModel::ObjectiveFactory(string ObjectName, list<double>
 
 double EvoDDAModel::L1Norm(){
     double Penalty = 0;
-    int N = (*Core).get_N();
-    VectorXd* diel_old = (*Core).get_diel_old();
+    int N = (*CStr).get_N();
+    VectorXd* diel_old = (*CStr).get_diel_old();
     for (int i=0;i<N;i++){
         Penalty += 0.5-abs((*diel_old)(3*i)-0.5);
     }

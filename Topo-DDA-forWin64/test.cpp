@@ -37,7 +37,7 @@ int main() {
 
     int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 30;
+    int MAX_ITERATION_EVO = 1;
 
     list<string> ObjectFunctionNames{ "PointE" };
 
@@ -51,29 +51,30 @@ int main() {
     double PenaltyFactor = 0.0001;
     list<list<double>*> ObjectParameters{ &ObjectParameter };
     string save_position = "";
-    
+
     Vector3d n_K;
     Vector3d n_E0;
 
-    AProductCore Core(&S, d, lam, material);
+    CoreStructure CStr(&S, d);
+    AProductCore Core(&CStr, lam, material);
 
     list<DDAModel> ModelList;
     list<DDAModel*> ModelpointerList;
 
     ofstream AngleInfo("AngleInfo.txt");
     ofstream nEInfo("nEInfo.txt");
-    
-    int theta_num = 4;
+
+    int theta_num = 2;
     //int phi_num = 36;
     VectorXd theta(theta_num);
     //VectorXd phi=VectorXd::Zero(phi_num);
-    theta << 0, 10, 20, 30;
+    theta << 0, 10;
     //for (int i = 0; i <= phi_num - 1; i++) {
     //    phi(i) = i * 360 / phi_num;
     //}
-    VectorXd phi(14);
-    phi << 0, 10, 20, 30, 150, 160, 170, 180, 190, 200, 210, 330, 340, 350;
-    int phi_num = 14;
+    VectorXd phi(2);
+    phi << 0, 10;
+    int phi_num = 2;
 
     for (int i = 0; i <= theta_num - 1; i++) {
         for (int j = 0; j <= phi_num - 1; j++) {
@@ -90,7 +91,7 @@ int main() {
                 nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
                 DDAModel Model(&Core, n_K, E0, n_E0);
                 ModelList.push_back(Model);
-            }    
+            }
         }
     }
 
@@ -118,11 +119,11 @@ int main() {
     }
 
 
-    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, PenaltyFactor, save_position, &Core, ModelpointerList);
+    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, PenaltyFactor, save_position, &CStr, ModelpointerList);
 
 
     EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
-    
+
 
 
 
@@ -130,7 +131,6 @@ int main() {
     return 0;
 
 }
-
 
 
 

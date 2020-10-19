@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AProductCore.cpp" />
+    <ClCompile Include="CoreStructure.cpp" />
     <ClCompile Include="EvoModel.cpp" />
     <ClCompile Include="EvoDDAModel.cpp" />
     <ClCompile Include="Model.cpp" />

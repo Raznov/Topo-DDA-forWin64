@@ -3,111 +3,22 @@
 
 
 
-AProductCore::AProductCore(Space* space_, double d_, double lam_, Vector2cd material_){
+AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material_){
     
-    space = space_;
-    d=d_;
+    CStr = CStr_;
     lam=lam_;
     K=2*M_PI/lam;
     material = material_;
 
-    cout << "(d=" << d << ") " << "(lam=" << lam << ") " << "(K=" << K << ") " << endl;
-
-    tie(Nx, Ny, Nz, N)=(*space_).get_Ns();
-    list<Structure> *ln=(*space_).get_ln();
-    R=VectorXi::Zero(3*N);
-    RDep = VectorXi::Zero(3 * N);
-    VectorXd diel_tmp = VectorXd::Zero(3 * N);
-
-    //-----------------------------------------------------------------Input strs-------------------------------------------------------------
-    list<Structure>::iterator it = (*ln).begin();
-
-    int PositionParaN = 0;
-    for (int i = 0; i <= int((*ln).size()) - 1; i++) {
-        int n2 = ((*((*it).get_geometry())).size());
-        if ((*it).get_para() == 1) {
-            PositionParaN += int(round(n2 / 3));
-        }
-        it++;
-    }
-    PositionPara = VectorXi::Zero(PositionParaN);
-
-    //Build R, RDep
-    int n1 = 0;
-    it = (*ln).begin();
-    int PositionParaPos = 0;
-    VectorXi RPara = VectorXi::Zero(3 * N);
-    for (int i = 0; i <= int((*ln).size()) - 1; i++) {
-        int n2 = ((*((*it).get_geometry())).size());
-        if ((*it).get_para() == 1) {
-            para_nums.push_back(n2);
-            para_starts.push_back(n1);
-            for (int i = int(round(n1 / 3)); i <= int(round(n1 / 3)) + int(round(n2 / 3)) - 1; i++) {
-                PositionPara(PositionParaPos) = i;
-                PositionParaPos += 1;
-            }
-        }
-        if ((*it).get_para() == 2) {
-            para_dep_nums.push_back(n2);
-            para_dep_starts.push_back(n1);
-        }
-        for (int j = 0; j <= n2 - 1; j++) {
-            R(n1 + j) = (*((*it).get_geometry()))(j);
-            diel_tmp(n1 + j) = (*((*it).get_diel()))(j);
-            RDep(n1 + j) = (*((*it).get_geometry_dep()))(j);
-            RPara(n1 + j) = (*it).get_para();
-        }
-        it++;
-        n1 = n1 + n2;
-    }
-
-
-    for (int i = 0; i <= PositionPara.size() - 1; i++) {
-        list<int> tmpPos;
-        int Parax = R(3 * PositionPara(i));
-        int Paray = R(3 * PositionPara(i) + 1);
-        int Paraz = R(3 * PositionPara(i) + 2);
-        for (int j = 0; j <= N - 1; j++) {
-            int jx = R(3 * j);
-            int jy = R(3 * j + 1);
-            int jz = R(3 * j + 2);
-            int Depx = RDep(3 * j);
-            int Depy = RDep(3 * j + 1);
-            int Depz = RDep(3 * j + 2);
-            if (RPara(3 * j) == 2) {
-                if (Depx == Parax && Depy == Paray && Depz == Paraz) {
-                    tmpPos.push_back(j);
-                }
-            }
-        }
-        PositionDep.push_back(tmpPos);
-    }
-
-    int PositionDepN = 0;
-    list<list<int>>::iterator it1PositionDep = PositionDep.begin();
-    for (int i = 0; i <= int(PositionDep.size()) - 1; i++) {
-        PositionDepN += (*it1PositionDep).size();
-        it1PositionDep++;
-    }
-    if (PositionDepN + PositionParaN != N) {
-        cout << "PositionDepN = " << PositionDepN << endl;
-        cout << "PositionParaN = " << PositionParaN << endl;
-        cout << "In AProductCore::AProductCore(Space* space_, double d_, double lam_, Vector2cd material_) : PositionDepN + PositionParaN! = N" << endl;
-    }
-
-    //---------------------------------------------------initial diel------------------------------------
-    diel = VectorXcd::Zero(3 * N);
-    diel_old = VectorXd::Zero(3 * N);
-
-    diel_old_max = diel_old;
-    diel_max = diel;
-
-    for (int i = 0; i <= 3 * N - 1; i++) {
-        diel(i) = material(0) + diel_tmp(i) * (material(1) - material(0));
-        diel_old(i) = diel_tmp(i);
-    }
+    cout << "(lam=" << lam << ") " << "(K=" << K << ") " << endl;
+    int N = (*CStr).get_N();
+    int Nx = (*CStr).get_Nx();
+    int Ny = (*CStr).get_Ny();
+    int Nz = (*CStr).get_Nz();
+    VectorXd* diel_old = (*CStr).get_diel_old();
+    double d = (*CStr).get_d();
     
-    //Allocation and part of initialization for FFT
+    //--------------------------------------------------Allocation and part of initialization for FFT-----------------------------------------
     //NFFT:
     NxFFT = 2*Nx-1;
     NyFFT = 2*Ny-1;
@@ -311,111 +222,32 @@ AProductCore::AProductCore(Space* space_, double d_, double lam_, Vector2cd mate
     
 }
 
-AProductCore::AProductCore(Space* space_, double d_, double lam_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_) {
-
-    space = space_;
-    d = d_;
+AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_) {
+    MAXm = MAXm_;
+    MAXn = MAXn_;
+    Lm = Lm_;
+    Ln = Ln_;
+    
+    CStr = CStr_;
     lam = lam_;
     K = 2 * M_PI / lam;
     material = material_;
 
-    cout << "(d=" << d << ") " << "(lam=" << lam << ") " << "(K=" << K << ") " << endl;
+    cout << "(lam=" << lam << ") " << "(K=" << K << ") " << endl;
+    int N = (*CStr).get_N();
+    int Nx = (*CStr).get_Nx();
+    int Ny = (*CStr).get_Ny();
+    int Nz = (*CStr).get_Nz();
+    VectorXd* diel_old = (*CStr).get_diel_old();
+    double d = (*CStr).get_d();
 
-    tie(Nx, Ny, Nz, N) = (*space_).get_Ns();
-    list<Structure>* ln = (*space_).get_ln();
-    R = VectorXi::Zero(3 * N);
-    RDep = VectorXi::Zero(3 * N);
-    VectorXd diel_tmp = VectorXd::Zero(3 * N);
-
-    //-----------------------------------------------------------------Input strs-------------------------------------------------------------
-    list<Structure>::iterator it = (*ln).begin();
-
-    int PositionParaN = 0;
-    for (int i = 0; i <= int((*ln).size()) - 1; i++) {
-        int n2 = ((*((*it).get_geometry())).size());
-        if ((*it).get_para() == 1) {
-            PositionParaN += int(round(n2 / 3));
-        }
-        it++;
-    }
-    PositionPara = VectorXi::Zero(PositionParaN);
-
-    //Build R, RDep
-    int n1 = 0;
-    it = (*ln).begin();
-    int PositionParaPos = 0;
-    VectorXi RPara = VectorXi::Zero(3 * N);
-    for (int i = 0; i <= int((*ln).size()) - 1; i++) {
-        int n2 = ((*((*it).get_geometry())).size());
-        if ((*it).get_para() == 1) {
-            para_nums.push_back(n2);
-            para_starts.push_back(n1);
-            for (int i = int(round(n1 / 3)); i <= int(round(n1 / 3)) + int(round(n2 / 3)) - 1; i++) {
-                PositionPara(PositionParaPos) = i;
-                PositionParaPos += 1;
-            }
-        }
-        if ((*it).get_para() == 2) {
-            para_dep_nums.push_back(n2);
-            para_dep_starts.push_back(n1);
-        }
-        for (int j = 0; j <= n2 - 1; j++) {
-            R(n1 + j) = (*((*it).get_geometry()))(j);
-            diel_tmp(n1 + j) = (*((*it).get_diel()))(j);
-            RDep(n1 + j) = (*((*it).get_geometry_dep()))(j);
-            RPara(n1 + j) = (*it).get_para();
-        }
-        it++;
-        n1 = n1 + n2;
-    }
-
-
-    for (int i = 0; i <= PositionPara.size() - 1; i++) {
-        list<int> tmpPos;
-        int Parax = R(3 * PositionPara(i));
-        int Paray = R(3 * PositionPara(i) + 1);
-        int Paraz = R(3 * PositionPara(i) + 2);
-        for (int j = 0; j <= N - 1; j++) {
-            int jx = R(3 * j);
-            int jy = R(3 * j + 1);
-            int jz = R(3 * j + 2);
-            int Depx = RDep(3 * j);
-            int Depy = RDep(3 * j + 1);
-            int Depz = RDep(3 * j + 2);
-            if (RPara(3 * j) == 2) {
-                if (Depx == Parax && Depy == Paray && Depz == Paraz) {
-                    tmpPos.push_back(j);
-                }
-            }
-        }
-        PositionDep.push_back(tmpPos);
-    }
-
-    int PositionDepN = 0;
-    list<list<int>>::iterator it1PositionDep = PositionDep.begin();
-    for (int i = 0; i <= int(PositionDep.size()) - 1; i++) {
-        PositionDepN += (*it1PositionDep).size();
-        it1PositionDep++;
-    }
-    if (PositionDepN + PositionParaN != N) {
-        cout << "PositionDepN = " << PositionDepN << endl;
-        cout << "PositionParaN = " << PositionParaN << endl;
-        cout << "In AProductCore::AProductCore(Space* space_, double d_, double lam_, Vector2cd material_) : PositionDepN + PositionParaN! = N" << endl;
-    }
-
-    //---------------------------------------------------initial diel------------------------------------
-    diel = VectorXcd::Zero(3 * N);
-    diel_old = VectorXd::Zero(3 * N);
-
-    diel_old_max = diel_old;
-    diel_max = diel;
-
+    /*
     for (int i = 0; i <= 3 * N - 1; i++) {
-        diel(i) = material(0) + diel_tmp(i) * (material(1) - material(0));
-        diel_old(i) = diel_tmp(i);
+        diel(i) = material(0) + (*diel_old)(i) * (material(1) - material(0));
     }
+    */
 
-    //Allocation and part of initialization for FFT
+    //-----------------------------------------------------Allocation and part of initialization for FFT--------------------------------------
     //NFFT:
     NxFFT = 2 * Nx - 1;
     NyFFT = 2 * Ny - 1;
@@ -727,13 +559,16 @@ Matrix3cd AProductCore::A_dic_generator(double x, double y, double z, int m, int
 
 VectorXcd AProductCore::Aproduct(VectorXcd &b){
     //! in geometry use np.meshgrid with 'ij'  
+    VectorXi* R = (*CStr).get_R();
+    int N = (*CStr).get_N();
+
     for(int i=0; i<=2*3*NFFT-1; i++){
         bHos[i] = 0.0;
     }
     for(int i=0;i<=N-1;i++){
-        int x=round(R(3*i));
-        int y=round(R(3*i+1));
-        int z=round(R(3*i+2));
+        int x=round((*R)(3*i));
+        int y=round((*R)(3*i+1));
+        int z=round((*R)(3*i+2));
         for(int j=0; j<=2; j++){
             int index_real = 0+2*j+2*3*(z+NzFFT*(y+NyFFT*x));
             int index_imag = 1+2*j+2*3*(z+NzFFT*(y+NyFFT*x));
@@ -772,9 +607,9 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b){
    
     VectorXcd result(3*N);
     for(int i=0;i<=N-1;i++){
-        int x=round(R(3*i));
-        int y=round(R(3*i+1));
-        int z=round(R(3*i+2));
+        int x=round((*R)(3*i));
+        int y=round((*R)(3*i+1));
+        int z=round((*R)(3*i+2));
         int position=z+NzFFT*(y+NyFFT*x);
         for(int j=0 ;j<=2; j++){
             result(3*i+j)=(bHos[0+2*j+2*3*position] + bHos[1+2*j+2*3*position]*1.0i)/double(NFFT); // + b(3*i+j)*al(3*i+j)
@@ -785,6 +620,7 @@ VectorXcd AProductCore::Aproduct(VectorXcd &b){
 
 }
 
+/*
 void AProductCore::UpdateStr(VectorXd step) {
 
     cout << "step in UpdateStr" << step.mean() << endl;
@@ -869,89 +705,62 @@ void AProductCore::UpdateStr(VectorXd step) {
     }
 
 }
+*/
 
-void AProductCore::output_to_file() {
-
-    ofstream fout("AProductCore.txt");
-    fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
-    fout << R << endl;
-    fout << diel_old << endl;
-    fout << d << endl;
-    fout << lam << endl;
-    fout.close();
+CoreStructure* AProductCore::get_CStr() {
+    return CStr;
 }
-
-void AProductCore::output_to_file(string save_position, int iteration) {
-
-    string name;
-    //name=save_position+"AProductCoreit" + to_string(iteration) + ".txt";
-    name = "AProductCoreit" + to_string(iteration) + ".txt";
-    ofstream fout(name);
-    fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
-    fout << R << endl;
-    fout << diel_old << endl;
-    fout << d << endl;
-    fout << lam << endl;
-    fout.close();
-}
-
 int AProductCore::get_N() {
-    return N;
+    return (*CStr).get_N();
 }
 int AProductCore::get_Nx() {
-    return Nx;
+    return (*CStr).get_Nx();
 }
 int AProductCore::get_Ny() {
-    return Ny;
+    return (*CStr).get_Ny();
 }
 int AProductCore::get_Nz() {
-    return Nz;
+    return (*CStr).get_Nz();
 }
 tuple<list<int>, list<int>, list<int>, list<int>> AProductCore::get_para_info() {
-    return make_tuple(para_nums, para_starts, para_dep_nums, para_dep_starts);
+    return (*CStr).get_para_info();
 }
 VectorXi* AProductCore::get_R() {
-    return &R;
+    return (*CStr).get_R();
 }
 double AProductCore::get_d() {
-    return d;
+    return (*CStr).get_d();
 }
 Space* AProductCore::get_space() {
-    return space;
+    return (*CStr).get_space();
 }
 double AProductCore::get_lam() {
     return lam;
 }
-VectorXcd* AProductCore::get_diel() {
-    return &diel;
-}
 list<list<int>>* AProductCore::get_PositionDep() {
-    return &PositionDep;
+    return (*CStr).get_PositionDep();
 }
 VectorXi* AProductCore::get_PositionPara() {
-    return &PositionPara;
+    return (*CStr).get_PositionPara();
 }
 list<int>* AProductCore::get_para_nums() {
-    return &para_nums;
+    return (*CStr).get_para_nums();
 }
 list<int>* AProductCore::get_para_starts() {
-    return &para_starts;
+    return (*CStr).get_para_starts();
 }
 list<int>* AProductCore::get_para_dep_nums() {
-    return &para_dep_nums;
+    return (*CStr).get_para_dep_nums();
 }
 list<int>* AProductCore::get_para_dep_starts() {
-    return &para_dep_starts;
+    return (*CStr).get_para_dep_starts();
 }
 VectorXd* AProductCore::get_diel_old() {
-    return &diel_old;
+    return (*CStr).get_diel_old();
 }
 Vector2cd* AProductCore::get_material() {
     return &material;
 }
-VectorXcd* AProductCore::get_diel_max() {
-    return &diel_max;
-}
 VectorXd* AProductCore::get_diel_old_max() {
-    return &diel_old_max;
+    return (*CStr).get_diel_old_max();
 }
