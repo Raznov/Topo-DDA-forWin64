@@ -14,6 +14,7 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
     CStr = CStr_;
     ModelList = ModelList_;
     ModelNum = ModelList.size();
+    cout << "ModelNum" << ModelNum << endl;
     MaxObjarray = VectorXd::Zero(ModelNum);
     Originarray = VectorXd::Zero(ModelNum);
     PreviousObj = 0.0;

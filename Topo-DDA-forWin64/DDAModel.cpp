@@ -13,6 +13,8 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     n_K=n_K_;
     n_E0=n_E0_;
 
+    //cout << "lam" << (*Core).get_lam() << endl;
+
     //cout << "E0=" << E0 << endl;
     //cout << "n_K" << endl << n_K << endl;
     //cout << "n_E0" << endl << n_E0 << endl;

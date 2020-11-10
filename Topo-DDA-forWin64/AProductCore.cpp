@@ -7,6 +7,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material
     
     CStr = CStr_;
     lam=lam_;
+    cout << "laminAP" << lam << endl;
     K=2*M_PI/lam;
     material = material_;
 
@@ -207,6 +208,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material
 
     //b:
     bHos = new double[2*3*NFFT];
+    cout << &bHos << endl;
     cudaMalloc((void**)&bDev, sizeof(double)*2*3*NFFT);
     cudaMalloc((void**)&bxDev, sizeof(cufftDoubleComplex)*NFFT);
     cudaMalloc((void**)&byDev, sizeof(cufftDoubleComplex)*NFFT);
