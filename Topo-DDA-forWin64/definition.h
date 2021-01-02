@@ -399,6 +399,7 @@ private:
     int ITERATION;
     double Error;
 
+
 public:
     DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_);
     DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_);
@@ -411,6 +412,7 @@ public:
     VectorXcd Aproductwithalb(VectorXcd& b);                    //add the al*b term on base of AproductCore
     void output_to_file();
     void output_to_file(string save_position, int iteration, int ModelLabel);              //especially used for EvoOptimization
+    void InitializeP(VectorXcd& Initializer);
     VectorXcd* get_P();
     Vector3d get_nE0();
     Vector3d get_nK();
@@ -420,7 +422,8 @@ public:
     VectorXcd* get_al();
     VectorXcd* get_P_max();
     VectorXcd* get_al_max();
-    
+    int get_ITERATION();
+
     //-----------------From AProductCore-----------------------
 
     int get_N();
@@ -452,6 +455,11 @@ private:
     int ModelNum;                                 //number of DDA model
     string save_position;
 
+    list<VectorXcd> PforOrigin;
+    list<VectorXcd> PforAdjoint;
+    list<VectorXcd> PforOriginMax;
+    list<VectorXcd> PforAdjointMax;
+
     list<list<double>*>* ObjectParameters;
     list<double> MajorObjectParameters;
     list<list<double>> MinorObjectParameters;
@@ -473,9 +481,11 @@ private:
     double epsilon_fix;
     double epsilon_tmp;                         //The epsilon used for calculation (can be different from the fixed input epsilon)
     bool HavePathRecord;
+    bool HaveOriginHeritage;
+    bool HaveAdjointHeritage;
     int Stephold;
 public:
-    EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, CoreStructure* CStr_, list<DDAModel*> ModelList_);
+    EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, double PenaltyFactor_, string save_position_, CoreStructure* CStr_, list<DDAModel*> ModelList_);
     
     //functions used to calculate partial derivatives                                 
     tuple<VectorXd, VectorXcd> devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin);                       //partial derivative of obj to parameter and A to x times p

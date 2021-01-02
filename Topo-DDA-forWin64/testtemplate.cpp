@@ -1003,8 +1003,10 @@ int main() {
     for (int i = 0; i <= 3; i++) {
         for (int j = 0; j <= 3; j++) {
             cout << "theta" << theta[i] << "phi" << phi[j] << endl;
-            n_K << sin(theta[i]) * cos(phi[j]), sin(theta[i])* sin(phi[j]), cos(theta[i]);
-            n_E0 = nEPerpinXZ(theta[i], phi[j]);
+            double theta_tmp = theta(i) * M_PI / 180;
+            double phi_tmp = phi(j) * M_PI / 180;
+            n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+            n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
             cout << "n_K" << n_K << endl;
             cout << "n_E0" << n_E0 << endl;
 

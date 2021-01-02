@@ -1,6 +1,6 @@
 #include "definition.h"
 
-EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, double PenaltyFactor_, string save_position_, CoreStructure* CStr_, list<DDAModel*> ModelList_){
+EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, double PenaltyFactor_, string save_position_, CoreStructure* CStr_, list<DDAModel*> ModelList_){
     ObjectFunctionNames = ObjectFunctionNames_;
     save_position = save_position_;
     ObjectParameters = ObjectParameters_;
@@ -9,6 +9,8 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
     epsilon_fix = epsilon_fix_;
     epsilon_tmp = epsilon_fix;
     HavePathRecord = HavePathRecord_;
+    HaveOriginHeritage = HaveOriginHeritage_;
+    HaveAdjointHeritage = HaveAdjointHeritage_;
     MaxObj = 0.0;
     Stephold = 0;
     CStr = CStr_;
@@ -28,6 +30,15 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
         it_ModelList++;
     }
 
+    int N = (*CStr).get_N();
+    for (int i = 0; i <= ModelNum - 1; i++) {
+        VectorXcd Ptmp = VectorXcd::Zero(N*3);
+        PforOrigin.push_back(Ptmp);
+        PforAdjoint.push_back(Ptmp);
+        PforOriginMax.push_back(Ptmp);
+        PforAdjointMax.push_back(Ptmp);
+
+    }
 
     list<string>::iterator it0 = (*ObjectFunctionNames).begin();
     MajorObjectFunctionName = (*it0);
@@ -295,8 +306,12 @@ VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjectiveDDA
 
 void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method){
     ofstream convergence;
+    ofstream Originiterations;
+    ofstream Adjointiterations;
     //convergence.open(save_position+"convergence.txt");
     convergence.open("convergence.txt");
+    Originiterations.open("Originiterations.txt");
+    Adjointiterations.open("Adjointiterations.txt");
     //Parameters for Adam Optimizer.
     double beta1 = 0.9;
     double beta2 = 0.99;
@@ -316,14 +331,23 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         list<DDAModel*>::iterator it_ModelList = ModelList.begin();
         list<ObjectiveDDAModel*>::iterator it_ObjList = ObjList.begin();
         (*CStr).output_to_file(save_position + "Model_output\\", iteration);
+        list<VectorXcd>::iterator it_PforOrigin = PforOrigin.begin();
         for (int i = 0; i <= ModelNum - 1; i++) {
+            cout << (*(it_PforOrigin))(0) << endl;
+            (*(*it_ModelList)).InitializeP(*(it_PforOrigin));
             (*(*it_ModelList)).bicgstab(MAX_ITERATION, MAX_ERROR);
+            if (HaveOriginHeritage == true) {
+                *(it_PforOrigin) = *((*(*it_ModelList)).get_P());
+            }
+            it_PforOrigin++;
             (*(*it_ModelList)).update_E_in_structure();
             if (iteration == MAX_ITERATION_EVO - 1) {                                    //useless fix, not gonna to use RResultswithc = true feature in the future
                 (*(*it_ModelList)).solve_E();
             }
             //(*(*it_ModelList)).output_to_file(save_position + "Model_output\\", iteration, i);
             objarray(i) = (*(*it_ObjList)).GetVal();
+
+            Originiterations << (*(*it_ModelList)).get_ITERATION() << endl;
             it_ModelList++;
             it_ObjList++;
         }
@@ -353,7 +377,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             PreviousObj = obj;
             if (CutoffHold >= 3) {
                 cout << "Three times with small change in obj, break the iterations" << endl;
-                break;
+                //break;
             }
 
             if (obj < MaxObj) {
@@ -361,6 +385,10 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 Stephold = 0;
                 (*diel_old) = (*diel_old_max);
                 it_ModelList = ModelList.begin();
+                it_PforOrigin = PforOrigin.begin();
+                list<VectorXcd>::iterator it_PforAdjoint = PforAdjoint.begin();
+                list<VectorXcd>::iterator it_PforOriginMax = PforOriginMax.begin();
+                list<VectorXcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
                 for (int i = 0; i <= ModelNum - 1; i++) {
                     VectorXcd* P = (*(*it_ModelList)).get_P();
                     VectorXcd* P_max = (*(*it_ModelList)).get_P_max();
@@ -369,7 +397,13 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                     (*P) = (*P_max);
                     (*al) = (*al_max);
                     objarray(i) = MaxObjarray(i);
+                    *(it_PforOrigin) = *(it_PforOriginMax);
+                    *(it_PforAdjoint) = *(it_PforAdjointMax);
                     it_ModelList++;
+                    it_PforOrigin++;
+                    it_PforAdjoint++;
+                    it_PforOriginMax++;
+                    it_PforAdjointMax++;
                 }
   
                 obj = MaxObj;
@@ -393,6 +427,10 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
                 (*diel_old_max) = (*diel_old);
                 it_ModelList = ModelList.begin();
+                it_PforOrigin = PforOrigin.begin();
+                list<VectorXcd>::iterator it_PforAdjoint = PforAdjoint.begin();
+                list<VectorXcd>::iterator it_PforOriginMax = PforOriginMax.begin();
+                list<VectorXcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
                 for (int i = 0; i <= ModelNum - 1; i++) {
                     VectorXcd* P = (*(*it_ModelList)).get_P();
                     VectorXcd* P_max = (*(*it_ModelList)).get_P_max();
@@ -401,7 +439,13 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                     (*P_max) = (*P);
                     (*al_max) = (*al);
                     MaxObjarray(i) = objarray(i);
+                    *(it_PforOriginMax) = *(it_PforOrigin);
+                    *(it_PforAdjointMax) = *(it_PforAdjoint);
                     it_ModelList++;
+                    it_PforOrigin++;
+                    it_PforAdjoint++;
+                    it_PforOriginMax++;
+                    it_PforAdjointMax++;
                 }
                 MaxObj = obj;
                 Stephold += 1;
@@ -454,8 +498,9 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
         it_ModelList = ModelList.begin();
         it_ObjList = ObjList.begin();
+        list<VectorXcd>::iterator it_PforAdjoint = PforAdjoint.begin();
         for (int i = 0; i <= ModelNum - 1; i++) {
-            VectorXcd* P = (*(*it_ModelList)).get_P();
+            
             //----------------------------------------get partial derivative of current model---------------------------
             high_resolution_clock::time_point t1 = high_resolution_clock::now();
             //cout << "---------------------------START PARTIAL DERIVATIVE of Model" << i << " ----------------------" << endl;
@@ -471,10 +516,18 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             //------------------------------------Solving adjoint problem-----------------------------------------
             //cout << "---------------------------START ADJOINT PROBLEM of Model" << i << " ----------------------" << endl;
             (*(*it_ModelList)).change_E(devp);
+
+            (*(*it_ModelList)).InitializeP(*(it_PforAdjoint));
             (*(*it_ModelList)).bicgstab(MAX_ITERATION, MAX_ERROR);
+            if (HaveAdjointHeritage == true) {
+                *(it_PforAdjoint) = *((*(*it_ModelList)).get_P());
+            }
+            it_PforAdjoint++;
+
+            VectorXcd* P = (*(*it_ModelList)).get_P();
             VectorXcd lambdaT = (*P);
             (*(*it_ModelList)).reset_E();                                  //reset E to initial value
-
+            Adjointiterations << (*(*it_ModelList)).get_ITERATION() << endl;
             //times lambdaT and Adevxp together
             VectorXcd mult_result;
 
@@ -569,6 +622,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
     }
     
     convergence.close();
+    Originiterations.close();
+    Adjointiterations.close();
 
 }
 

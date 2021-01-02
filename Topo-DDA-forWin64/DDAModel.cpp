@@ -136,7 +136,7 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     
     
     //Always starts with P=0 to avoid strange behaviour
-    P = VectorXcd::Zero(N * 3);
+    //P = VectorXcd::Zero(N * 3);
 
 
 
@@ -191,6 +191,7 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
                 ofstream fout;
                 fout.open("DDATime.txt", fstream::app);
                 fout<<N<<" "<<duration/1000.0<<endl;
+                fout << ITERATION << " " << duration / 1000.0 / ITERATION << endl;
                 fout.close();
 
                 cout << "              Error: "<<Error<<endl;
@@ -353,6 +354,9 @@ void DDAModel::output_to_file(string save_position, int iteration, int ModelLabe
     fout.close();
 }
 
+void DDAModel::InitializeP(VectorXcd& Initializer) {
+    P = Initializer;
+}
 
 VectorXcd* DDAModel::get_P() {
     return &P;
@@ -388,6 +392,10 @@ VectorXcd* DDAModel::get_al_max() {
 
 VectorXcd* DDAModel::get_P_max() {
     return &P_max;
+}
+
+int DDAModel::get_ITERATION() {
+    return ITERATION;
 }
 
 //----------------------------------------heritage from AProductCore------------------------------------
