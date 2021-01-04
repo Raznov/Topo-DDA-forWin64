@@ -1,9 +1,16 @@
 ﻿#include "definition.h"
 
 int main() {
+
+    ofstream TotalTime;
+    TotalTime.open("TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+    
+
+
     Vector3d l;
     Vector3d center;
-    l << 200.0, 200.0, 4.0;
+    l << 80.0, 80.0, 16.0;
     center << l(0)/2, l(1)/2, l(2)/2;
 
     int Nx, Ny, Nz;
@@ -40,9 +47,9 @@ int main() {
 
     int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 100;
+    int MAX_ITERATION_EVO = 50;
 
-    list<string> ObjectFunctionNames{ "PointE" };
+    list<string> ObjectFunctionNames{ "PointI" };
 
     double exponent = 2;
     double ratio = 4;
@@ -52,7 +59,7 @@ int main() {
     bool HavePathRecord = false;
     bool HavePenalty = false;
     bool HaveOriginHeritage = true;
-    bool HaveAdjointHeritage = true;
+    bool HaveAdjointHeritage = false;
     double PenaltyFactor = 0.0001;
     list<list<double>*> ObjectParameters{ &ObjectParameter };
     string save_position = "";
@@ -68,12 +75,12 @@ int main() {
     ofstream AngleInfo("AngleInfo.txt");
     ofstream nEInfo("nEInfo.txt");
 
-    int theta_num = 1;
+    int theta_num = 4;
     VectorXd theta(theta_num);
-    theta << 0;
-    int phi_num = 1;
+    theta << 0, 10, 20, 30;
+    int phi_num = 10;
     VectorXd phi(phi_num);
-    phi << 0;
+    phi << 0, 10, 20, 160, 170, 180, 190, 200, 340, 350;
     int lam_num = 1;
     VectorXd lam(lam_num);
     lam << 500;
@@ -162,7 +169,12 @@ int main() {
 
 
 
+    
 
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
 
     return 0;
 

@@ -308,6 +308,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
     ofstream convergence;
     ofstream Originiterations;
     ofstream Adjointiterations;
+    int TotalOriginIt = 0;
+    int TotalAdjointIt = 0;
     //convergence.open(save_position+"convergence.txt");
     convergence.open("convergence.txt");
     Originiterations.open("Originiterations.txt");
@@ -318,7 +320,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
     VectorXd V;
     VectorXd S;
     
-    
+    high_resolution_clock::time_point TotalTime0 = high_resolution_clock::now();
+
     double epsilon_partial=0.001;
     for(int iteration=0;iteration<=MAX_ITERATION_EVO-1;iteration++){
         //solve DDA
@@ -330,10 +333,10 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         VectorXd objarray = VectorXd::Zero(ModelNum);
         list<DDAModel*>::iterator it_ModelList = ModelList.begin();
         list<ObjectiveDDAModel*>::iterator it_ObjList = ObjList.begin();
-        (*CStr).output_to_file(save_position + "Model_output\\", iteration);
+        (*CStr).output_to_file(save_position, iteration);
         list<VectorXcd>::iterator it_PforOrigin = PforOrigin.begin();
         for (int i = 0; i <= ModelNum - 1; i++) {
-            cout << (*(it_PforOrigin))(0) << endl;
+            //cout << (*(it_PforOrigin))(0) << endl;
             (*(*it_ModelList)).InitializeP(*(it_PforOrigin));
             (*(*it_ModelList)).bicgstab(MAX_ITERATION, MAX_ERROR);
             if (HaveOriginHeritage == true) {
@@ -348,6 +351,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             objarray(i) = (*(*it_ObjList)).GetVal();
 
             Originiterations << (*(*it_ModelList)).get_ITERATION() << endl;
+            TotalOriginIt += (*(*it_ModelList)).get_ITERATION();
+
             it_ModelList++;
             it_ObjList++;
         }
@@ -528,6 +533,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             VectorXcd lambdaT = (*P);
             (*(*it_ModelList)).reset_E();                                  //reset E to initial value
             Adjointiterations << (*(*it_ModelList)).get_ITERATION() << endl;
+            TotalAdjointIt += (*(*it_ModelList)).get_ITERATION();
             //times lambdaT and Adevxp together
             VectorXcd mult_result;
 
@@ -587,7 +593,6 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
         //The final gradients for this iteration
         gradients = gradients / ModelNum;
-        
 
         if(method == "Adam"){
             cout << "Using Adam Optimizer." << endl;
@@ -601,13 +606,22 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             }
             for(int i=0;i<=n_para-1;i++){
                 gradients(i) = V(i)/(sqrt(S(i))+0.00000001);
-            } 
+            }
         } 
-        //cout << "gradients: " << gradients.mean() << endl;
+        cout << "gradients: " << gradients.mean() << endl;
         
         //cout<<"gradients1-3"<<endl<<gradients(0)<<endl<<gradients(1)<<endl<<gradients(2)<<endl;
         //double step_len = this->get_step_length(gradients,epsilon);
-        VectorXd step=epsilon*gradients;               //Find the maximum. If -1 find minimum
+        
+        double epsilon_final;
+        if (iteration <= 3) {
+            epsilon_final = 0.1;
+        }
+        else {
+            epsilon_final = epsilon;
+        }
+        
+        VectorXd step = epsilon_final * gradients;            //Find the maximum. If -1 find minimum
         //cout << "epsilon = " << epsilon << endl;
         //cout << "step = "<< step.mean() << endl;
 
@@ -621,6 +635,10 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         
     }
     
+    
+    Originiterations << TotalOriginIt << endl;
+    Adjointiterations << TotalAdjointIt << endl;
+
     convergence.close();
     Originiterations.close();
     Adjointiterations.close();
@@ -634,6 +652,9 @@ ObjectiveDDAModel* EvoDDAModel::ObjectiveFactory(string ObjectName, list<double>
     }
     if (MajorObjectFunctionName == "PointE"){
         return new ObjectivePointEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    }
+    if (MajorObjectFunctionName == "PointI") {
+        return new ObjectivePointIDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
     }
     /*
     else if (MajorObjectFunctionName == "SurfaceEExp"){

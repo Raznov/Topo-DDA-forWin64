@@ -770,6 +770,26 @@ public:
     void Reset();
 };
 
+class ObjectivePointIDDAModel : public ObjectiveDDAModel {
+private:
+    double x;
+    double y;
+    double z;      // Here x, y, z are absolute coordinates. (No need to multiply d).
+    double d;
+    int N;
+    VectorXcd* P;
+    VectorXi* R;
+    DDAModel* model;
+    EvoDDAModel* evomodel;
+    Vector3cd E_sum;
+    Vector3cd E_ext;
+public:
+    ObjectivePointIDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
+};
 
 
 
