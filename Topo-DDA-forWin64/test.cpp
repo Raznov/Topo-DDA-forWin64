@@ -5,17 +5,17 @@ int main() {
     ofstream TotalTime;
     TotalTime.open("TotalTime.txt");
     high_resolution_clock::time_point t_start = high_resolution_clock::now();
-    
+
 
 
     Vector3d l;
     Vector3d center;
     l << 80.0, 80.0, 16.0;
-    center << l(0)/2, l(1)/2, l(2)/2;
+    center << l(0) / 2, l(1) / 2, l(2) / 2;
 
     int Nx, Ny, Nz;
     //Nx = 103; Ny = 103; Nz = 16;
-    Nx = round(l(0)+3); Ny = round(l(1)+3); Nz = round(l(2)+1);
+    Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);
     cout << center << endl;
     //Nx = 23; Ny = 23; Nz = 10;
     int N = 0;
@@ -40,16 +40,17 @@ int main() {
     double E0 = 1.0;
 
 
-    double epsilon = 100;
+    double epsilon = 10;
 
-    double focus = (l(2) + 2) * d;   //nm       
+    //double focus = (l(2) + 2) * d;   //nm       
+    double focus = (l(2) + 2) * d;
     cout << focus << endl;
 
-    int MAX_ITERATION_DDA = 10000;
+    int MAX_ITERATION_DDA = 100000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 50;
+    int MAX_ITERATION_EVO = 200;
 
-    list<string> ObjectFunctionNames{ "PointI" };
+    list<string> ObjectFunctionNames{ "PointE" };
 
     double exponent = 2;
     double ratio = 4;
@@ -58,7 +59,7 @@ int main() {
 
     bool HavePathRecord = false;
     bool HavePenalty = false;
-    bool HaveOriginHeritage = true;
+    bool HaveOriginHeritage = false;
     bool HaveAdjointHeritage = false;
     double PenaltyFactor = 0.0001;
     list<list<double>*> ObjectParameters{ &ObjectParameter };
@@ -75,12 +76,12 @@ int main() {
     ofstream AngleInfo("AngleInfo.txt");
     ofstream nEInfo("nEInfo.txt");
 
-    int theta_num = 4;
+    int theta_num = 1;
     VectorXd theta(theta_num);
-    theta << 0, 10, 20, 30;
-    int phi_num = 10;
+    theta << 0;
+    int phi_num = 1;
     VectorXd phi(phi_num);
-    phi << 0, 10, 20, 160, 170, 180, 190, 200, 340, 350;
+    phi << 0;
     int lam_num = 1;
     VectorXd lam(lam_num);
     lam << 500;
@@ -89,12 +90,12 @@ int main() {
     list<AProductCore> CoreList;
     list<AProductCore*> CorePointList;
     Vector2cd material;
-    material = Get_2_material("Air", "SiO2", lam(0), "nm");
-    AProductCore Core1(&CStr, lam(0), material);
-    //material = Get_2_material("Air", "SiO2", lam(1), "nm");
-    //AProductCore Core2(&CStr, lam(1), material);
-    //material = Get_2_material("Air", "SiO2", lam(2), "nm");
-    //AProductCore Core3(&CStr, lam(2), material);
+    material = Get_2_material("Air", "2.5", lam(0), "nm");
+    AProductCore Core1(&CStr, lam(0), material, "LDR");
+    //material = Get_2_material("Air", "2.5", lam(1), "nm");
+    //AProductCore Core2(&CStr, lam(1), material, "LDR");
+    //material = Get_2_material("Air", "2.5", lam(2), "nm");
+    //AProductCore Core3(&CStr, lam(2), material, "LDR");
     CorePointList.push_back(&Core1);
     //CorePointList.push_back(&Core2);
     //CorePointList.push_back(&Core3);
@@ -106,6 +107,7 @@ int main() {
         CoreList.push_back(Core_tmp);
     }
     */
+
     list<AProductCore*>::iterator it = CorePointList.begin();
     for (int k = 0; k <= lam_num - 1; k++) {
         AProductCore* Core = (*it);
@@ -169,7 +171,7 @@ int main() {
 
 
 
-    
+
 
     high_resolution_clock::time_point t_end = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(t_end - t_start).count();

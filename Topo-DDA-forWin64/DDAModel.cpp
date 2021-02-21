@@ -51,7 +51,7 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     //cout << "al" << al(0) << endl;
 
     al_max = al;
-    verbose = false;
+    verbose = true;
 }
 
 DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_) {

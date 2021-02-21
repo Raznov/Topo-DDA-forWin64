@@ -51,6 +51,9 @@
     <ClCompile Include="CoreStructure.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SiCi.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definition.h">

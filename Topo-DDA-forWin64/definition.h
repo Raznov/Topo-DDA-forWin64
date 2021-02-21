@@ -37,7 +37,7 @@ void Conv2B(cufftDoubleComplex *Convx, cufftDoubleComplex *Convy, cufftDoubleCom
 void APtoESum(cufftDoubleComplex *A00, cufftDoubleComplex *A01, cufftDoubleComplex *A02, cufftDoubleComplex *A11, cufftDoubleComplex *A12, cufftDoubleComplex *A22, cufftDoubleComplex *PxDev, cufftDoubleComplex *PyDev, cufftDoubleComplex *PzDev, cufftDoubleComplex *ESumxDev, cufftDoubleComplex *ESumyDev, cufftDoubleComplex *ESumzDev, int NxFFT, int NyFFT, int NzFFT, int NxA, int NyA, int NzA, int index1, int index2, int index3, int deduction);
 
 complex<double> Get_Alpha(double lam, double K, double d, complex<double> diel, Vector3d n_E0, Vector3d n_K);
-complex<double> Get_Alpha_FLTRCD(double lam,double K,double d,complex<double> diel);
+complex<double> Get_Alpha_FCD(double lam, double K, double d, complex<double> diel);
 complex<double> Get_material(string mat, double wl, string unit);                  //name of mat to get its diel function at certain wavlength              
 Vector2cd Get_2_material(string sub, string mat, double wl, string unit);          //a wrapper for Get_material
 double Average(VectorXcd* E, int N, double exponent);
@@ -109,6 +109,20 @@ class Space{
 class Objective;
 class ObjectivePointE;
 class ObjectiveSurfaceEExp;
+
+class SiCi {
+public:
+    int numberSi;
+    int numberCi;
+    double disSi;
+    double disCi;
+    VectorXd Si;
+    VectorXd Ci;
+    SiCi();
+    double get_Si(double x);
+    double get_Ci(double y);
+
+};
 
 class Model{
     protected:
@@ -205,8 +219,6 @@ class Model{
         //FFT plan for all
         cufftHandle Plan;
 };
-
-class Objective;
 
 class EvoModel : public Model{
     private:
@@ -339,10 +351,13 @@ private:
     Vector2cd material;
     //VectorXcd diel_max;                         //corresponds to the previous maximum obj
     
+    //------------------------------For FCD and LDR choice-----------------------
+    string AMatrixMethod;
+    SiCi* SiCiValue;
 
 public:
-    AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material_);
-    AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_);
+    AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material_, string AMatrixMethod_);
+    AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_);
     ~AProductCore();
     Matrix3cd A_dic_generator(double x, double y, double z);
     Matrix3cd A_dic_generator(double x, double y, double z, int m, int n);
@@ -372,6 +387,8 @@ public:
     Vector2cd* get_material();
     //VectorXcd* get_diel_max();                        
     VectorXd* get_diel_old_max();
+    Matrix3cd FCD_inter(double x, double y, double z);
+    Matrix3cd LDR_inter(double x, double y, double z);
 };
 
 class DDAModel {

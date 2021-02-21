@@ -153,6 +153,7 @@
     <ClCompile Include="DDAModel.cpp" />
     <ClCompile Include="Objective.cpp" />
     <ClCompile Include="ObjectiveDDAModel.cpp" />
+    <ClCompile Include="SiCi.cpp" />
     <ClCompile Include="Space.cpp" />
     <ClCompile Include="Structure.cpp" />
     <ClCompile Include="test.cpp" />

@@ -106,7 +106,6 @@ Vector2cd Get_2_material(string sub, string mat, double wl, string unit){
 
 complex<double> Get_Alpha(double lam, double K, double d, complex<double> diel, Vector3d n_E0, Vector3d n_K){
     double b1 = -1.891531;
-    b1 = -1.891531;
     double b2 = 0.1648469;
     double b3 = -1.7700004;
     //cout<<"lam"<<lam<<"K"<<K<<"d"<<d<<endl;
@@ -117,6 +116,16 @@ complex<double> Get_Alpha(double lam, double K, double d, complex<double> diel, 
     result = 1.0 + (a1 / pow(d, 3)) * ((b1 + diel * b2 + diel * b3 * S) * pow(K * d, 2) - result);
     //cout<<result<<endl;
     result=a1/result;
+    return result;
+}
+
+complex<double> Get_Alpha_FCD(double lam, double K, double d, complex<double> diel) {
+    complex<double> M = (4.0 / 3.0) * pow((K * d), 2) + (2.0 / 3.0) * (1.0i + (1 / M_PI) * log((M_PI - K * d) / (M_PI + K * d))) * pow(K * d, 3);
+    // complex<double> kappa = (diel - 1.0) / (4 * M_PI);
+    // complex<double> result = pow(d, 3) * kappa / (1.0 + (4.0 * M_PI / 3.0 - M) * kappa);
+    complex<double> a1 = (3 * pow(d, 3) / (4 * M_PI)) * (diel - 1.0) / (diel + 2.0);
+    complex<double> result = 1.0 - M * a1 / pow(d, 3);
+    result = a1 / result;
     return result;
 }
 
