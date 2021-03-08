@@ -22,6 +22,10 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
     PreviousObj = 0.0;
     CutoffHold = 0;
 
+    VectorXi* PositionPara = (*CStr).get_PositionPara();
+    int n_para = (*PositionPara).size();                     //Total number of parameters
+    gradientsquare = VectorXd::Zero(n_para);
+
     list<DDAModel*>::iterator it_ModelList = ModelList.begin();
     for (int i = 0; i <= ModelNum - 1; i++) {
         if ((*(*(*(it_ModelList))).get_Core()).get_CStr() != CStr) {
@@ -320,6 +324,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
     VectorXd V;
     VectorXd S;
     
+
     high_resolution_clock::time_point TotalTime0 = high_resolution_clock::now();
 
     double epsilon_partial=0.001;
@@ -593,6 +598,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
         //The final gradients for this iteration
         gradients = gradients / ModelNum;
+        double epsilon_final=epsilon;
 
         if(method == "Adam"){
             cout << "Using Adam Optimizer." << endl;
@@ -607,19 +613,54 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             for(int i=0;i<=n_para-1;i++){
                 gradients(i) = V(i)/(sqrt(S(i))+0.00000001);
             }
+
+            if (iteration <= 3) {
+                epsilon_final = 0.1;
+            }
+            else {
+                epsilon_final = epsilon;
+            }
         } 
-        cout << "gradients: " << gradients.mean() << endl;
-        
-        //cout<<"gradients1-3"<<endl<<gradients(0)<<endl<<gradients(1)<<endl<<gradients(2)<<endl;
-        //double step_len = this->get_step_length(gradients,epsilon);
-        
-        double epsilon_final;
-        if (iteration <= 3) {
-            epsilon_final = 0.1;
+
+        if (method == "Adamdecay") {
+            cout << "Using Adam Optimizer." << endl;
+            if (iteration == 0) {
+                V = (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
+                S = (1 - beta2) * (gradients.array().pow(2).matrix()) / (1 - pow(beta2, iteration + 1));
+            }
+            else {
+                V = beta1 * V + (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
+                S = beta2 * S + (1 - beta2) * (gradients.array().pow(2).matrix()) / (1 - pow(beta2, iteration + 1));
+            }
+            for (int i = 0; i <= n_para - 1; i++) {
+                gradients(i) = V(i) / (sqrt(S(i)) + 0.00000001);
+            }
+
+            int decaybarrier = 50;
+
+            if (iteration <= 3) {
+                epsilon_final = 0.1;
+            }
+            else if (iteration >= decaybarrier) {
+                double expconst = 10;
+                epsilon_final = epsilon * exp(-(iteration - decaybarrier) / expconst);
+                //epsilon_final = epsilon / exp(-(iteration - decaybarrier));
+            }
+            else {
+                epsilon_final = epsilon;
+            }
         }
-        else {
-            epsilon_final = epsilon;
+        
+        if (method == "Adagrad") {
+            for (int i = 0; i <= n_para - 1; i++) {
+                gradientsquare(i) += pow(gradients(i), 2)/100000;
+                gradients(i) = gradients(i) / sqrt(gradientsquare(i) + 1);
+            }
+
         }
+        
+        
+        
         
         VectorXd step = epsilon_final * gradients;            //Find the maximum. If -1 find minimum
         //cout << "epsilon = " << epsilon << endl;

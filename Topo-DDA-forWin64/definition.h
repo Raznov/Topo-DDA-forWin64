@@ -501,6 +501,8 @@ private:
     bool HaveOriginHeritage;
     bool HaveAdjointHeritage;
     int Stephold;
+
+    VectorXd gradientsquare;                    //cumulative summation of gradients square. Used in Adagrad.
 public:
     EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, double PenaltyFactor_, string save_position_, CoreStructure* CStr_, list<DDAModel*> ModelList_);
     

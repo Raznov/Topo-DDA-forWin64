@@ -12,7 +12,7 @@ import matplotlib.animation as ani
 from mpl_toolkits.mplot3d import Axes3D
 import time
 
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 
 def Shape(geometry,diel,d,iteration=-1,position="./",decimal=0,FullLattice=False):
     """Plot the shape of object as dot matrix.
@@ -185,8 +185,7 @@ def EField(geometry,diel,d,wl,k_dir,E_dir,E_tot,iteration=-1,position="./",decim
 
 """
 #Code used for single DDA calculation or if you only wants to see the final results for Evooptimization
-
-data=np.genfromtxt("Model_results54.txt",dtype=complex)
+data=np.genfromtxt("Model_results.txt",dtype=complex)
 N=int(np.real(data[3]))
 #print(np.real(data[(3*N+4):(6*N+4)]))
 geometry=np.real(data[4:(3*N+4)]).astype(int)
@@ -200,10 +199,7 @@ E_dir=np.real(data[(9*N+9):(9*N+12)])
 N_plot=int(np.real(data[(9*N+12)]))
 geometry_plot=np.real(data[(9*N+13):(9*N+13+N_plot)]).astype(int)
 E_tot=(data[(9*N+13+N_plot):(9*N+13+2*N_plot)])
-
-
 Shape(geometry, diel, d)
-
 EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot)
 """
 
@@ -219,8 +215,8 @@ para=0.5*np.real(data[(6*N+4):(9*N+4)])
 d=1
 Shape(geometry,para, d)
 """
-
 """
+
 #Code used for optimization
 
 #final, pos=input().split()
@@ -230,6 +226,9 @@ if __name__ == "__main__":
 
     objective_number = 1
     pos="./" + sys.argv[1] + "/"
+    it_start = sys.argv[2]
+    it_end = sys.argv[3]
+
     it = 0
     dec = 5
     
@@ -254,34 +253,31 @@ if __name__ == "__main__":
             N=int(np.real(data[3]))
             #print(np.real(data[(3*N+4):(6*N+4)]))
             geometry=np.real(data[4:(3*N+4)]).astype(int)
-            polarization=data[(3*N+4):(6*N+4)]
-            diel=np.real(data[(6*N+4):(9*N+4)])
-            d=np.real(data[9*N+4])
-            wl=np.real(data[9*N+5])
-            k_dir=np.real(data[(9*N+6):(9*N+9)])
-            E_dir=np.real(data[(9*N+9):(9*N+12)])
-            N_plot=int(np.real(data[(9*N+12)]))
-            geometry_plot=np.real(data[(9*N+13):(9*N+13+N_plot)]).astype(int)
-            E_tot=data[(9*N+13+N_plot):(9*N+13+2*N_plot)]
+            diel=np.real(data[(3*N+4):(6*N+4)])
+            d=np.real(data[6*N+4])
             ##print(6*N,N_plot,data.shape,E_tot.shape)
-            Shape(geometry, diel, d, iteration=it, position=pos+"Shape/", decimal=dec, FullLattice=False)
-            Shape(geometry, diel, d, iteration=it, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
-            if(it==99):
-                EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
-            it += 1
+            if(it >= int(it_start) and it <= int(it_end)):
+                Shape(geometry, diel, d, iteration=it, position=pos+"Shape/", decimal=dec, FullLattice=False)
+                Shape(geometry, diel, d, iteration=it, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
 
+            #if(it==99):
+            #    EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
+
+            it += 1
 """
 
 
-##tmp:
-name = '55'
+pos="./noAdm-noheritage-size2000/"
+convergence=np.genfromtxt(pos+"convergence.txt")
+fig1=plt.figure()
+plt.plot(np.arange(len(convergence)),convergence)
+plt.xlim = (0,len(convergence)-1)
+plt.savefig(pos+"convergence.png")
 
-data=np.genfromtxt('Model_results'+name+'.txt',dtype=complex)
-N=int(np.real(data[3]))
-geometry=np.real(data[4:(3*N+4)]).astype(int)
-diel=np.real(data[(6*N+4):(9*N+4)])
+originit=np.genfromtxt(pos+"Originiterations.txt")
+originit=originit[0:-1]
+fig2=plt.figure()
+plt.plot(np.arange(len(originit)),originit)
+plt.xlim = (0,len(originit)-1)
+plt.savefig(pos+"Originiterations.png")
 
-polarization=data[(3*N+4):(6*N+4)]
-np.savetxt(name+'Diel.txt', diel, '%f')
-np.savetxt(name+'Geometry.txt', geometry, '%d')
-np.savetxt(name+'polarization.txt', polarization, '%f')

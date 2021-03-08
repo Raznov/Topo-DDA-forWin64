@@ -40,7 +40,7 @@ int main() {
     double E0 = 1.0;
 
 
-    double epsilon = 10;
+    double epsilon = 100;
 
     //double focus = (l(2) + 2) * d;   //nm       
     double focus = (l(2) + 2) * d;
@@ -167,7 +167,7 @@ int main() {
     EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, &CStr, ModelpointerList);
 
 
-    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adamdecay");
 
 
 
