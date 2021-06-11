@@ -10,12 +10,13 @@ int main() {
 
     Vector3d l;
     Vector3d center;
-    l << 80.0, 80.0, 16.0;
+    l << 21.0, 21.0, 9.0;
+    //l << 40.0, 40.0, 8.0;
     center << l(0) / 2, l(1) / 2, l(2) / 2;
 
     int Nx, Ny, Nz;
     //Nx = 103; Ny = 103; Nz = 16;
-    Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);
+    Nx = round(l(0) + 1); Ny = round(l(1) + 1); Nz = round(l(2) + 1);
     cout << center << endl;
     //Nx = 23; Ny = 23; Nz = 10;
     int N = 0;
@@ -27,43 +28,48 @@ int main() {
 
     //l << 20.0, 20.0, 9.0;
     //center << 10.0, 10.0, 4.5;
-    Structure s1(S.get_total_space(), "ONES", l, center, 1);
+    Structure s1(S.get_total_space(), l, center);
 
 
 
     S = S + s1;
+    double d = 15;
+    double r = 150 / d;
 
+    Vector3i bind(1, 1, 10);
+    SpacePara spacepara(&S, bind, "ONES", "ZEROS", r);
 
-    double d = 25;
+    //SpacePara spacepara(&S, bind, "RANDOM");
 
 
     double E0 = 1.0;
 
 
-    double epsilon = 100;
+    double epsilon = 0.2;
+    //double epsilon = 1;
 
     //double focus = (l(2) + 2) * d;   //nm       
     double focus = (l(2) + 2) * d;
     cout << focus << endl;
 
-    int MAX_ITERATION_DDA = 100000;
+    int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 200;
+    int MAX_ITERATION_EVO = 500;
 
-    list<string> ObjectFunctionNames{ "PointE" };
+    list<string> ObjectFunctionNames{ "IntegratedE" };
 
     double exponent = 2;
     double ratio = 4;
 
-    list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };
+    list<double> ObjectParameter{ 70.0 };
 
     bool HavePathRecord = false;
     bool HavePenalty = false;
     bool HaveOriginHeritage = false;
     bool HaveAdjointHeritage = false;
-    double PenaltyFactor = 0.0001;
+    double PenaltyFactor = 1;
     list<list<double>*> ObjectParameters{ &ObjectParameter };
-    string save_position = "";
+    string save_position = ".\\p330-lam542-beta7-TiO2-InE-circle-verify\\";
 
     Vector3d n_K;
     Vector3d n_E0;
@@ -73,8 +79,8 @@ int main() {
     list<DDAModel> ModelList;
     list<DDAModel*> ModelpointerList;
 
-    ofstream AngleInfo("AngleInfo.txt");
-    ofstream nEInfo("nEInfo.txt");
+    ofstream AngleInfo(save_position + "AngleInfo.txt");
+    ofstream nEInfo(save_position + "nEInfo.txt");
 
     int theta_num = 1;
     VectorXd theta(theta_num);
@@ -84,14 +90,23 @@ int main() {
     phi << 0;
     int lam_num = 1;
     VectorXd lam(lam_num);
-    lam << 500;
+    lam << 542;
 
-    CoreStructure CStr(&S, d);
+    CoreStructure CStr(&spacepara, d);
     list<AProductCore> CoreList;
     list<AProductCore*> CorePointList;
     Vector2cd material;
-    material = Get_2_material("Air", "2.5", lam(0), "nm");
-    AProductCore Core1(&CStr, lam(0), material, "LDR");
+    material = Get_2_material("Air", "TiO2", lam(0), "nm");
+    //AProductCore Core1(&CStr, lam(0), material, "LDR");
+
+    int m, n;
+    double Lm, Ln;
+    m = 50;
+    n = 50;
+    Lm = 22 * d;
+    Ln = 22 * d;
+    AProductCore Core1(&CStr, lam(0), material, m, n, Lm, Ln, "FCD");
+    //AProductCore Core1(&CStr, lam(0), material, "FCD");
     //material = Get_2_material("Air", "2.5", lam(1), "nm");
     //AProductCore Core2(&CStr, lam(1), material, "LDR");
     //material = Get_2_material("Air", "2.5", lam(2), "nm");
@@ -151,7 +166,8 @@ int main() {
     }
 
 
-
+    cout << "nK" << n_K << endl;
+    cout << "nE0" << n_E0 << endl;
 
     AngleInfo.close();
     nEInfo.close();
@@ -167,7 +183,7 @@ int main() {
     EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, &CStr, ModelpointerList);
 
 
-    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adamdecay");
+    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
 
 
 

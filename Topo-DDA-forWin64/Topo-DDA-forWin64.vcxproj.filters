@@ -15,15 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EvoModel.cpp">
-      <Filter>资源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>资源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Objective.cpp">
-      <Filter>资源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Space.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
@@ -52,6 +43,9 @@
       <Filter>资源文件</Filter>
     </ClCompile>
     <ClCompile Include="SiCi.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SpacePara.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
   </ItemGroup>

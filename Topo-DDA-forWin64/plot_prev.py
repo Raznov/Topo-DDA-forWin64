@@ -215,7 +215,7 @@ para=0.5*np.real(data[(6*N+4):(9*N+4)])
 d=1
 Shape(geometry,para, d)
 """
-
+"""
 
 #Code used for optimization
 
@@ -232,7 +232,6 @@ if __name__ == "__main__":
     it = 0
     dec = 5
     
-
     if objective_number == 1:
         convergence=np.genfromtxt(pos+"convergence.txt")
         fig=plt.figure()
@@ -246,6 +245,7 @@ if __name__ == "__main__":
             plt.plot(np.arange(len(convergence)),convergence[:,i])
             plt.xlim = (0,len(convergence)-1)
             plt.savefig(pos+"convergence_{}.png".format(i))
+
     for filename in sorted(os.listdir(pos+"Model_output"), key = lambda x: int(x[13:x.index(".txt")])):
         if filename.endswith(".txt"):
             print(filename)
@@ -253,15 +253,8 @@ if __name__ == "__main__":
             N=int(np.real(data[3]))
             #print(np.real(data[(3*N+4):(6*N+4)]))
             geometry=np.real(data[4:(3*N+4)]).astype(int)
-            #polarization=data[(3*N+4):(6*N+4)]
             diel=np.real(data[(3*N+4):(6*N+4)])
             d=np.real(data[6*N+4])
-            #wl=np.real(data[9*N+5])
-            #k_dir=np.real(data[(9*N+6):(9*N+9)])
-            #E_dir=np.real(data[(9*N+9):(9*N+12)])
-            #N_plot=int(np.real(data[(9*N+12)]))
-            #geometry_plot=np.real(data[(9*N+13):(9*N+13+N_plot)]).astype(int)
-            #E_tot=data[(9*N+13+N_plot):(9*N+13+2*N_plot)]
             ##print(6*N,N_plot,data.shape,E_tot.shape)
             if(it >= int(it_start) and it <= int(it_end)):
                 Shape(geometry, diel, d, iteration=it, position=pos+"Shape/", decimal=dec, FullLattice=False)
@@ -271,13 +264,20 @@ if __name__ == "__main__":
             #    EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
 
             it += 1
-
-
 """
-pos="./theta0phi0-lam500-size1000-d12d5-1-diel4-FCD/"
+
+
+pos="./noAdm-noheritage-size2000/"
 convergence=np.genfromtxt(pos+"convergence.txt")
-fig=plt.figure()
+fig1=plt.figure()
 plt.plot(np.arange(len(convergence)),convergence)
 plt.xlim = (0,len(convergence)-1)
 plt.savefig(pos+"convergence.png")
-"""
+
+originit=np.genfromtxt(pos+"Originiterations.txt")
+originit=originit[0:-1]
+fig2=plt.figure()
+plt.plot(np.arange(len(originit)),originit)
+plt.xlim = (0,len(originit)-1)
+plt.savefig(pos+"Originiterations.png")
+

@@ -163,9 +163,37 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     VectorXcd Ap = VectorXcd::Zero(N*3);
     VectorXcd At = VectorXcd::Zero(N*3);
     for (int it=0;it<=MAX_ITERATION-1;it++) {
-        if (verbose && (it+1)%100==0) {
+        if (verbose && (it+1)%10000==0) {
+            cout << "r.norm(): " << r.norm() << endl;
+            cout << "E.norm(): " << E.norm() << endl;
             cout << "                Iter " << it+1 << ", error=" << r.norm()/E.norm() << " MAX_ERROR="<<MAX_ERROR<<endl;
         }
+
+        complex<double> r0dotrl = r0.dot(rl);
+        if (r0dotrl.real() == 0 && r0dotrl.imag() == 0) {
+            Error = r.norm() / E.norm();
+            cout << "r.norm(): " << r.norm() << endl;
+            cout << "E.norm(): " << E.norm() << endl;
+            ITERATION = it + 1;
+            if (verbose) {
+                high_resolution_clock::time_point t_end = high_resolution_clock::now();
+                auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+                time = duration_cast<milliseconds>(t_end - t_start).count();
+                cout << "----------------------------r0dotrl==(0,0), nan is going to occur so stop now------------------------" << endl;
+                cout << "--------------Calculation finished. Duration: " << duration / 1000.0 << "s.-------------------" << endl;
+                //ofstream fout;
+                //fout.open("DDATime.txt", fstream::app);
+                //fout<<N<<" "<<duration/1000.0<<endl;
+                //fout << ITERATION << " " << duration / 1000.0 / ITERATION << endl;
+                //fout.close();
+
+                cout << "              Error: " << Error << endl;
+                cout << "              Iteration: " << ITERATION << endl;
+                cout << endl;
+            }
+            return;
+        }
+
         beta = (alpha/zeta)*r0.dot(r)/r0.dot(rl);
         p = r+beta*(p-u);
         Ap = Aproductwithalb(p);
@@ -182,17 +210,19 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
 
         if (r.norm()/E.norm()<=MAX_ERROR) {
             Error = r.norm()/E.norm();
+            cout << "r.norm(): " << r.norm() << endl;
+            cout << "E.norm(): " << E.norm() << endl;
             ITERATION = it+1;
             if (verbose) {
                 high_resolution_clock::time_point t_end = high_resolution_clock::now();
                 auto duration = duration_cast<milliseconds>(t_end-t_start).count();
                 time = duration_cast<milliseconds>(t_end-t_start).count();
                 cout << "--------------Calculation finished. Duration: " << duration/1000.0 << "s.-------------------" << endl;
-                ofstream fout;
-                fout.open("DDATime.txt", fstream::app);
-                fout<<N<<" "<<duration/1000.0<<endl;
-                fout << ITERATION << " " << duration / 1000.0 / ITERATION << endl;
-                fout.close();
+                //ofstream fout;
+                //fout.open("DDATime.txt", fstream::app);
+                //fout<<N<<" "<<duration/1000.0<<endl;
+                //fout << ITERATION << " " << duration / 1000.0 / ITERATION << endl;
+                //fout.close();
 
                 cout << "              Error: "<<Error<<endl;
                 cout << "              Iteration: "<<ITERATION<<endl;
@@ -204,6 +234,196 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     high_resolution_clock::time_point t_end = high_resolution_clock::now();
     time = duration_cast<milliseconds>(t_end-t_start).count();
     cout<<"                ERROR:does not converge in "<<MAX_ITERATION<<" iterations"<<endl;
+    return;
+}
+
+void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
+    if (verbose) {
+        cout << "--------------Calculation start. Iterative method used: BICGSTAB---------------" << endl;
+        cout << endl;
+    }
+    int N = (*Core).get_N();
+
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+
+    //fftw_init_threads();                                                       //////////Initialize the multi-thread
+    //fftw_plan_with_nthreads(NUM_THREADS);
+    //cout<<"Threads"<<NUM_THREADS<<endl;;
+    VectorXcd p = VectorXcd::Zero(N * 3);
+    VectorXcd t = VectorXcd::Zero(N * 3);
+    VectorXcd w = VectorXcd::Zero(N * 3);
+    VectorXcd r = VectorXcd::Zero(N * 3);
+    VectorXcd r0 = VectorXcd::Zero(N * 3);
+    VectorXcd rl = VectorXcd::Zero(N * 3);
+    VectorXcd y = VectorXcd::Zero(N * 3);
+    VectorXcd u = VectorXcd::Zero(N * 3);
+    VectorXcd z = VectorXcd::Zero(N * 3);
+    VectorXcd x = VectorXcd::Zero(N * 3);
+    std::complex<double> alpha;
+    std::complex<double> beta;
+    std::complex<double> eta;
+    std::complex<double> zeta;
+
+
+    //Always starts with P=0 to avoid strange behaviour
+    //P = VectorXcd::Zero(N * 3);
+
+    ofstream foutnew(".\\p330-lam542-beta8-TiO2-InE-circle-fordebug\\BUGINFO.txt");
+
+    
+
+    VectorXcd Ax0 = Aproductwithalb(P);
+
+
+
+    r = E - Ax0;
+
+
+
+    r0 = r;
+    p = r;
+    VectorXcd Ap0 = Aproductwithalb(p);
+
+
+
+    alpha = r0.dot(r) / r0.dot(Ap0);
+
+
+
+    t = r - alpha * Ap0;
+    VectorXcd At0 = Aproductwithalb(t);
+
+
+
+    zeta = At0.dot(t) / At0.dot(At0);
+
+
+
+    u = zeta * Ap0;
+    z = zeta * r - alpha * u;
+    P = P + alpha * p + z;                                    //this will directly change P in this.
+    rl = r;
+    r = t - zeta * At0;
+
+    
+
+
+
+    VectorXcd Ap = VectorXcd::Zero(N * 3);
+    VectorXcd At = VectorXcd::Zero(N * 3);
+    for (int it = 0; it <= MAX_ITERATION - 1; it++) {
+        if (verbose && (it + 1) % 1000 == 0) {
+            cout << "r.norm(): " << r.norm() << endl;
+            cout << "E.norm(): " << E.norm() << endl;
+            cout << "                Iter " << it + 1 << ", error=" << r.norm() / E.norm() << " MAX_ERROR=" << MAX_ERROR << endl;
+        }
+        beta = (alpha / zeta) * r0.dot(r) / r0.dot(rl);
+
+        /*
+        if ((EVOITERATION == 88) && (it == 4849)) {
+            //cout << "WE FIND 88" << endl;
+            foutnew << "-----------------beta at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << beta << endl;
+
+            //foutnew << "-----------------p at " << "it" + to_string(it) << "---------------" << endl;
+            //foutnew << p << endl;
+
+            //foutnew << "-----------------Ap at " << "it" + to_string(it) << "---------------" << endl;
+            //foutnew << Ap << endl;
+
+            foutnew << "-----------------alpha at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << alpha << endl;
+
+            //foutnew << "-----------------t at " << "it" + to_string(it) << "---------------" << endl;
+            //foutnew << t << endl;
+
+            //foutnew << "-----------------At at " << "it" + to_string(it) << "---------------" << endl;
+            //foutnew << At << endl;
+
+            foutnew << "-----------------zeta at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << zeta << endl;
+
+            foutnew << "-----------------alpha/zeta at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << alpha/zeta << endl;
+
+            foutnew << "-----------------r1 at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << rl << endl;
+
+            foutnew << "-----------------r0 at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << r0 << endl;
+
+            //foutnew << "-----------------u at " << "it" + to_string(it) << "---------------" << endl;
+            //foutnew << u << endl;
+
+            //foutnew << "-----------------z at " << "it" + to_string(it) << "---------------" << endl;
+            //foutnew << z << endl;
+
+            //foutnew << "-----------------P at " << "it" + to_string(it) << "---------------" << endl;
+            //foutnew << P << endl;
+
+            foutnew << "-----------------r at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << r << endl;
+
+            foutnew << "-----------------r0dotr at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << r0.dot(r) << endl;
+
+            foutnew << "-----------------r0dotrl at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << r0.dot(rl) << endl;
+
+            foutnew << "-----------------r0dotr/r0dotrl at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << r0.dot(r) / r0.dot(rl) << endl;
+        }
+        */
+        p = r + beta * (p - u);
+        Ap = Aproductwithalb(p);
+        alpha = r0.dot(r) / r0.dot(Ap);
+        t = r - alpha * Ap;
+        At = Aproductwithalb(t);
+
+        zeta = At.dot(t) / At.dot(At);
+        u = zeta * Ap;
+        z = zeta * r - alpha * u;
+        P = P + alpha * p + z;
+        rl = r;
+        r = t - zeta * At;
+        
+
+        if (EVOITERATION == 88) {
+            //cout << "WE FIND 88" << endl;
+            foutnew << "-----------------r at " << "it" + to_string(it) << "---------------" << endl;
+            foutnew << r.norm() << endl;
+        }
+
+        if (r.norm() / E.norm() <= MAX_ERROR) {
+            Error = r.norm() / E.norm();
+            cout << "r.norm(): " << r.norm() << endl;
+            cout << "E.norm(): " << E.norm() << endl;
+            ITERATION = it + 1;
+            if (verbose) {
+                high_resolution_clock::time_point t_end = high_resolution_clock::now();
+                auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+                time = duration_cast<milliseconds>(t_end - t_start).count();
+                cout << "--------------Calculation finished. Duration: " << duration / 1000.0 << "s.-------------------" << endl;
+                //ofstream fout;
+                //fout.open("DDATime.txt", fstream::app);
+                //fout<<N<<" "<<duration/1000.0<<endl;
+                //fout << ITERATION << " " << duration / 1000.0 / ITERATION << endl;
+                //fout.close();
+
+                cout << "              Error: " << Error << endl;
+                cout << "              Iteration: " << ITERATION << endl;
+                cout << endl;
+            }
+            return;
+        }
+    }
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    time = duration_cast<milliseconds>(t_end - t_start).count();
+    cout << "                ERROR:does not converge in " << MAX_ITERATION << " iterations" << endl;
+
+    foutnew.close();
+
+
     return;
 }
 
@@ -327,7 +547,7 @@ void DDAModel::output_to_file(string save_position, int iteration, int ModelLabe
     
     string name;
 
-    name = "Model_results" + to_string(ModelLabel) + "it" + to_string(iteration) + ".txt";
+    name = save_position + "Model_output\\" + "Model_results" + to_string(ModelLabel) + "it" + to_string(iteration) + ".txt";
     ofstream fout(name);
     for(int i=0;i<=P.size()-1;i++){
         if(P(i).imag()<0){
@@ -416,10 +636,6 @@ int DDAModel::get_Nz() {
     return (*Core).get_Nz();
 }
 
-tuple<list<int>, list<int>, list<int>, list<int>> DDAModel::get_para_info() {
-    return (*Core).get_para_info();
-}
-
 VectorXi* DDAModel::get_R() {
     return (*Core).get_R();
 }
@@ -428,36 +644,9 @@ double DDAModel::get_d() {
     return (*Core).get_d();
 }
 
-Space* DDAModel::get_space() {
-    return (*Core).get_space();
-}
 
 double DDAModel::get_lam() {
     return (*Core).get_lam();
-}
-
-list<list<int>>* DDAModel::get_PositionDep() {
-    return (*Core).get_PositionDep();
-}
-
-VectorXi* DDAModel::get_PositionPara() {
-    return (*Core).get_PositionPara();
-}
-
-list<int>* DDAModel::get_para_nums() {
-    return (*Core).get_para_nums();
-}
-
-list<int>* DDAModel::get_para_starts() {
-    return (*Core).get_para_starts();
-}
-
-list<int>* DDAModel::get_para_dep_nums() {
-    return (*Core).get_para_dep_nums();
-}
-
-list<int>* DDAModel::get_para_dep_starts() {
-    return (*Core).get_para_dep_starts();
 }
 
 VectorXd* DDAModel::get_diel_old() {
@@ -470,4 +659,8 @@ Vector2cd* DDAModel::get_material() {
 
 VectorXd* DDAModel::get_diel_old_max() {
     return (*Core).get_diel_old_max();
+}
+
+SpacePara* DDAModel::get_spacepara() {
+    return (*((*Core).get_CStr())).get_spacepara();
 }

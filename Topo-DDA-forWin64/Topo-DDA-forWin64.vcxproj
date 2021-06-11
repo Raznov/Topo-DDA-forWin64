@@ -147,17 +147,15 @@
   <ItemGroup>
     <ClCompile Include="AProductCore.cpp" />
     <ClCompile Include="CoreStructure.cpp" />
-    <ClCompile Include="EvoModel.cpp" />
     <ClCompile Include="EvoDDAModel.cpp" />
-    <ClCompile Include="Model.cpp" />
     <ClCompile Include="DDAModel.cpp" />
-    <ClCompile Include="Objective.cpp" />
     <ClCompile Include="ObjectiveDDAModel.cpp" />
     <ClCompile Include="SiCi.cpp" />
     <ClCompile Include="Space.cpp" />
     <ClCompile Include="Structure.cpp" />
     <ClCompile Include="test.cpp" />
     <ClCompile Include="tools.cpp" />
+    <ClCompile Include="SpacePara.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu">

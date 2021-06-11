@@ -164,6 +164,159 @@ void ObjectivePointIDDAModel::Reset() {
 
 
 
+ObjectiveIntegratedEDDAModel::ObjectiveIntegratedEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+    Have_Penalty = HavePenalty_;
+    Have_Devx = true;
+    model = model_;
+    evomodel = evomodel_;
+    AProductCore* Core = (*model).get_Core();
+    N = (*Core).get_N();
+    Nx = (*Core).get_Nx();
+    Ny = (*Core).get_Ny();
+    Nz = (*Core).get_Nz();
+    d = (*Core).get_d();
+    al = (*model).get_al();
+    P = (*model).get_P();
+    E = VectorXcd::Zero(N * 3);
+    R = (*Core).get_R();
+    E_int = 0;
+}
+
+void ObjectiveIntegratedEDDAModel::SingleResponse(int idx, bool deduction) {
+    return;
+}
+
+double ObjectiveIntegratedEDDAModel::GroupResponse() {
+    for (int i = 0; i < N; i++) {
+        E(i * 3) = (*al)(i * 3) * (*P)(i * 3);
+        E(i * 3 + 1) = (*al)(i * 3 + 1) * (*P)(i * 3 + 1);
+        E(i * 3 + 2) = (*al)(i * 3 + 2) * (*P)(i * 3 + 2);
+    }
+    E_int = 0;
+    double diel_sum = 0;
+    
+    for (int i = 0; i < N; i++) {
+        if ((*R)(3*i+2) >= 9) {
+            double E_sum_temp = 0;
+            for (int j = 0; j < 3; j++) {
+                E_sum_temp += pow(abs(E(3 * i + j)), 2);
+            }
+            diel_sum += (*((*model).get_Core()->get_diel_old()))(i * 3);
+            E_int += pow(E_sum_temp, 2) * ((*((*model).get_Core()->get_diel_old()))(i * 3) + 0.0001) / 4.0; //prevent nan result for devp calculation.
+        }
+    }
+    
+    E_int = log(E_int);
+
+
+    // E_int /= diel_sum;
+    if (Have_Penalty) {
+        return E_int - (*evomodel).L1Norm();
+    }
+    else {
+        return E_int;
+    }
+
+}
+
+double ObjectiveIntegratedEDDAModel::GetVal() {
+    Reset();
+    for (int i = 0; i < N; i++) {
+        E(i * 3) = (*al)(i * 3) * (*P)(i * 3);
+        E(i * 3 + 1) = (*al)(i * 3 + 1) * (*P)(i * 3 + 1);
+        E(i * 3 + 2) = (*al)(i * 3 + 2) * (*P)(i * 3 + 2);
+    }
+    return GroupResponse();
+}
+
+void ObjectiveIntegratedEDDAModel::Reset() {
+    E_int = 0;
+    E = VectorXcd::Zero(N * 3);
+}
+
+
+
+ObjectiveMidAvgEDDAModel::ObjectiveMidAvgEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+    VectorXd PointEParameters = VectorXd::Zero((parameters).size());
+    list<double>::iterator it = (parameters).begin();
+    for (int i = 0; i <= int((parameters).size() - 1); i++) {
+        PointEParameters(i) = (*it);
+        it++;
+    }
+    r = PointEParameters(0);
+    
+    Have_Penalty = HavePenalty_;
+    Have_Devx = true;
+    model = model_;
+    evomodel = evomodel_;
+    AProductCore* Core = (*model).get_Core();
+    N = (*Core).get_N();
+    Nx = (*Core).get_Nx();
+    Ny = (*Core).get_Ny();
+    Nz = (*Core).get_Nz();
+    d = (*Core).get_d();
+    al = (*model).get_al();
+    P = (*model).get_P();
+    E = VectorXcd::Zero(N * 3);
+    R = (*Core).get_R();
+
+}
+
+void ObjectiveMidAvgEDDAModel::SingleResponse(int idx, bool deduction) {
+    return;
+}
+
+double ObjectiveMidAvgEDDAModel::GroupResponse() {
+    for (int i = 0; i < N; i++) {
+        E(i * 3) = (*al)(i * 3) * (*P)(i * 3);
+        E(i * 3 + 1) = (*al)(i * 3 + 1) * (*P)(i * 3 + 1);
+        E(i * 3 + 2) = (*al)(i * 3 + 2) * (*P)(i * 3 + 2);
+    }
+
+    double avg_num = 0;
+
+    for (int i = 0; i < N; i++) {
+        if ((48<=(*R)(3 * i) * d<=118 && 48 <= (*R)(3 * i+1) * d <= 118) || ((212 <= (*R)(3 * i) * d <= 282 && 212 <= (*R)(3 * i + 1) * d <= 282))) {
+            double E_sum_temp = 0;
+            
+            for (int j = 0; j < 3; j++) {
+                E_sum_temp += pow(abs(E(3 * i + j)), 2);
+            }
+            E_sum_temp = sqrt(E_sum_temp);
+
+            E_avg += E_sum_temp * (pow((*((*model).get_Core()->get_diel_old()))(i * 3), 1) + 0.0001);
+            avg_num += 1;
+        }
+    }
+
+    E_avg = E_avg;
+
+
+    // E_int /= diel_sum;
+    if (Have_Penalty) {
+        return E_avg - (*evomodel).L1Norm();
+    }
+    else {
+        return E_avg;
+    }
+
+}
+
+double ObjectiveMidAvgEDDAModel::GetVal() {
+    Reset();
+    for (int i = 0; i < N; i++) {
+        E(i * 3) = (*al)(i * 3) * (*P)(i * 3);
+        E(i * 3 + 1) = (*al)(i * 3 + 1) * (*P)(i * 3 + 1);
+        E(i * 3 + 2) = (*al)(i * 3 + 2) * (*P)(i * 3 + 2);
+    }
+    return GroupResponse();
+}
+
+void ObjectiveMidAvgEDDAModel::Reset() {
+    E_avg = 0;
+    E = VectorXcd::Zero(N * 3);
+}
+
 
 
 

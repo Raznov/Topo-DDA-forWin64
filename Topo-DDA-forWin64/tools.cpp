@@ -1,5 +1,83 @@
 #include "definition.h"
 
+//Find the Max and Min of the input geometry in each direction
+MatrixXi find_scope_3_dim(VectorXi* x) {
+    int N = round((*x).size() / 3);
+    MatrixXi result(3, 2);
+    result(0, 0) = (*x)(0);
+    result(0, 1) = (*x)(0);
+    result(1, 0) = (*x)(1);
+    result(1, 1) = (*x)(1);
+    result(2, 0) = (*x)(2);
+    result(2, 1) = (*x)(2);
+
+    for (int i = 0; i <= N - 1; i++) {
+        if (result(0, 0) >= (*x)(3 * i)) {
+            result(0, 0) = (*x)(3 * i);
+        }
+        if (result(0, 1) <= (*x)(3 * i)) {
+            result(0, 1) = (*x)(3 * i);
+        }
+        if (result(1, 0) >= (*x)(3 * i + 1)) {
+            result(1, 0) = (*x)(3 * i + 1);
+        }
+        if (result(1, 1) <= (*x)(3 * i + 1)) {
+            result(1, 1) = (*x)(3 * i + 1);
+        }
+        if (result(2, 0) >= (*x)(3 * i + 2)) {
+            result(2, 0) = (*x)(3 * i + 2);
+        }
+        if (result(2, 1) <= (*x)(3 * i + 2)) {
+            result(2, 1) = (*x)(3 * i + 2);
+        }
+    }
+    return result;
+}
+
+VectorXd initial_diel_func(string initial_diel, int N) {
+    VectorXd diel;
+    if (initial_diel.compare("ZEROS") == 0) {
+        diel = VectorXd::Zero(N);
+    }
+    else if (initial_diel.compare("0.5") == 0) {
+        diel = VectorXd::Ones(N);
+        diel = 0.5 * diel;
+    }
+    else if (initial_diel.compare("ONES") == 0) {
+        diel = VectorXd::Ones(N);
+    }
+    else if (initial_diel.compare("RANDOM") == 0) {
+        diel = VectorXd::Zero(N);
+        srand((unsigned)(time(0)));
+        for (int i = 0; i <= N - 1; i++) {
+            double r = ((double)rand() / (RAND_MAX));
+            diel(i) = r;
+        }
+
+    }
+    else {
+        diel = VectorXd::Zero(N);
+        cout << "The initial type given does not match any of the built in method" << endl;
+    }
+    return diel;
+}
+
+double initial_diel_func(string initial_diel) {
+    VectorXd diel;
+    if (initial_diel.compare("ZEROS") == 0) {
+        return 0.0;
+    }
+    else if (initial_diel.compare("0.5") == 0) {
+        return 0.5;
+    }
+    else if (initial_diel.compare("ONES") == 0) {
+        return 1.0;
+    }
+    else {
+        cout << "The initial type given does not match any of the built in method" << endl;
+        return 0.0;
+    }
+}
 
 VectorXi build_a_bulk(int Nx, int Ny, int Nz){
     VectorXi result=VectorXi::Zero(3*Nx*Ny*Nz);
@@ -28,6 +106,7 @@ complex<double> Get_material(string mat, double wl, string unit){
     diel_dic.insert(pair<string,string>("Au","diel/Au (Gold) - Johnson and Christy (raw)"));
     diel_dic.insert(pair<string,string>("Si","diel/Si (Silicon) - Palik (raw)"));
     diel_dic.insert(pair<string,string>("SiO2","diel/SiO2 (Glass) - Palik (raw)"));
+    diel_dic.insert(pair<string,string>("TiO2", "diel/TiO2_ALD (raw)"));
     diel_dic.insert(pair<string,string>("Air","diel/Air"));
     diel_dic.insert(pair<string,string>("1.5","diel/Diel1.5"));
     diel_dic.insert(pair<string,string>("2.0","diel/Diel2.0"));
