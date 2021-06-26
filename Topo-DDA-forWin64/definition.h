@@ -63,7 +63,7 @@ class Structure{
         Structure(VectorXi *total_space, VectorXi *geometry_);            //vanilla initialization
 
         //Sphere
-        //Structure(VectorXi *total_space, string initial_diel, double r, Vector3d center, int para_);  //r: actual radius/d. center: actual center/d. In charge of Sphere 
+        Structure(VectorXi *total_space, double r, Vector3d center);  //r: actual radius/d. center: actual center/d. In charge of Sphere 
         
         //Circle
         //Structure(VectorXi *total_space, string initial_diel, double r, Vector3i center, Vector3i direction, int para_); //build a circle, direction is its normalized direction in Cart. coord.
@@ -122,6 +122,11 @@ public:
     SpacePara(Space* space_, Vector3i bind_, string initial_diel); //l, center similar to bulk build in Structure class. Every 'bind' nearby dipoles correspond 
                                                                     //to 1 parameter in this bulk. bind=(2,2,2): 2*2*2; bind=(1,1,3):1*1*3
     SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r);   //ONly for 2d cylinder. r is raidus/d.
+
+    SpacePara(Space* space_, Vector3i bind_, string initial_diel_background, list<string>* initial_diel_list, list<double>* r_list, list<Vector2d>* center_list);
+    //Build 2d cylinders with diel in the list, rest of the diel is the backgroudn diel.
+
+
     void ChangeBind(Vector3i bind_);                                  //Change bind number
     VectorXi cut(VectorXi* big, VectorXi* smalll);
 

@@ -59,6 +59,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, Vec
             geometry(n1 + j) = (*((*it).get_geometry()))(j);
         }
         n1 = n1 + n2;
+        it++;
     }
 
     scope = find_scope_3_dim(&geometry);
@@ -86,6 +87,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel) {
             geometry(n1+j)= (*((*it).get_geometry()))(j);
         }
         n1 = n1 + n2;
+        it++;
     }
 
     scope = find_scope_3_dim(&geometry);
@@ -129,6 +131,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, 
             geometry(n1 + j) = (*((*it).get_geometry()))(j);
         }
         n1 = n1 + n2;
+        it++;
     }
 
     scope = find_scope_3_dim(&geometry);
@@ -166,6 +169,97 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, 
             }
         }
     }
+
+
+    for (int i = 0; i <= N - 1; i++) {
+        double x = geometry(3 * i);
+        double y = geometry(3 * i + 1);
+        double z = geometry(3 * i + 2);
+        int parax = floor((x - scope(0, 0)) / bind(0));
+        int paray = floor((y - scope(1, 0)) / bind(1));
+        int paraz = floor((z - scope(2, 0)) / bind(2));
+        int pos = paraz + Nparaz * (paray + Nparay * parax);
+        geometryPara(i) = pos;
+    }
+
+}
+
+SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_background, list<string>* initial_diel_list, list<double>* r_list, list<Vector2d>* center_list){
+    space = space_;
+    bind = bind_;
+    VectorXi* total_space = (*space).get_total_space();
+    int Nx, Ny, Nz, N;
+    tie(Nx, Ny, Nz, N) = (*space).get_Ns();
+    geometry = VectorXi::Zero(3 * N);
+
+    list<Structure>* ln = (*space).get_ln();
+    list<Structure>::iterator it = (*ln).begin();
+    int n1 = 0;
+    for (int i = 0; i <= (*ln).size() - 1; i++) {
+        int n2 = 3 * ((*it).get_geometry_size());
+        for (int j = 0; j <= n2 - 1; j++) {
+            geometry(n1 + j) = (*((*it).get_geometry()))(j);
+        }
+        n1 = n1 + n2;
+        it++;
+    }
+
+    scope = find_scope_3_dim(&geometry);
+    geometryPara = VectorXi::Zero(N);
+    int Nparax, Nparay, Nparaz, Npara;
+    Nparax = ceil(double(scope(0, 1) - scope(0, 0) + 1) / bind(0));
+    Nparay = ceil(double(scope(1, 1) - scope(1, 0) + 1) / bind(1));
+    Nparaz = ceil(double(scope(2, 1) - scope(2, 0) + 1) / bind(2));
+    Npara = Nparax * Nparay * Nparaz;
+    Para = VectorXd::Zero(Npara);
+
+    for (int i = 0; i <= Npara - 1; i++) {                          //First inital all to background
+        Para(i) = initial_diel_func(initial_diel_background);
+    }
+
+    list<string>::iterator it_diel = (*initial_diel_list).begin();
+    list<double>::iterator it_r = (*r_list).begin();
+    list<Vector2d>::iterator it_center = (*center_list).begin();
+
+    for (int itnum = 0; itnum <= (*initial_diel_list).size() - 1; itnum++) {
+        string initial_diel = (*it_diel);
+        double r = (*it_r);
+        Vector2d center = (*it_center);
+        double xcenter, ycenter;
+        xcenter = center(0);
+        ycenter = center(1);
+        cout << "xcenter" << xcenter << endl;
+        cout << "ycenter" << ycenter << endl;
+ 
+
+        for (int i = 0; i <= Nparax - 1; i++) {
+            for (int j = 0; j <= Nparay - 1; j++) {
+                for (int k = 0; k <= Nparaz - 1; k++) {
+                    int pos = k + Nparaz * (j + Nparay * i);
+                    double x, y;      //center of one 2D para region
+                    x = bind(0) * (2 * i + 1) / 2;
+                    y = bind(1) * (2 * j + 1) / 2;
+                    double rx, ry;
+                    rx = x - xcenter;
+                    ry = y - ycenter;
+                    if (rx * rx + ry * ry < (r+0.1) * (r+0.1)) {
+                        Para(pos) = initial_diel_func(initial_diel);
+                    }
+                }
+            }
+        }
+
+        it_diel++;
+        it_r++;
+        it_center++;
+
+
+    }
+    
+
+    
+    
+    
 
 
     for (int i = 0; i <= N - 1; i++) {

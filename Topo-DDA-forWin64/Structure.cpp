@@ -100,6 +100,31 @@ Structure::Structure(VectorXi *total_space, VectorXi *geometry_){
     geometry = *geometry_;
 }
 
+//Sphere
+Structure::Structure(VectorXi* total_space, double r, Vector3d center) {
+    int N = round((*total_space).size() / 3);
+    list<int> positions;
+    for (int i = 0; i <= N - 1; i++) {
+        double x = (*total_space)(3 * i) - center(0);
+        double y = (*total_space)(3 * i + 1) - center(1);
+        double z = (*total_space)(3 * i + 2) - center(2);
+        if (x * x + y * y + z * z < (r + 0.1) * (r + 0.1)) {
+            positions.push_back(i);
+        }
+    }
+    int N_want = positions.size();
+    VectorXi geometry_tmp = VectorXi::Zero(3 * N_want);
+    for (int i = 0; i <= N_want - 1; i++) {
+        int j = positions.front();
+        positions.pop_front();
+        geometry_tmp(3 * i) = (*total_space)(3 * j);
+        geometry_tmp(3 * i + 1) = (*total_space)(3 * j + 1);
+        geometry_tmp(3 * i + 2) = (*total_space)(3 * j + 2);
+    }
+    cut(total_space, &geometry_tmp);
+}
+
+
 /*
 Structure::Structure(VectorXi *total_space, string initial_diel, double r, Vector3d center, int para_){
     if (para_ != 0 && para_ != 1) {

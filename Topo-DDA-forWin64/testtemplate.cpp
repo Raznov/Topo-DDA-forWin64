@@ -1,6 +1,6 @@
 
 
-//DDAModel verification; updated after adding FCD
+//DDAModel verification; updated after adding FCD and binding; updated on 2021-6-20
 int main() {
 
     int Nx, Ny, Nz;
@@ -19,7 +19,7 @@ int main() {
     r = 55 / d;
     center << Nx / 2, Ny / 2, Nz / 2;
 
-    Structure s1(S.get_total_space(), "ONES", r, center, 1);
+    Structure s1(S.get_total_space(), r, center);
 
 
 
@@ -37,7 +37,7 @@ int main() {
     double E0 = 1.0;
     Vector3d n_E0;
     n_E0 << 1.0, 0.0, 0.0;
-    Vector2cd material = Get_2_material("Air", "Au", lam, "nm");
+    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
 
     double epsilon = 100;
 
@@ -68,8 +68,13 @@ int main() {
     list<list<double>*> ObjectParameters{ &ObjectParameter2 };
     string save_position = "";
 
-    CoreStructure CStr(&S, d);
-    AProductCore Core(&CStr, lam, material, "FCD");
+    Vector3i bind(1, 1, 1);
+    //SpacePara spacepara(&S, bind, "ONES", "ZEROS", r);
+
+    SpacePara spacepara(&S, bind, "ONES");
+
+    CoreStructure CStr(&spacepara, d);
+    AProductCore Core(&CStr, lam, material, "LDR");
     DDAModel TestModel(&Core, n_K, E0, n_E0);
 
     TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
@@ -1140,6 +1145,11 @@ int main() {
 
 }
 
+
+
+
+
+
 //2021-3 with bind
 int main() {
 
@@ -1405,6 +1415,205 @@ int main() {
     double PenaltyFactor = 1;
     list<list<double>*> ObjectParameters{ &ObjectParameter };
     string save_position = ".\\p330-lam542-beta8-TiO2-InE-circle-withinter\\";
+
+    Vector3d n_K;
+    Vector3d n_E0;
+
+
+
+    list<DDAModel> ModelList;
+    list<DDAModel*> ModelpointerList;
+
+    ofstream AngleInfo(save_position + "AngleInfo.txt");
+    ofstream nEInfo(save_position + "nEInfo.txt");
+
+    int theta_num = 1;
+    VectorXd theta(theta_num);
+    theta << 0;
+    int phi_num = 1;
+    VectorXd phi(phi_num);
+    phi << 0;
+    int lam_num = 1;
+    VectorXd lam(lam_num);
+    lam << 542;
+
+    CoreStructure CStr(&spacepara, d);
+    list<AProductCore> CoreList;
+    list<AProductCore*> CorePointList;
+    Vector2cd material;
+    material = Get_2_material("Air", "TiO2", lam(0), "nm");
+    //AProductCore Core1(&CStr, lam(0), material, "LDR");
+
+    int m, n;
+    double Lm, Ln;
+    m = 50;
+    n = 50;
+    Lm = 22 * d;
+    Ln = 22 * d;
+    AProductCore Core1(&CStr, lam(0), material, m, n, Lm, Ln, "FCD");
+    //AProductCore Core1(&CStr, lam(0), material, "FCD");
+    //material = Get_2_material("Air", "2.5", lam(1), "nm");
+    //AProductCore Core2(&CStr, lam(1), material, "LDR");
+    //material = Get_2_material("Air", "2.5", lam(2), "nm");
+    //AProductCore Core3(&CStr, lam(2), material, "LDR");
+    CorePointList.push_back(&Core1);
+    //CorePointList.push_back(&Core2);
+    //CorePointList.push_back(&Core3);
+
+    /*
+    for (int k = 0; k <= lam_num - 1; k++) {
+        Vector2cd material = Get_2_material("Air", "SiO2", lam(k), "nm");
+        AProductCore Core_tmp(&CStr, lam(k), material);
+        CoreList.push_back(Core_tmp);
+    }
+    */
+
+    list<AProductCore*>::iterator it = CorePointList.begin();
+    for (int k = 0; k <= lam_num - 1; k++) {
+        AProductCore* Core = (*it);
+        for (int i = 0; i <= theta_num - 1; i++) {
+            for (int j = 0; j <= phi_num - 1; j++) {
+                if (theta(i) != 0) {
+                    double theta_tmp = theta(i) * M_PI / 180;
+                    double phi_tmp = phi(j) * M_PI / 180;
+                    n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+                    n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+                    if (CheckPerp(n_E0, n_K) == false) {
+                        cout << "----------------------------------------theta" << theta[i] << "phi" << phi[j] << "Not perpendicular---------------------------------------" << endl;
+                    }
+                    if (k == 0) {
+                        AngleInfo << theta[i] << endl;
+                        AngleInfo << phi[j] << endl;
+                        nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+                    }
+                    DDAModel Model(Core, n_K, E0, n_E0);
+                    ModelList.push_back(Model);
+                }
+            }
+        }
+
+        double theta_tmp = 0 * M_PI / 180;
+        double phi_tmp = 0 * M_PI / 180;
+        n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+        n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+        if (CheckPerp(n_E0, n_K) == false) {
+            cout << "----------------------------------------theta" << 0 << "phi" << 0 << "Not perpendicular---------------------------------------" << endl;
+        }
+        if (k == 0) {
+            AngleInfo << 0.0 << endl;
+            AngleInfo << 0.0 << endl;
+            nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+        }
+        DDAModel Model(Core, n_K, E0, n_E0);
+        ModelList.push_back(Model);
+
+        it++;
+    }
+
+
+    cout << "nK" << n_K << endl;
+    cout << "nE0" << n_E0 << endl;
+
+    AngleInfo.close();
+    nEInfo.close();
+    cout << "Number of DDA Model : " << ModelList.size() << endl;
+
+    list<DDAModel>::iterator it1 = ModelList.begin();
+    for (int i = 0; i <= ModelList.size() - 1; i++) {
+        ModelpointerList.push_back(&(*it1));
+        it1++;
+    }
+
+
+    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, &CStr, ModelpointerList);
+
+
+    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+
+
+
+
+
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
+
+    return 0;
+
+}
+
+//2021-4-8, USE this to regenerate the doubl arrow structure. Set integration objective function for z>=8 because it is 2layer.
+int main() {
+
+    ofstream TotalTime;
+    TotalTime.open("TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+
+
+
+    Vector3d l;
+    Vector3d center;
+    l << 21.0, 21.0, 9.0;
+    //l << 40.0, 40.0, 8.0;
+    center << l(0) / 2, l(1) / 2, l(2) / 2;
+
+    int Nx, Ny, Nz;
+    //Nx = 103; Ny = 103; Nz = 16;
+    Nx = round(l(0) + 1); Ny = round(l(1) + 1); Nz = round(l(2) + 1);
+    cout << center << endl;
+    //Nx = 23; Ny = 23; Nz = 10;
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    Vector3i direction;
+
+    //l << 20.0, 20.0, 9.0;
+    //center << 10.0, 10.0, 4.5;
+    Structure s1(S.get_total_space(), l, center);
+
+
+
+    S = S + s1;
+    double d = 15;
+    double r = 150 / d;
+
+    Vector3i bind(1, 1, 10);
+    SpacePara spacepara(&S, bind, "ONES", "ZEROS", r);
+
+    //SpacePara spacepara(&S, bind, "RANDOM");
+
+
+    double E0 = 1.0;
+
+
+    double epsilon = 0.2;
+    //double epsilon = 1;
+
+    //double focus = (l(2) + 2) * d;   //nm       
+    double focus = (l(2) + 2) * d;
+    cout << focus << endl;
+
+    int MAX_ITERATION_DDA = 100000;
+    double MAX_ERROR = 0.00001;
+    int MAX_ITERATION_EVO = 88;
+
+    list<string> ObjectFunctionNames{ "IntegratedE" };
+
+    double exponent = 2;
+    double ratio = 4;
+
+    list<double> ObjectParameter{ 70.0 };
+
+    bool HavePathRecord = false;
+    bool HavePenalty = false;
+    bool HaveOriginHeritage = false;
+    bool HaveAdjointHeritage = false;
+    double PenaltyFactor = 1;
+    list<list<double>*> ObjectParameters{ &ObjectParameter };
+    string save_position = ".\\p330-lam542-beta7-TiO2-InE-2layer-circle\\";
 
     Vector3d n_K;
     Vector3d n_E0;
@@ -2388,3 +2597,470 @@ int main() {
     return 0;
 
 }
+
+//2021-6-20 feeding heterodimer back d=15
+int main() {
+
+    ofstream TotalTime;
+    TotalTime.open("TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+
+
+    double ld = 375;
+    double tTiO2 = 180;
+    double d = 15;
+    double disp = 155;
+
+    Vector3d l;
+    Vector3d center;
+    l << ld / d, ld / d, tTiO2 / d;
+    //l << 40.0, 40.0, 8.0;
+    center << l(0) / 2, l(1) / 2, l(2) / 2;
+
+    int Nx, Ny, Nz;
+    //Nx = 103; Ny = 103; Nz = 16;
+    Nx = round(l(0) + 1); Ny = round(l(1) + 1); Nz = round(l(2) + 1);
+    cout << center << endl;
+    //Nx = 23; Ny = 23; Nz = 10;
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    Vector3i direction;
+
+    //l << 20.0, 20.0, 9.0;
+    //center << 10.0, 10.0, 4.5;
+    Structure s1(S.get_total_space(), l, center);
+
+
+
+    S = S + s1;
+
+    Vector2d center1, center2;
+    center1 << 100 / d, 100 / d;
+    center2 << (100 + disp * cos(70 * PI / 180)) / d, (100 + disp * sin(70 * PI / 180)) / d;
+    list<double> r_list{ 30 / d, 40 / d };
+    list<Vector2d> center_list{ center1, center2 };
+    list<string> initials_list{ "ZEROS", "ZEROS" };
+    double r = 150 / d;
+
+    Vector3i bind(1, 1, round(l(2)));
+    //SpacePara spacepara(&S, bind, "ONES", "ZEROS", r);
+
+
+    SpacePara spacepara(&S, bind, "ONES", &initials_list, &r_list, &center_list);
+
+
+    double E0 = 1.0;
+
+
+    double epsilon = 0.2;
+    //double epsilon = 1;
+
+    //double focus = (l(2) + 2) * d;   //nm       
+    //double focus = (l(2) + 2) * d;
+    //cout << focus << endl;
+
+    int MAX_ITERATION_DDA = 10000;
+    double MAX_ERROR = 0.00001;
+    int MAX_ITERATION_EVO = 500;
+
+    list<string> ObjectFunctionNames{ "IntegratedE" };
+
+
+    Vector3d n_K;
+    Vector3d n_E0;
+
+    n_K << 0.0, 0.0, -1.0;
+    n_E0 << 1.0, 0.0, 0.0;
+
+
+    list<DDAModel> ModelList;
+    list<DDAModel*> ModelpointerList;
+
+    double lam_min = 630;
+    double lam_max = 730;
+    double lam_interval = 1;
+    int lam_num = round((lam_max - lam_min) / lam_interval) + 1;
+
+    CoreStructure CStr(&spacepara, d);
+    string save_position = ".\\dimer-wavelengthscan-d=15\\";
+    string name = save_position + "IntegratedEwavedepend=" + to_string(d) + ".txt";
+
+    CStr.output_to_file(save_position, 0);
+    //S.show_something_about_Structures();
+    ofstream fout(name);
+
+    for (int i = 0; i <= lam_num; i++) {
+        double lam = lam_min + i * lam_interval;
+        Vector2cd material;
+        material = Get_2_material("Air", "TiO2", lam, "nm");
+        int m, n;
+        double Lm, Ln;
+        m = 50;
+        n = 50;
+        Lm = (Nx + 1) * d;
+        Ln = (Ny + 1) * d;
+        AProductCore Core(&CStr, lam, material, m, n, Lm, Ln, "FCD");
+        DDAModel TestModel(&Core, n_K, E0, n_E0);
+        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel.update_E_in_structure();
+        TestModel.solve_E();
+        TestModel.output_to_file(save_position, 0, lam);
+
+        VectorXcd* E_internal = TestModel.get_Einternal();
+        VectorXi* R = CStr.get_R();
+        N = CStr.get_N();
+        double E_int = 0.0;
+        for (int j = 0; j < N; j++) {
+            if ((*R)(3 * j + 2) >= 0) {
+                double E_sum_temp = 0;
+                for (int k = 0; k < 3; k++) {
+                    E_sum_temp += pow(abs((*E_internal)(3 * j + k)), 2);
+                }
+
+                E_int += pow(E_sum_temp, 3 / 2) * ((*(CStr.get_diel_old()))(j * 3));  //prevent nan result for devp calculation.
+
+
+            }
+        }
+
+        E_int = log(E_int * pow(d, 3));   //unit: nm^3
+        cout << "E_int" << E_int << endl;
+        fout << lam << " " << E_int << endl;
+    }
+    fout.close();
+
+
+    //AProductCore Core1(&CStr, lam(0), material, "LDR")
+
+
+
+
+
+
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
+
+    return 0;
+
+}
+
+//2021-6-20 feeding heterodimer back d=10
+int main() {
+
+    ofstream TotalTime;
+    TotalTime.open("TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+
+
+    double ld = 375;
+    double tTiO2 = 180;
+    double d = 10;
+    double disp = 155;
+
+    Vector3d l;
+    Vector3d center;
+    l << ld / d, ld / d, tTiO2 / d;
+    //l << 40.0, 40.0, 8.0;
+    center << l(0) / 2, l(1) / 2, l(2) / 2;
+
+    int Nx, Ny, Nz;
+    //Nx = 103; Ny = 103; Nz = 16;
+    Nx = round(l(0) + 1); Ny = round(l(1) + 1); Nz = round(l(2) + 1);
+    cout << center << endl;
+    //Nx = 23; Ny = 23; Nz = 10;
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    Vector3i direction;
+
+    //l << 20.0, 20.0, 9.0;
+    //center << 10.0, 10.0, 4.5;
+    Structure s1(S.get_total_space(), l, center);
+
+
+
+    S = S + s1;
+
+    Vector2d center1, center2;
+    center1 << round(115 / d), round(115 / d);
+    center2 << round(center1(0) + disp * cos(70 * PI / 180) / d), round(center1(1) + disp * sin(70 * PI / 180) / d);
+    list<double> r_list{ 30 / d, 40 / d };
+    list<Vector2d> center_list{ center1, center2 };
+    list<string> initials_list{ "ZEROS", "ZEROS" };
+    double r = 150 / d;
+
+    Vector3i bind(1, 1, round(l(2)));
+    //SpacePara spacepara(&S, bind, "ONES", "ZEROS", r);
+
+
+    SpacePara spacepara(&S, bind, "ONES", &initials_list, &r_list, &center_list);
+
+
+    double E0 = 1.0;
+
+
+    double epsilon = 0.2;
+    //double epsilon = 1;
+
+    //double focus = (l(2) + 2) * d;   //nm       
+    //double focus = (l(2) + 2) * d;
+    //cout << focus << endl;
+
+    int MAX_ITERATION_DDA = 10000;
+    double MAX_ERROR = 0.00001;
+    int MAX_ITERATION_EVO = 500;
+
+    list<string> ObjectFunctionNames{ "IntegratedE" };
+
+
+    Vector3d n_K;
+    Vector3d n_E0;
+
+    n_K << 0.0, 0.0, -1.0;
+    n_E0 << 1.0, 0.0, 0.0;
+
+
+    list<DDAModel> ModelList;
+    list<DDAModel*> ModelpointerList;
+
+    double lam_min = 630;
+    double lam_max = 660;
+    double lam_interval = 1;
+    int lam_num = round((lam_max - lam_min) / lam_interval) + 1;
+
+    CoreStructure CStr(&spacepara, d);
+    string save_position = ".\\dimer-wavelengthscan-d=10\\";
+    string name = save_position + "IntegratedEwavedepend=" + to_string(d) + ".txt";
+
+    CStr.output_to_file(save_position, 0);
+    //S.show_something_about_Structures();
+    ofstream fout(name);
+
+    for (int i = 0; i <= lam_num; i++) {
+        double lam = lam_min + i * lam_interval;
+        Vector2cd material;
+        material = Get_2_material("Air", "TiO2", lam, "nm");
+        int m, n;
+        double Lm, Ln;
+        m = 50;
+        n = 50;
+        Lm = (Nx + 1) * d;
+        Ln = (Ny + 1) * d;
+        AProductCore Core(&CStr, lam, material, m, n, Lm, Ln, "FCD");
+        DDAModel TestModel(&Core, n_K, E0, n_E0);
+        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel.update_E_in_structure();
+        TestModel.solve_E();
+        TestModel.output_to_file(save_position, 0, lam);
+
+        VectorXcd* E_internal = TestModel.get_Einternal();
+        VectorXi* R = CStr.get_R();
+        N = CStr.get_N();
+        double E_int = 0;
+        for (int j = 0; j < N; j++) {
+            if ((*R)(3 * j + 2) >= 0) {
+                double E_sum_temp = 0;
+                for (int k = 0; k < 3; k++) {
+                    E_sum_temp += pow(abs((*E_internal)(3 * j + k)), 2);
+                }
+
+                E_int += pow(E_sum_temp, 2) * ((*(CStr.get_diel_old()))(j * 3) + 0.0001) / 4.0;  //prevent nan result for devp calculation.
+                //cout << "j: " << j << " " << E_int << endl;
+
+            }
+        }
+
+        E_int = log(E_int);
+        cout << "E_int" << E_int << endl;
+        fout << lam << " " << E_int << endl;
+    }
+    fout.close();
+
+
+    //AProductCore Core1(&CStr, lam(0), material, "LDR")
+
+
+
+
+
+
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
+
+    return 0;
+
+}
+
+//2021-6-21 import structure from binary files converted from COMSOL and do DDA calculation
+int main() {
+
+    ofstream TotalTime;
+    TotalTime.open("TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+
+
+    string open_position = ".\\170-air-d=10\\";
+    string name1 = open_position + "CoreStructre-fromComsol-170air.txt";
+
+    ifstream fin1(name1);
+    int Nx, Ny, Nz;
+    int Ntmp;
+    fin1 >> Nx;
+    fin1 >> Ny;
+    fin1 >> Nz;
+    fin1 >> Ntmp;
+    VectorXi geometry = VectorXi::Zero(3 * Ntmp);
+    for (int i = 0; i <= Ntmp - 1; i++) {
+        fin1 >> geometry(3 * i);
+        fin1 >> geometry(3 * i + 1);
+        fin1 >> geometry(3 * i + 2);
+    }
+    double d;
+    fin1 >> d;
+    fin1.close();
+
+
+    string name2, name3, name4;
+    name2 = open_position + "geometryPara-fromComsol-170air.txt";
+    name3 = open_position + "Para-fromComsol-170air.txt";
+    name4 = open_position + "bind-fromComsol-170air.txt";
+    ifstream fin2(name2), fin3(name3), fin4(name4);
+
+    VectorXi geometryPara = VectorXi::Zero(Ntmp);
+    int parasize;
+    fin3 >> parasize;
+    VectorXd Para = VectorXd::Zero(parasize);
+    Vector3i bind = Vector3i::Zero();
+    for (int i = 0; i <= Ntmp - 1; i++) {
+        fin2 >> geometryPara(i);
+    }
+    for (int i = 0; i <= parasize - 1; i++) {
+        fin3 >> Para(i);
+    }
+    for (int i = 0; i <= 2; i++) {
+        fin4 >> bind(i);
+    }
+    fin2.close();
+    fin3.close();
+    fin4.close();
+
+
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    Structure s1(S.get_total_space(), &geometry);
+
+    S = S + s1;
+
+
+    SpacePara spacepara(&S, bind, &geometryPara, &Para);
+
+
+    double E0 = 1.0;
+
+
+    double epsilon = 0.2;
+    //double epsilon = 1;
+
+    //double focus = (l(2) + 2) * d;   //nm       
+    //double focus = (l(2) + 2) * d;
+    //cout << focus << endl;
+
+    int MAX_ITERATION_DDA = 10000;
+    double MAX_ERROR = 0.00001;
+    int MAX_ITERATION_EVO = 500;
+
+    list<string> ObjectFunctionNames{ "IntegratedE" };
+
+
+    Vector3d n_K;
+    Vector3d n_E0;
+
+    n_K << 0.0, 0.0, -1.0;
+    n_E0 << 1.0, 0.0, 0.0;
+
+
+    list<DDAModel> ModelList;
+    list<DDAModel*> ModelpointerList;
+
+    double lam_min = 600;
+    double lam_max = 680;
+    double lam_interval = 1;
+    int lam_num = round((lam_max - lam_min) / lam_interval) + 1;
+
+    CoreStructure CStr(&spacepara, d);
+    string save_position = ".\\170-air-d=10\\";
+    string name = save_position + "IntegratedEwavedepend=" + to_string(d) + ".txt";
+
+    CStr.output_to_file(save_position, 0);
+    //S.show_something_about_Structures();
+    ofstream fout(name);
+
+    for (int i = 0; i <= lam_num; i++) {
+        double lam = lam_min + i * lam_interval;
+        Vector2cd material;
+        material = Get_2_material("Air", "TiO2", lam, "nm");
+        int m, n;
+        double Lm, Ln;
+        m = 50;
+        n = 50;
+        Lm = (Nx + 1) * d;
+        Ln = (Ny + 1) * d;
+        AProductCore Core(&CStr, lam, material, m, n, Lm, Ln, "FCD");
+        DDAModel TestModel(&Core, n_K, E0, n_E0);
+        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel.update_E_in_structure();
+        TestModel.solve_E();
+        TestModel.output_to_file(save_position, 0, lam);
+
+        VectorXcd* E_internal = TestModel.get_Einternal();
+        VectorXi* R = CStr.get_R();
+        N = CStr.get_N();
+        double E_int = 0.0;
+        for (int j = 0; j < N; j++) {
+            if ((*R)(3 * j + 2) >= 0) {
+                double E_sum_temp = 0;
+                for (int k = 0; k < 3; k++) {
+                    E_sum_temp += pow(abs((*E_internal)(3 * j + k)), 2);
+                }
+
+                E_int += pow(E_sum_temp, 3 / 2) * ((*(CStr.get_diel_old()))(j * 3));  //prevent nan result for devp calculation.
+
+
+            }
+        }
+
+        E_int = log(E_int * pow(d, 3));   //unit: nm^3
+        cout << "E_int" << E_int << endl;
+        fout << lam << " " << E_int << endl;
+    }
+    fout.close();
+
+
+    //AProductCore Core1(&CStr, lam(0), material, "LDR")
+
+
+
+
+
+
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
+
+    return 0;
+
+}
+

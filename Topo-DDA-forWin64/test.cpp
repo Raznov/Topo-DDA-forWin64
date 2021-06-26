@@ -1,4 +1,6 @@
 ﻿#include "definition.h"
+#define PI 3.14159265
+
 
 int main() {
 
@@ -7,10 +9,14 @@ int main() {
     high_resolution_clock::time_point t_start = high_resolution_clock::now();
 
 
+    double ld = 375;
+    double tTiO2 = 180;
+    double d = 10;
+    double disp = 155;
 
     Vector3d l;
     Vector3d center;
-    l << 21.0, 21.0, 9.0;
+    l << ld / d, ld / d, tTiO2 / d;
     //l << 40.0, 40.0, 8.0;
     center << l(0) / 2, l(1) / 2, l(2) / 2;
 
@@ -33,13 +39,20 @@ int main() {
 
 
     S = S + s1;
-    double d = 15;
+
+    Vector2d center1, center2;
+    center1 << round(115 / d), round(115 / d);
+    center2 << round(center1(0) + disp * cos(70 * PI / 180) / d), round(center1(1) + disp * sin(70 * PI / 180) / d);
+    list<double> r_list{ 30 / d, 40 / d };
+    list<Vector2d> center_list{ center1, center2 };
+    list<string> initials_list{ "ZEROS", "ZEROS" };
     double r = 150 / d;
 
-    Vector3i bind(1, 1, 10);
-    SpacePara spacepara(&S, bind, "ONES", "ZEROS", r);
+    Vector3i bind(1, 1, round(l(2)));
+    //SpacePara spacepara(&S, bind, "ONES", "ZEROS", r);
 
-    //SpacePara spacepara(&S, bind, "RANDOM");
+
+    SpacePara spacepara(&S, bind, "ONES", &initials_list, &r_list, &center_list);
 
 
     double E0 = 1.0;
@@ -49,8 +62,8 @@ int main() {
     //double epsilon = 1;
 
     //double focus = (l(2) + 2) * d;   //nm       
-    double focus = (l(2) + 2) * d;
-    cout << focus << endl;
+    //double focus = (l(2) + 2) * d;
+    //cout << focus << endl;
 
     int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
@@ -58,132 +71,73 @@ int main() {
 
     list<string> ObjectFunctionNames{ "IntegratedE" };
 
-    double exponent = 2;
-    double ratio = 4;
-
-    list<double> ObjectParameter{ 70.0 };
-
-    bool HavePathRecord = false;
-    bool HavePenalty = false;
-    bool HaveOriginHeritage = false;
-    bool HaveAdjointHeritage = false;
-    double PenaltyFactor = 1;
-    list<list<double>*> ObjectParameters{ &ObjectParameter };
-    string save_position = ".\\p330-lam542-beta7-TiO2-InE-circle-verify\\";
 
     Vector3d n_K;
     Vector3d n_E0;
 
+    n_K << 0.0, 0.0, -1.0;
+    n_E0 << 1.0, 0.0, 0.0;
 
 
     list<DDAModel> ModelList;
     list<DDAModel*> ModelpointerList;
 
-    ofstream AngleInfo(save_position + "AngleInfo.txt");
-    ofstream nEInfo(save_position + "nEInfo.txt");
-
-    int theta_num = 1;
-    VectorXd theta(theta_num);
-    theta << 0;
-    int phi_num = 1;
-    VectorXd phi(phi_num);
-    phi << 0;
-    int lam_num = 1;
-    VectorXd lam(lam_num);
-    lam << 542;
+    double lam_min = 630;
+    double lam_max = 700;
+    double lam_interval = 1;
+    int lam_num = round((lam_max - lam_min) / lam_interval) + 1;
 
     CoreStructure CStr(&spacepara, d);
-    list<AProductCore> CoreList;
-    list<AProductCore*> CorePointList;
-    Vector2cd material;
-    material = Get_2_material("Air", "TiO2", lam(0), "nm");
-    //AProductCore Core1(&CStr, lam(0), material, "LDR");
+    string save_position = ".\\dimer-wavelengthscan-d=10\\";
+    string name = save_position + "IntegratedEwavedepend=" + to_string(d) + ".txt";
 
-    int m, n;
-    double Lm, Ln;
-    m = 50;
-    n = 50;
-    Lm = 22 * d;
-    Ln = 22 * d;
-    AProductCore Core1(&CStr, lam(0), material, m, n, Lm, Ln, "FCD");
-    //AProductCore Core1(&CStr, lam(0), material, "FCD");
-    //material = Get_2_material("Air", "2.5", lam(1), "nm");
-    //AProductCore Core2(&CStr, lam(1), material, "LDR");
-    //material = Get_2_material("Air", "2.5", lam(2), "nm");
-    //AProductCore Core3(&CStr, lam(2), material, "LDR");
-    CorePointList.push_back(&Core1);
-    //CorePointList.push_back(&Core2);
-    //CorePointList.push_back(&Core3);
+    CStr.output_to_file(save_position, 0);
+    //S.show_something_about_Structures();
+    ofstream fout(name);
 
-    /*
-    for (int k = 0; k <= lam_num - 1; k++) {
-        Vector2cd material = Get_2_material("Air", "SiO2", lam(k), "nm");
-        AProductCore Core_tmp(&CStr, lam(k), material);
-        CoreList.push_back(Core_tmp);
-    }
-    */
+    for (int i = 0; i <= lam_num; i++) {
+        double lam = lam_min + i * lam_interval;
+        Vector2cd material;
+        material = Get_2_material("Air", "TiO2", lam, "nm");
+        int m, n;
+        double Lm, Ln;
+        m = 50;
+        n = 50;
+        Lm = (Nx + 1) * d;
+        Ln = (Ny + 1) * d;
+        AProductCore Core(&CStr, lam, material, m, n, Lm, Ln, "FCD");
+        DDAModel TestModel(&Core, n_K, E0, n_E0);
+        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel.update_E_in_structure();
+        TestModel.solve_E();
+        TestModel.output_to_file(save_position, 0, lam);
 
-    list<AProductCore*>::iterator it = CorePointList.begin();
-    for (int k = 0; k <= lam_num - 1; k++) {
-        AProductCore* Core = (*it);
-        for (int i = 0; i <= theta_num - 1; i++) {
-            for (int j = 0; j <= phi_num - 1; j++) {
-                if (theta(i) != 0) {
-                    double theta_tmp = theta(i) * M_PI / 180;
-                    double phi_tmp = phi(j) * M_PI / 180;
-                    n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
-                    n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
-                    if (CheckPerp(n_E0, n_K) == false) {
-                        cout << "----------------------------------------theta" << theta[i] << "phi" << phi[j] << "Not perpendicular---------------------------------------" << endl;
-                    }
-                    if (k == 0) {
-                        AngleInfo << theta[i] << endl;
-                        AngleInfo << phi[j] << endl;
-                        nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
-                    }
-                    DDAModel Model(Core, n_K, E0, n_E0);
-                    ModelList.push_back(Model);
+        VectorXcd* E_internal = TestModel.get_Einternal();
+        VectorXi* R = CStr.get_R();
+        N = CStr.get_N();
+        double E_int = 0;
+        for (int j = 0; j < N; j++) {
+            if ((*R)(3 * j + 2) >= 0) {
+                double E_sum_temp = 0;
+                for (int k = 0; k < 3; k++) {
+                    E_sum_temp += pow(abs((*E_internal)(3 * j + k)), 2);
                 }
+
+                E_int += pow(E_sum_temp, 3 / 2) * ((*(CStr.get_diel_old()))(j * 3));  
+                //cout << "j: " << j << " " << E_int << endl;
+
             }
         }
 
-        double theta_tmp = 0 * M_PI / 180;
-        double phi_tmp = 0 * M_PI / 180;
-        n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
-        n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
-        if (CheckPerp(n_E0, n_K) == false) {
-            cout << "----------------------------------------theta" << 0 << "phi" << 0 << "Not perpendicular---------------------------------------" << endl;
-        }
-        if (k == 0) {
-            AngleInfo << 0.0 << endl;
-            AngleInfo << 0.0 << endl;
-            nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
-        }
-        DDAModel Model(Core, n_K, E0, n_E0);
-        ModelList.push_back(Model);
-
-        it++;
+        E_int = log(E_int * pow(d, 3));
+        cout << "E_int" << E_int << endl;
+        fout << lam << " " << E_int << endl;
     }
+    fout.close();
 
 
-    cout << "nK" << n_K << endl;
-    cout << "nE0" << n_E0 << endl;
+    //AProductCore Core1(&CStr, lam(0), material, "LDR")
 
-    AngleInfo.close();
-    nEInfo.close();
-    cout << "Number of DDA Model : " << ModelList.size() << endl;
-
-    list<DDAModel>::iterator it1 = ModelList.begin();
-    for (int i = 0; i <= ModelList.size() - 1; i++) {
-        ModelpointerList.push_back(&(*it1));
-        it1++;
-    }
-
-
-    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, &CStr, ModelpointerList);
-
-
-    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
 
 
 
@@ -197,7 +151,6 @@ int main() {
     return 0;
 
 }
-
 
 
 

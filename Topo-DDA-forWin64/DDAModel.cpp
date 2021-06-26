@@ -163,17 +163,17 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     VectorXcd Ap = VectorXcd::Zero(N*3);
     VectorXcd At = VectorXcd::Zero(N*3);
     for (int it=0;it<=MAX_ITERATION-1;it++) {
-        if (verbose && (it+1)%10000==0) {
-            cout << "r.norm(): " << r.norm() << endl;
-            cout << "E.norm(): " << E.norm() << endl;
+        if (verbose && (it+1)%1000==0) {
+            //cout << "r.norm(): " << r.norm() << endl;
+            //cout << "E.norm(): " << E.norm() << endl;
             cout << "                Iter " << it+1 << ", error=" << r.norm()/E.norm() << " MAX_ERROR="<<MAX_ERROR<<endl;
         }
 
         complex<double> r0dotrl = r0.dot(rl);
         if (r0dotrl.real() == 0 && r0dotrl.imag() == 0) {
             Error = r.norm() / E.norm();
-            cout << "r.norm(): " << r.norm() << endl;
-            cout << "E.norm(): " << E.norm() << endl;
+            //cout << "r.norm(): " << r.norm() << endl;
+            //cout << "E.norm(): " << E.norm() << endl;
             ITERATION = it + 1;
             if (verbose) {
                 high_resolution_clock::time_point t_end = high_resolution_clock::now();

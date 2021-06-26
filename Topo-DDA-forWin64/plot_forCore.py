@@ -206,7 +206,7 @@ EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot)
 
 """
 #Code used for taking a look at the geometry you built
-                          
+                                   
 data=np.genfromtxt("Space.txt",dtype=complex)
 N=int(np.real(data[3]))
 geometry=np.real(data[4:(3*N+4)]).astype(int)
@@ -221,7 +221,7 @@ Shape(geometry,para, d)
 
 #final, pos=input().split()
 
-
+"""
 if __name__ == "__main__":
 
     objective_number = 1
@@ -232,7 +232,6 @@ if __name__ == "__main__":
     it = 0
     dec = 5
     
-
     if objective_number == 1:
         convergence=np.genfromtxt(pos+"convergence.txt")
         fig=plt.figure()
@@ -246,6 +245,7 @@ if __name__ == "__main__":
             plt.plot(np.arange(len(convergence)),convergence[:,i])
             plt.xlim = (0,len(convergence)-1)
             plt.savefig(pos+"convergence_{}.png".format(i))
+
     for filename in sorted(os.listdir(pos+"Model_output"), key = lambda x: int(x[13:x.index(".txt")])):
         if filename.endswith(".txt"):
             print(filename)
@@ -271,6 +271,42 @@ if __name__ == "__main__":
             #    EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
 
             it += 1
+"""
+
+
+
+
+#For Single DDA calculation using CoreSturcutre to see the geometry
+if __name__ == "__main__":
+
+    objective_number = 1
+    pos=".\\" + sys.argv[1] + "\\"
+    filename=sys.argv[2]+".txt"
+
+    it = 0
+    dec = 5
+
+    
+    print(filename)
+    data=np.genfromtxt(os.path.join(pos, filename),dtype=complex)
+    N=int(np.real(data[3]))
+    #print(np.real(data[(3*N+4):(6*N+4)]))
+    geometry=np.real(data[4:(3*N+4)]).astype(int)
+    #polarization=data[(3*N+4):(6*N+4)]
+    diel=np.real(data[(3*N+4):(6*N+4)])
+    d=np.real(data[6*N+4])
+    #wl=np.real(data[9*N+5])
+    #k_dir=np.real(data[(9*N+6):(9*N+9)])
+    #E_dir=np.real(data[(9*N+9):(9*N+12)])
+    #N_plot=int(np.real(data[(9*N+12)]))
+    #geometry_plot=np.real(data[(9*N+13):(9*N+13+N_plot)]).astype(int)
+    #E_tot=data[(9*N+13+N_plot):(9*N+13+2*N_plot)]
+    ##print(6*N,N_plot,data.shape,E_tot.shape)
+    Shape(geometry, diel, d, iteration=it, position=pos+"Shape/", decimal=dec, FullLattice=False)
+    Shape(geometry, diel, d, iteration=it, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
+
+    #if(it==99):
+    #    EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
 
 
 """

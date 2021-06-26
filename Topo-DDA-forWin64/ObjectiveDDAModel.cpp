@@ -196,7 +196,7 @@ double ObjectiveIntegratedEDDAModel::GroupResponse() {
     double diel_sum = 0;
     
     for (int i = 0; i < N; i++) {
-        if ((*R)(3*i+2) >= 9) {
+        if ((*R)(3*i+2) >= 8) {
             double E_sum_temp = 0;
             for (int j = 0; j < 3; j++) {
                 E_sum_temp += pow(abs(E(3 * i + j)), 2);
