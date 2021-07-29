@@ -43,8 +43,10 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
         E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
     }
     al = VectorXcd::Zero(N*3);
+    diel = VectorXcd::Zero(N * 3);
     for (int i = 0; i < N * 3; i++) {
         std::complex<double> diel_tmp = (*material)(0) + (*diel_old)(i) * ((*material)(1) - (*material)(0));
+        diel(i) = diel_tmp;
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }  
 
@@ -98,8 +100,10 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
         E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
     }
     al = VectorXcd::Zero(N * 3);
+    diel = VectorXcd::Zero(N * 3);
     for (int i = 0; i < N * 3; i++) {
         std::complex<double> diel_tmp = (*material)(0) + (*diel_old)(i) * ((*material)(1) - (*material)(0));
+        diel(i) = diel_tmp;
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }
     al_max = al;
@@ -453,6 +457,7 @@ void DDAModel::UpdateAlpha() {
     double d = (*Core).get_d();
     for (int i = 0; i <= (*diel_old).size() - 1; i++) {
         std::complex<double> diel_tmp = (*material)(0) + (*diel_old)(i) * ((*material)(1) - (*material)(0));
+        diel(i) = diel_tmp;
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }
 }
@@ -496,9 +501,11 @@ void DDAModel::solve_E(){
 
 void DDAModel::update_E_in_structure(){
     int N = (*Core).get_N();
+    
     for(int i=0;i<=3*N-1;i++){
-
-        Einternal(i)=al(i)*P(i);
+        std::complex<double> lorentzfactor = 2.0 + diel(i);
+        lorentzfactor = lorentzfactor / 3.0;
+        Einternal(i) = al(i) * P(i)/lorentzfactor;
     }
 }
 

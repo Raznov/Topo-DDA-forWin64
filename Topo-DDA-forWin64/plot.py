@@ -86,7 +86,7 @@ def Shape(geometry,diel,d,iteration=-1,position="./",decimal=0,FullLattice=False
         plt.savefig(position+"{}Space.png".format(str(iteration).zfill(decimal))) 
     #plt.show()
 
-def EField(geometry,diel,d,wl,k_dir,E_dir,E_tot,iteration=-1,position="./",decimal=0,FullLattice=False):
+def EField(geometry,diel,d,k_dir,E_dir,E_tot,iteration=-1,position="./",decimal=0,FullLattice=False):
     """Plot the E field of object as arrow matrix.
     # Input:
     # --SC         SolutionClass
@@ -97,7 +97,7 @@ def EField(geometry,diel,d,wl,k_dir,E_dir,E_tot,iteration=-1,position="./",decim
     #print(geometry)
 
     N=round(np.shape(geometry)[0]/3)
-    #print(N)
+    print(N)
     geometry=np.reshape(geometry,(N,3))
     
     print(geometry.shape)
@@ -112,6 +112,8 @@ def EField(geometry,diel,d,wl,k_dir,E_dir,E_tot,iteration=-1,position="./",decim
     [X,Y,Z] = list(np.amax(geometry,axis=0)+1)
     Axis_max = max(X,Y,Z)*1.2*d
     
+    print("{}, {}, {}".format(X,Y,Z))
+
     E_tot = E_tot.reshape(int(E_tot.size/3),3)
     E_tot_abs = np.abs(np.sqrt(np.sum((E_tot)**2,axis=1)))
     
@@ -143,7 +145,9 @@ def EField(geometry,diel,d,wl,k_dir,E_dir,E_tot,iteration=-1,position="./",decim
     ax1.set_ylabel("y[nm]")
     ax1.set_zlabel("z[nm]")
     ax1.grid(False)
-    fig1.suptitle("E field - Arrow plot\n {}nm, {}".format(wl,E_dir))
+    fig1.suptitle("E field - Arrow plot\n {}".format(E_dir))
+    plt.savefig("E_field_arrow.png")
+
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111, projection='3d')
     geo_dic = set()
@@ -176,31 +180,98 @@ def EField(geometry,diel,d,wl,k_dir,E_dir,E_tot,iteration=-1,position="./",decim
     ax2.grid(False)
     fig2.colorbar(colorset, shrink=0.9, aspect=10)
     if iteration==-1:
-        fig2.suptitle("E field - Scatter plot\n {}nm, {}".format(wl,k_dir)) 
+        fig2.suptitle("E field - Scatter plot\n, {}".format(k_dir)) 
         plt.savefig("E_field.png")
     else:
-        fig2.suptitle("E field - Scatter plot\n {}nm, {} - iteration{}".format(wl,k_dir,iteration)) 
+        fig2.suptitle("E field - Scatter plot\n, {} - iteration{}".format(k_dir,iteration)) 
         plt.savefig(position+"{}E_field.png".format(str(iteration).zfill(decimal)))
-    #plt.show()
+    plt.show()
+
+
+    """Plot the E field of object as arrow matrix.
+    # Input:
+    # --SC         SolutionClass
+    #   Solved Solution Class.
+    # --idx1,idx2  int
+    #   Indexs of the target instance.
+    """
+
+def EField_slice(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1,iteration=-1,position="./",decimal=0,FullLattice=False):
+    """Plot the E field of object as arrow matrix.
+    # Input:
+    # --SC         SolutionClass
+    #   Solved Solution Class.
+    # --idx1,idx2  int
+    #   Indexs of the target instance.
+    """
+    #print(geometry)
+
+    N=round(np.shape(geometry)[0]/3)
+    print(N)
+    geometry=np.reshape(geometry,(N,3))
+    
+    print(geometry.shape)
+    #diel=np.reshape(diel,(N,3))
+    #diel=diel[:,0]
+    
+
+    for i in range(3):
+        geometry[:,i] -= np.amin(geometry[:,i])
+    
+    #print(geometry)
+    [X,Y,Z] = list(np.amax(geometry,axis=0)+1)
+    Axis_max = max(X,Y,Z)*1.2*d
+    
+    print("{}, {}, {}".format(X,Y,Z))
+
+    E_tot = E_tot.reshape(int(E_tot.size/3),3)
+    E_tot_abs = np.abs(np.sqrt(np.sum((E_tot)**2,axis=1)))
+    slicedim=-1
+    
+
+    if Xslice!=-1:
+        slicedim=0
+        Eslice=np.zeros((Y, Z))
+    if Yslice!=-1:
+        slicedim=1
+        Eslice=np.zeros((Z, X))
+    if Zslice!=-1:
+        slicedim=2
+        Eslice=np.zeros((X, Y))
+    
+    slicepos= max([Xslice, Yslice, Zslice])
+    for i, ele in enumerate(E_tot_abs):
+        if geometry[i][slicedim]==slicepos:
+            Eslice[geometry[i][slicedim-2]][geometry[i][slicedim-1]]=ele
+    
+    fig1 = plt.figure()
+    plt.imshow(Eslice, cmap='jet', interpolation='bilinear')
+    plt.colorbar()
+    plt.savefig(position+"Model{} E_slice_{}.png".format(iteration, (["X", "Y", "Z"])[slicedim]))
+
+    
+
+    
 
 """
 #Code used for single DDA calculation or if you only wants to see the final results for Evooptimization
-data=np.genfromtxt("Model_results.txt",dtype=complex)
-N=int(np.real(data[3]))
-#print(np.real(data[(3*N+4):(6*N+4)]))
-geometry=np.real(data[4:(3*N+4)]).astype(int)
-polarization=data[(3*N+4):(6*N+4)]
-diel=np.real(data[(6*N+4):(9*N+4)])
-d=np.real(data[9*N+4])
-wl=np.real(data[9*N+5])
-k_dir=np.real(data[(9*N+6):(9*N+9)])
-E_dir=np.real(data[(9*N+9):(9*N+12)])
-#E_tot=(data[(6*N+12):(9*N+12)])
-N_plot=int(np.real(data[(9*N+12)]))
-geometry_plot=np.real(data[(9*N+13):(9*N+13+N_plot)]).astype(int)
-E_tot=(data[(9*N+13+N_plot):(9*N+13+2*N_plot)])
-Shape(geometry, diel, d)
-EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot)
+pos="./" + sys.argv[1] + "/"
+CoreStructure=np.genfromtxt(os.path.join(pos+"Model_output","CoreStructure0.txt"),dtype=complex)
+Modelresults=np.genfromtxt(os.path.join(pos+"Model_output","Model_results0it0.txt"),dtype=complex)
+N=int(np.real(CoreStructure[3]))
+geometry=np.real(CoreStructure[4:(3*N+4)]).astype(int)
+diel=np.real(CoreStructure[(3*N+4):(6*N+4)])
+d=np.real(CoreStructure[6*N+4])
+
+k_dir=np.real(Modelresults[(3*N):(3*N+3)])
+E_dir=np.real(Modelresults[(3*N+3):(3*N+6)])
+
+E_tot=(Modelresults[(6*N+7):(9*N+7)])
+#Shape(geometry, diel, d)
+
+yslice=35
+
+EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, Yslice=yslice,position=pos)
 """
 
 
@@ -221,7 +292,7 @@ Shape(geometry,para, d)
 
 #final, pos=input().split()
 
-
+"""
 if __name__ == "__main__":
 
     objective_number = 1
@@ -271,7 +342,7 @@ if __name__ == "__main__":
             #    EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
 
             it += 1
-
+"""
 
 """
 pos="./theta0phi0-lam500-size1000-d12d5-1-diel4-FCD/"
@@ -281,3 +352,93 @@ plt.plot(np.arange(len(convergence)),convergence)
 plt.xlim = (0,len(convergence)-1)
 plt.savefig(pos+"convergence.png")
 """
+
+
+#For Single DDA calculation using CoreSturcutre to see the geometry
+"""
+if __name__ == "__main__":
+
+    objective_number = 1
+    pos=".\\" + sys.argv[1] + "\\"
+    filename=sys.argv[2]+".txt"
+
+    it = 0
+    dec = 5
+
+    
+    print(filename)
+    data=np.genfromtxt(os.path.join(pos, filename),dtype=complex)
+    N=int(np.real(data[3]))
+    #print(np.real(data[(3*N+4):(6*N+4)]))
+    geometry=np.real(data[4:(3*N+4)]).astype(int)
+    #polarization=data[(3*N+4):(6*N+4)]
+    diel=np.real(data[(3*N+4):(6*N+4)])
+    d=np.real(data[6*N+4])
+    #wl=np.real(data[9*N+5])
+    #k_dir=np.real(data[(9*N+6):(9*N+9)])
+    #E_dir=np.real(data[(9*N+9):(9*N+12)])
+    #N_plot=int(np.real(data[(9*N+12)]))
+    #geometry_plot=np.real(data[(9*N+13):(9*N+13+N_plot)]).astype(int)
+    #E_tot=data[(9*N+13+N_plot):(9*N+13+2*N_plot)]
+    ##print(6*N,N_plot,data.shape,E_tot.shape)
+    Shape(geometry, diel, d, iteration=it, position=pos+"Shape/", decimal=dec, FullLattice=False)
+    Shape(geometry, diel, d, iteration=it, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
+
+    #if(it==99):
+    #    EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
+"""
+
+
+#For several DDA calculation Structure
+"""
+if __name__ == "__main__":
+
+    objective_number = 1
+    pos="./" + sys.argv[1] + "/"
+    it_start = sys.argv[2]
+    it_end = sys.argv[3]
+
+    it = 0
+    dec = 5
+    for filename in sorted(os.listdir(pos+"CoreStructure"), key = lambda x: int(x[13:x.index(".txt")])):
+        if filename.endswith(".txt"):
+            print(filename)
+            data=np.genfromtxt(os.path.join(pos+"CoreStructure",filename),dtype=complex)
+            N=int(np.real(data[3]))
+            #print(np.real(data[(3*N+4):(6*N+4)]))
+            geometry=np.real(data[4:(3*N+4)]).astype(int)
+            #polarization=data[(3*N+4):(6*N+4)]
+            diel=np.real(data[(3*N+4):(6*N+4)])
+            d=np.real(data[6*N+4])
+            if(it >= int(it_start) and it <= int(it_end)):
+                Shape(geometry, diel, d, iteration=it, position=pos+"Shape/", decimal=dec, FullLattice=False)
+                Shape(geometry, diel, d, iteration=it, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
+
+            it += 1
+
+"""
+
+#For several DDA calculation E field
+
+if __name__ == "__main__":
+
+    objective_number = 1
+    pos="./" + sys.argv[1] + "/"
+    it_start = sys.argv[2]
+    it_end = sys.argv[3]
+
+    dec = 5
+    for it in range(int(it_start), int(it_end)+1):
+        pos="./" + sys.argv[1] + "/"
+        CoreStructure=np.genfromtxt(os.path.join(pos+"CoreStructure","CoreStructure"+str(it)+".txt"),dtype=complex)
+        Modelresults=np.genfromtxt(os.path.join(pos+"Model_output","Model_results"+str(it)+"it0.txt"),dtype=complex)
+        N=int(np.real(CoreStructure[3]))
+        geometry=np.real(CoreStructure[4:(3*N+4)]).astype(int)
+        diel=np.real(CoreStructure[(3*N+4):(6*N+4)])
+        d=np.real(CoreStructure[6*N+4])
+        k_dir=np.real(Modelresults[(3*N):(3*N+3)])
+        E_dir=np.real(Modelresults[(3*N+3):(3*N+6)])
+        E_tot=(Modelresults[(6*N+7):(9*N+7)])
+        zslice=10
+
+        EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")

@@ -48,7 +48,6 @@ VectorXd initial_diel_func(string initial_diel, int N) {
     }
     else if (initial_diel.compare("RANDOM") == 0) {
         diel = VectorXd::Zero(N);
-        srand((unsigned)(time(0)));
         for (int i = 0; i <= N - 1; i++) {
             double r = ((double)rand() / (RAND_MAX));
             diel(i) = r;
@@ -72,6 +71,10 @@ double initial_diel_func(string initial_diel) {
     }
     else if (initial_diel.compare("ONES") == 0) {
         return 1.0;
+    }
+    else if (initial_diel.compare("RANDOM") == 0) {
+        return ((double)rand() / (RAND_MAX));
+
     }
     else {
         cout << "The initial type given does not match any of the built in method" << endl;

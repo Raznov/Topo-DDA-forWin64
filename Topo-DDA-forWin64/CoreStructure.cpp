@@ -52,6 +52,25 @@ void CoreStructure::UpdateStr(VectorXd step) {
     }
 }
 
+void CoreStructure::UpdateStr(SpacePara* spacepara_){
+  
+    VectorXi* geometryPara = (*spacepara).get_geometryPara();
+    VectorXd* Para = (*spacepara).get_Para();
+    VectorXd* Parareplace = (*spacepara_).get_Para();
+    int Parasize = (*Para).size();
+    
+    for (int i = 0; i <= Parasize - 1; i++) {
+        (*Para)(i) = (*Parareplace)(i);
+    }
+    for (int i = 0; i <= N - 1; i++) {
+        int position = (*geometryPara)(i);
+        double value = (*Para)(position);
+        diel_old(3 * i) = value;
+        diel_old(3 * i + 1) = value;
+        diel_old(3 * i + 2) = value;
+    }
+}
+
 void CoreStructure::output_to_file() {
 
     ofstream fout("CoreStructure.txt");
@@ -66,7 +85,7 @@ void CoreStructure::output_to_file(string save_position, int iteration) {
 
     string name;
     //name=save_position+"AProductCoreit" + to_string(iteration) + ".txt";
-    name = save_position + "Model_output\\CoreStructure" + to_string(iteration) + ".txt";
+    name = save_position + "CoreStructure\\CoreStructure" + to_string(iteration) + ".txt";
     ofstream fout(name);
     fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
     fout << R << endl;

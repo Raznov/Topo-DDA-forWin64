@@ -121,11 +121,13 @@ public:
     SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_);
     SpacePara(Space* space_, Vector3i bind_, string initial_diel); //l, center similar to bulk build in Structure class. Every 'bind' nearby dipoles correspond 
                                                                     //to 1 parameter in this bulk. bind=(2,2,2): 2*2*2; bind=(1,1,3):1*1*3
-    SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r);   //ONly for 2d cylinder. r is raidus/d.
+    SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type);   //ONly for 2d cylinder or spheres. r is raidus/d.
 
     SpacePara(Space* space_, Vector3i bind_, string initial_diel_background, list<string>* initial_diel_list, list<double>* r_list, list<Vector2d>* center_list);
     //Build 2d cylinders with diel in the list, rest of the diel is the backgroudn diel.
 
+    SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2);  //random rect in a region with extruded 2D geometry
+    SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, VectorXi* geometryPara_);
 
     void ChangeBind(Vector3i bind_);                                  //Change bind number
     VectorXi cut(VectorXi* big, VectorXi* smalll);
@@ -180,6 +182,7 @@ private:
 public:
     CoreStructure(SpacePara* spacepara_, double d_);
     void UpdateStr(VectorXd step);
+    void UpdateStr(SpacePara* spacepara_);
     void output_to_file();
     void output_to_file(string save_position, int iteration);
 
@@ -283,6 +286,7 @@ private:
     VectorXcd Einternal;              //E field on structure points
     VectorXcd EResult;                //E field on designated points
     VectorXcd al;                       // 1 over alpha instead of alpha.
+    VectorXcd diel;                     //Real dielectric from diel_old. Needed to calculate the Lorentz factor.
     bool verbose;
     VectorXcd P_max;
     VectorXcd al_max;
