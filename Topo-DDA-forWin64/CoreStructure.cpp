@@ -81,17 +81,28 @@ void CoreStructure::output_to_file() {
     fout.close();
 }
 
-void CoreStructure::output_to_file(string save_position, int iteration) {
+void CoreStructure::output_to_file(string save_position, int iteration, string mode) {
 
-    string name;
-    //name=save_position+"AProductCoreit" + to_string(iteration) + ".txt";
-    name = save_position + "CoreStructure\\CoreStructure" + to_string(iteration) + ".txt";
-    ofstream fout(name);
-    fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
-    fout << R << endl;
-    fout << diel_old << endl;
-    fout << d << endl;
-    fout.close();
+    if (mode == "normal") {
+        string name;
+        //name=save_position+"AProductCoreit" + to_string(iteration) + ".txt";
+        name = save_position + "CoreStructure\\CoreStructure" + to_string(iteration) + ".txt";
+        ofstream fout(name);
+        fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
+        fout << R << endl;
+        fout << diel_old << endl;
+        fout << d << endl;
+        fout.close();
+    }
+    else {
+        string name;
+        //name=save_position+"AProductCoreit" + to_string(iteration) + ".txt";
+        name = save_position + "CoreStructure\\CoreStructure" + to_string(iteration) + ".txt";
+        ofstream fout(name);
+        fout << diel_old << endl;
+        fout.close();
+    }
+    
 
     //-------------------------------Following for intermediate restart (output the structure and restart as initial in another calculation)--------------------
     /*

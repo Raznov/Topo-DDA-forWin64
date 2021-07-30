@@ -184,7 +184,7 @@ public:
     void UpdateStr(VectorXd step);
     void UpdateStr(SpacePara* spacepara_);
     void output_to_file();
-    void output_to_file(string save_position, int iteration);
+    void output_to_file(string save_position, int iteration, string mode = "normal");
 
     int get_N();
     int get_Nx();
@@ -310,6 +310,7 @@ public:
     VectorXcd Aproductwithalb(VectorXcd& b);                    //add the al*b term on base of AproductCore
     void output_to_file();
     void output_to_file(string save_position, int iteration, int ModelLabel);              //especially used for EvoOptimization
+    void output_to_file(string save_position, int iteration);             //For simplify output
     void InitializeP(VectorXcd& Initializer);
     VectorXcd* get_P();
     Vector3d get_nE0();

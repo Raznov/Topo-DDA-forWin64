@@ -50,11 +50,11 @@ int main() {
     double PenaltyFactor = 0.0001;
 
     Vector3i bind(1, 1, 20);
-    int number = 10;
+    int number = 6;
     double limitx1 = 4;
-    double limitx2 = 30;
+    double limitx2 = 25;
     double limity1 = 4;
-    double limity2 = 30;
+    double limity2 = 25;
 
     SpacePara spacepara(&S, bind, number, limitx1, limitx2, limity1, limity2);
 
@@ -68,10 +68,18 @@ int main() {
     TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
     TestModel.update_E_in_structure();
     TestModel.solve_E();
-    TestModel.output_to_file(save_position, 0, 0);
-    CStr.output_to_file(save_position, 0);
+    //TestModel.output_to_file(save_position, 0, 0);
+    //CStr.output_to_file(save_position, 0);
+    ofstream Common;
+    Common.open(save_position + "Commondata.txt");
+    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+    Common << (spacepara.get_geometry()) << endl;
+    Common << d << endl;
+    Common << n_E0 << endl;
+    Common << n_K << endl;
 
-    int num_model = 30;
+    int num_model = 10;
+    int start_num = 0;
 
     ofstream TotalTime;
     TotalTime.open(save_position+"TotalTime.txt");
@@ -79,12 +87,12 @@ int main() {
     for (int i = 0; i <= num_model-1; i++) {
         SpacePara spacepara_tmp(&S, bind, number, limitx1, limitx2, limity1, limity2, spacepara.get_geometryPara());
         CStr.UpdateStr(&spacepara_tmp);
-        CStr.output_to_file(save_position, i + 1);
+        CStr.output_to_file(save_position, start_num + i + 1, "Simple");
         TestModel.UpdateAlpha();
         TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
         TestModel.update_E_in_structure();
         TestModel.solve_E();
-        TestModel.output_to_file(save_position, 0, i+1);
+        TestModel.output_to_file(save_position, start_num + i + 1);
     }
     high_resolution_clock::time_point t_end = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(t_end - t_start).count();

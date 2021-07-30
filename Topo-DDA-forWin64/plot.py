@@ -388,9 +388,9 @@ if __name__ == "__main__":
     #    EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
 """
 
-
-#For several DDA calculation Structure
 """
+#For several DDA calculation Structure
+
 if __name__ == "__main__":
 
     objective_number = 1
@@ -415,9 +415,10 @@ if __name__ == "__main__":
                 Shape(geometry, diel, d, iteration=it, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
 
             it += 1
-
 """
 
+
+"""
 #For several DDA calculation E field
 
 if __name__ == "__main__":
@@ -442,3 +443,61 @@ if __name__ == "__main__":
         zslice=10
 
         EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")
+"""
+
+
+#For several DDA calculation Structure with simplified output
+
+if __name__ == "__main__":
+
+    objective_number = 1
+    pos="./" + sys.argv[1] + "/"
+    it_start = sys.argv[2]
+    it_end = sys.argv[3]
+    datacommon=np.genfromtxt(pos+"Commondata.txt")
+    N=int(np.real(datacommon[3]))
+    geometry=np.real(datacommon[4:(3*N+4)]).astype(int)
+    d=np.real(datacommon[3*N+4])
+    it = 1
+    dec = 5
+    for filename in sorted(os.listdir(pos+"CoreStructure"), key = lambda x: int(x[13:x.index(".txt")])):
+        if filename.endswith(".txt"):
+            print(filename)
+            data=np.genfromtxt(os.path.join(pos+"CoreStructure",filename),dtype=complex)
+            diel=np.real(data[0:3*N])
+            if(it >= int(it_start) and it <= int(it_end)):
+                Shape(geometry, diel, d, iteration=it, position=pos+"Shape/", decimal=dec, FullLattice=False)
+                Shape(geometry, diel, d, iteration=it, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
+
+            it += 1
+
+
+"""
+#For several DDA calculation E field with simplifed
+
+if __name__ == "__main__":
+
+    objective_number = 1
+    pos="./" + sys.argv[1] + "/"
+    it_start = sys.argv[2]
+    it_end = sys.argv[3]
+    
+    datacommon=np.genfromtxt(pos+"Commondata.txt")
+    N=int(np.real(datacommon[3]))
+    geometry=np.real(datacommon[4:(3*N+4)]).astype(int)
+    d=np.real(datacommon[3*N+4])
+    E_dir=np.real(datacommon[(3*N+5):(3*N+8)])
+    k_dir=np.real(datacommon[(3*N+8):(3*N+11)])
+    
+    dec = 5
+    for it in range(int(it_start), int(it_end)+1):
+        pos="./" + sys.argv[1] + "/"
+        CoreStructure=np.genfromtxt(os.path.join(pos+"CoreStructure","CoreStructure"+str(it)+".txt"),dtype=complex)
+        Modelresults=np.genfromtxt(os.path.join(pos+"Model_output","Model_results"+"it"+str(it)+".txt"),dtype=complex)
+        
+        diel=np.real(CoreStructure[(0):(3*N)])
+        E_tot=(Modelresults[(0):(3*N)])
+        zslice=10
+
+        EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")
+"""

@@ -581,6 +581,35 @@ void DDAModel::output_to_file(string save_position, int iteration, int ModelLabe
     fout.close();
 }
 
+void DDAModel::output_to_file(string save_position, int iteration) {
+
+    string name;
+
+    name = save_position + "Model_output\\" + "Model_results" + "it" + to_string(iteration) + ".txt";
+    ofstream fout(name);
+    /*
+    for (int i = 0; i <= P.size() - 1; i++) {
+        if (P(i).imag() < 0) {
+            fout << P(i).real() << P(i).imag() << "j" << endl;
+        }
+        else {
+            fout << P(i).real() << "+" << P(i).imag() << "j" << endl;
+        }
+
+    }
+    */
+    for (int i = 0; i <= EResult.size() - 1; i++) {
+        if (EResult(i).imag() < 0) {
+            fout << EResult(i).real() << EResult(i).imag() << "j" << endl;
+        }
+        else {
+            fout << EResult(i).real() << "+" << EResult(i).imag() << "j" << endl;
+        }
+
+    }
+    fout.close();
+}
+
 void DDAModel::InitializeP(VectorXcd& Initializer) {
     P = Initializer;
 }
