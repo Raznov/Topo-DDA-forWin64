@@ -117,8 +117,10 @@ private:
     VectorXd Para;                    //P dimension. P=number of parameters.
     MatrixXi scope;                   //[[xmin, xmax],[ymin, ymax],[zmin, zmax]]
     Vector3i bind;
+    VectorXi FreeparatoPara;
 public:
-    SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_);
+    SpacePara(Space* space_, string initial_diel, VectorXi* geometry_, VectorXd* diel_);
+    SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_, VectorXi* FreeparatoPara_);
     SpacePara(Space* space_, Vector3i bind_, string initial_diel); //l, center similar to bulk build in Structure class. Every 'bind' nearby dipoles correspond 
                                                                     //to 1 parameter in this bulk. bind=(2,2,2): 2*2*2; bind=(1,1,3):1*1*3
     SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type);   //ONly for 2d cylinder or spheres. r is raidus/d.
@@ -129,6 +131,7 @@ public:
     SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2);  //random rect in a region with extruded 2D geometry
     SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, VectorXi* geometryPara_);
 
+
     void ChangeBind(Vector3i bind_);                                  //Change bind number
     VectorXi cut(VectorXi* big, VectorXi* smalll);
 
@@ -137,6 +140,7 @@ public:
     VectorXi* get_geometryPara();
     VectorXd* get_Para();
     Vector3i* get_bind();
+    VectorXi* get_Free();
 };
 
 //Abstract parent class for objective function.

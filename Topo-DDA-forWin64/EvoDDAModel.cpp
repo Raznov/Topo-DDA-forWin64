@@ -103,6 +103,7 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
     SpacePara* spacepara = (*CurrentModel).get_spacepara();
     VectorXi* geometryPara = (*spacepara).get_geometryPara();
     VectorXd* Para = (*spacepara).get_Para();
+    VectorXi* Free = (*spacepara).get_Free();
 
     VectorXd* diel_old = (*CurrentModel).get_diel_old();
     Vector2cd* material = (*CurrentModel).get_material();
@@ -116,11 +117,11 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
 
     VectorXcd Adevxp=VectorXcd::Zero(3*N);
 
-    int n_para=(*Para).size();
-    
+    int n_para=(*Free).size();
+    int n_para_all = (*Para).size();
     
     VectorXd devx=VectorXd::Zero(n_para);
-    vector<list<int>> Paratogeometry(n_para);
+    vector<list<int>> Paratogeometry(n_para_all);
     //cout << "n_para:  " << n_para << endl;
     //cout << "geometry_Para size: " << (*geometryPara).size() << endl;
     for (int i = 0; i <= N - 1; i++) {
@@ -133,8 +134,9 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
     //Vector3cd diel_tmp = Vector3cd::Zero();
 
     for(int i = 0; i <= n_para - 1; i++){
-        
-        double diel_old_tmp = (*Para)(i);
+        int FreeParaPos = (*Free)(i);
+
+        double diel_old_tmp = (*Para)(FreeParaPos);
         int sign = 0;
         if (diel_old_tmp >= epsilon) {
             sign = -1;
@@ -155,8 +157,8 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
         complex<double> oneoveralpha = (1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K));
         
         
-        list<int>::iterator it = Paratogeometry[i].begin();
-        for (int j = 0; j <= Paratogeometry[i].size() - 1; j++) {
+        list<int>::iterator it = Paratogeometry[FreeParaPos].begin();
+        for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
             int position = *it;
             complex<double> change = (oneoveralpha - (*al)(3 * position)) / (sign * epsilon);
             Adevxp(3 * position) = change;
@@ -423,7 +425,9 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         SpacePara* spacepara = (*CStr).get_spacepara();
         VectorXi* geometryPara = (*spacepara).get_geometryPara();
         VectorXd* Para = (*spacepara).get_Para();
-        int n_para = (*Para).size();
+        VectorXi* Free = (*spacepara).get_Free();
+        int n_para_all = (*Para).size();
+        int n_para = (*Free).size();
         int N = (*CStr).get_N();
 
 
@@ -469,15 +473,16 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             //times lambdaT and Adevxp together
             VectorXcd mult_result;
             mult_result = VectorXcd::Zero(n_para);               //multiplication result has the length of parameter
-            vector<list<int>> Paratogeometry(n_para);
+            vector<list<int>> Paratogeometry(n_para_all);
             for (int i = 0; i <= N - 1; i++) {
                 (Paratogeometry[(*geometryPara)(i)]).push_back(i);
             }
 
             for (int i = 0; i <= n_para - 1; i++) {
+                int FreeParaPos = (*Free)(i);
 
-                list<int>::iterator it = Paratogeometry[i].begin();
-                for (int j = 0; j <= Paratogeometry[i].size() - 1; j++) {
+                list<int>::iterator it = Paratogeometry[FreeParaPos].begin();
+                for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
                     int position = *it;
                     mult_result(i) += lambdaT(3 * position) * Adevxp(3 * position);
                     mult_result(i) += lambdaT(3 * position + 1) * Adevxp(3 * position + 1);
@@ -798,7 +803,9 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         SpacePara* spacepara = (*CStr).get_spacepara();
         VectorXi* geometryPara = (*spacepara).get_geometryPara();
         VectorXd* Para = (*spacepara).get_Para();
-        int n_para = (*Para).size();
+        VectorXi* Free = (*spacepara).get_Free();
+        int n_para_all = (*Para).size();
+        int n_para = (*Free).size();
         int N = (*CStr).get_N();
 
 
@@ -842,15 +849,15 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             //times lambdaT and Adevxp together
             VectorXcd mult_result;
             mult_result = VectorXcd::Zero(n_para);               //multiplication result has the length of parameter
-            vector<list<int>> Paratogeometry(n_para);
+            vector<list<int>> Paratogeometry(n_para_all);
             for (int i = 0; i <= N - 1; i++) {
                 (Paratogeometry[(*geometryPara)(i)]).push_back(i);
             }
 
             for (int i = 0; i <= n_para - 1; i++) {
-
-                list<int>::iterator it = Paratogeometry[i].begin();
-                for (int j = 0; j <= Paratogeometry[i].size() - 1; j++) {
+                int FreeParaPos = (*Free)(i);
+                list<int>::iterator it = Paratogeometry[FreeParaPos].begin();
+                for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
                     int position = *it;
                     mult_result(i) += lambdaT(3 * position) * Adevxp(3 * position);
                     mult_result(i) += lambdaT(3 * position + 1) * Adevxp(3 * position + 1);
