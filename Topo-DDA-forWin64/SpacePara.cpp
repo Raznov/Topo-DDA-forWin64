@@ -42,14 +42,14 @@ VectorXi SpacePara::cut(VectorXi* big, VectorXi* smalll) {
     return geometry;
 }
 
-SpacePara::SpacePara(Space* space_, string initial_diel, VectorXi* geometry_, VectorXd* diel_) {
+SpacePara::SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_) {
     space = space_;
     bind << 1, 1, 1;                                    //---------Only work for 1,1,1
     VectorXi* total_space = (*space).get_total_space();
     int Nx, Ny, Nz, N;
     tie(Nx, Ny, Nz, N) = (*space).get_Ns();
     geometry = VectorXi::Zero(3 * N);
-
+    cout << N << endl;
     list<Structure>* ln = (*space).get_ln();
     list<Structure>::iterator it = (*ln).begin();
     int n1 = 0;
@@ -63,11 +63,11 @@ SpacePara::SpacePara(Space* space_, string initial_diel, VectorXi* geometry_, Ve
     }
 
     scope = find_scope_3_dim(&geometry);
-    MatrixXi scopefrozen = find_scope_3_dim(geometry_);            //Only work for rect input with same height
+    MatrixXi scopefrozen = find_scope_3_dim(&geometry_);            //Only work for rect input with same height
     int Nxfrozen, Nyfrozen, Nzfrozen, Nfrozen;
-    Nxfrozen = ceil(double(scope(0, 1) - scope(0, 0) + 1) / bind(0));
-    Nyfrozen = ceil(double(scope(1, 1) - scope(1, 0) + 1) / bind(1));
-    Nzfrozen = ceil(double(scope(2, 1) - scope(2, 0) + 1) / bind(2));
+    Nxfrozen = ceil(double(scopefrozen(0, 1) - scopefrozen(0, 0) + 1) / bind(0));
+    Nyfrozen = ceil(double(scopefrozen(1, 1) - scopefrozen(1, 0) + 1) / bind(1));
+    Nzfrozen = ceil(double(scopefrozen(2, 1) - scopefrozen(2, 0) + 1) / bind(2));
     Nfrozen = Nxfrozen * Nyfrozen * Nzfrozen;
 
     geometryPara = VectorXi::Zero(N);
@@ -81,6 +81,10 @@ SpacePara::SpacePara(Space* space_, string initial_diel, VectorXi* geometry_, Ve
     Vector3i relativepos;
     relativepos << int((Nparax - Nxfrozen) / 2), int((Nparay - Nyfrozen) / 2), int((Nparaz - Nzfrozen) / 2);  //Does not neceesarily /2=int, can have a bit deviation
 
+    cout << "Nparax" << Nparax << endl;
+    cout << "Nxfrozen" << Nxfrozen << endl;
+    cout << "relativepos" << relativepos << endl;
+
     Para = initial_diel_func(initial_diel, Npara);
     
     int nfree = 0;
@@ -89,9 +93,16 @@ SpacePara::SpacePara(Space* space_, string initial_diel, VectorXi* geometry_, Ve
             for (int k = 0; k <= Nparaz - 1; k++) {
                 int pos = k + Nparaz * (j + Nparay * i);
                 
-                if (relativepos(0) <= i <= Nparax - 1 - relativepos(0) && relativepos(1) <= j <= Nparay - 1 - relativepos(1) && relativepos(2) <= k <= Nparaz - 1 - relativepos(2)) {
+                if (relativepos(0) <= i && i <= Nparax - 1 - relativepos(0) 
+                    && relativepos(1) <= j && j <= Nparay - 1 - relativepos(1) 
+                    && relativepos(2) <= k && k <= Nparaz - 1 - relativepos(2)) 
+                {
                     int pos_tmp = (k - relativepos(2)) + Nzfrozen * ((j - relativepos(1)) + Nyfrozen * (i - relativepos(0)));
-                    Para(pos) = (*diel_)(3 * pos_tmp);
+                    //cout << i << endl;
+                    //cout << j << endl;
+                    //cout << k << endl;
+                    //cout << pos_tmp << endl;
+                    Para(pos) = (diel_)(3 * pos_tmp);
                 }
                 else {
                     FreeparatoPara(nfree)=pos;

@@ -4,23 +4,44 @@
 
 int main() {
 
+    
+
+    string open_position = ".\\thick100-phi0theta0-lam500-size4000\\";
+    string name1 = open_position + "CoreStructure\\CoreStructure99.txt";
     ofstream TotalTime;
-    TotalTime.open("TotalTime.txt");
+    TotalTime.open(open_position + "TotalTime.txt");
     high_resolution_clock::time_point t_start = high_resolution_clock::now();
-
-
+    ifstream fin1(name1);
+    int Nxtmp, Nytmp, Nztmp;
+    int Ntmp;
+    fin1 >> Nxtmp;
+    fin1 >> Nytmp;
+    fin1 >> Nztmp;
+    fin1 >> Ntmp;
+    cout << Ntmp << endl;
+    VectorXi geometrytmp = VectorXi::Zero(3 * Ntmp);
+    for (int i = 0; i <= Ntmp - 1; i++) {
+        fin1 >> geometrytmp(3 * i);
+        fin1 >> geometrytmp(3 * i + 1);
+        fin1 >> geometrytmp(3 * i + 2);
+    }
+    VectorXd dielinput = VectorXd::Zero(3 * Ntmp);
+    for (int i = 0; i <= Ntmp - 1; i++) {
+        fin1 >> dielinput(3 * i);
+        fin1 >> dielinput(3 * i + 1);
+        fin1 >> dielinput(3 * i + 2);
+    }
+    fin1.close();
 
     Vector3d l;
     Vector3d center;
-    l << 21.0, 21.0, 9.0;
-    //l << 40.0, 40.0, 8.0;
+    
+    l << 180.0, 180.0, 4.0;
     center << l(0) / 2, l(1) / 2, l(2) / 2;
 
     int Nx, Ny, Nz;
-    //Nx = 103; Ny = 103; Nz = 16;
     Nx = round(l(0) + 1); Ny = round(l(1) + 1); Nz = round(l(2) + 1);
-    cout << center << endl;
-    //Nx = 23; Ny = 23; Nz = 10;
+    //cout << center << endl;
     int N = 0;
     VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
     list<Structure> ln;
@@ -28,26 +49,23 @@ int main() {
 
     Vector3i direction;
 
-    //l << 20.0, 20.0, 9.0;
-    //center << 10.0, 10.0, 4.5;
     Structure s1(S.get_total_space(), l, center);
 
 
 
     S = S + s1;
-    double d = 15;
+    double d = 25;
     double r = 150 / d;
 
-    Vector3i bind(1, 1, 10);
-    SpacePara spacepara(&S, bind, "ONES", "ZEROS", r, "CYLINDER");
+    Vector3i bind(1, 1, 1);
 
-    //SpacePara spacepara(&S, bind, "RANDOM");
+    SpacePara spacepara(&S, "ZEROS", geometrytmp, dielinput);
 
 
     double E0 = 1.0;
 
 
-    double epsilon = 0.2;
+    double epsilon = 100;
     //double epsilon = 1;
 
     //double focus = (l(2) + 2) * d;   //nm       
@@ -56,14 +74,14 @@ int main() {
 
     int MAX_ITERATION_DDA = 100000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 5;
+    int MAX_ITERATION_EVO = 100;
 
-    list<string> ObjectFunctionNames{ "IntegratedE" };
+    list<string> ObjectFunctionNames{ "PointE" };
 
     double exponent = 2;
     double ratio = 4;
 
-    list<double> ObjectParameter{ 70.0 };
+    list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };
 
     bool HavePathRecord = false;
     bool HavePenalty = false;
@@ -71,7 +89,7 @@ int main() {
     bool HaveAdjointHeritage = false;
     double PenaltyFactor = 1;
     list<list<double>*> ObjectParameters{ &ObjectParameter };
-    string save_position = ".\\p330-lam542-beta7-TiO2-InE-2layer-circle\\";
+    string save_position = ".\\thick100-phi0theta0-lam500-size4500\\";
 
     Vector3d n_K;
     Vector3d n_E0;
@@ -92,22 +110,22 @@ int main() {
     phi << 0;
     int lam_num = 1;
     VectorXd lam(lam_num);
-    lam << 542;
+    lam << 500;
 
     CoreStructure CStr(&spacepara, d);
     list<AProductCore> CoreList;
     list<AProductCore*> CorePointList;
     Vector2cd material;
-    material = Get_2_material("Air", "TiO2", lam(0), "nm");
+    material = Get_2_material("Air", "SiO2", lam(0), "nm");
     //AProductCore Core1(&CStr, lam(0), material, "LDR");
 
-    int m, n;
-    double Lm, Ln;
-    m = 50;
-    n = 50;
-    Lm = 22 * d;
-    Ln = 22 * d;
-    AProductCore Core1(&CStr, lam(0), material, m, n, Lm, Ln, "FCD");
+    //int m, n;
+    //double Lm, Ln;
+    //m = 50;
+    //n = 50;
+    //Lm = 22 * d;
+    //Ln = 22 * d;
+    AProductCore Core1(&CStr, lam(0), material,"LDR");
     //AProductCore Core1(&CStr, lam(0), material, "FCD");
     //material = Get_2_material("Air", "2.5", lam(1), "nm");
     //AProductCore Core2(&CStr, lam(1), material, "LDR");

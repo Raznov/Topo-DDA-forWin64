@@ -390,7 +390,7 @@ if __name__ == "__main__":
 
 
 #For several DDA calculation Structure
-"""
+
 if __name__ == "__main__":
 
     objective_number = 1
@@ -416,8 +416,8 @@ if __name__ == "__main__":
 
             it += 1
 
-"""
 
+"""
 #For several DDA calculation E field
 
 if __name__ == "__main__":
@@ -442,3 +442,4 @@ if __name__ == "__main__":
         zslice=10
 
         EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")
+"""

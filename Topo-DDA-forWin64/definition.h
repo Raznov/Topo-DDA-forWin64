@@ -119,7 +119,7 @@ private:
     Vector3i bind;
     VectorXi FreeparatoPara;
 public:
-    SpacePara(Space* space_, string initial_diel, VectorXi* geometry_, VectorXd* diel_);
+    SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_);
     SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_, VectorXi* FreeparatoPara_);
     SpacePara(Space* space_, Vector3i bind_, string initial_diel); //l, center similar to bulk build in Structure class. Every 'bind' nearby dipoles correspond 
                                                                     //to 1 parameter in this bulk. bind=(2,2,2): 2*2*2; bind=(1,1,3):1*1*3
