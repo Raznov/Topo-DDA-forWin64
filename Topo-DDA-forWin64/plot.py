@@ -445,7 +445,7 @@ if __name__ == "__main__":
         EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")
 """
 
-
+"""
 #For several DDA calculation Structure with simplified output
 
 if __name__ == "__main__":
@@ -470,9 +470,9 @@ if __name__ == "__main__":
                 Shape(geometry, diel, d, iteration=it, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
 
             it += 1
-
-
 """
+
+
 #For several DDA calculation E field with simplifed
 
 if __name__ == "__main__":
@@ -500,4 +500,3 @@ if __name__ == "__main__":
         zslice=10
 
         EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")
-"""

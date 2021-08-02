@@ -78,7 +78,7 @@ int main() {
     Common << n_E0 << endl;
     Common << n_K << endl;
 
-    int num_model = 10;
+    int num_model = 15000;
     int start_num = 0;
 
     ofstream TotalTime;

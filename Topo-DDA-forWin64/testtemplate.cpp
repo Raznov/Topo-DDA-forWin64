@@ -3064,44 +3064,28 @@ int main() {
 
 }
 
-//test_with_rect
+//random rect generation 2021-7-31
 int main() {
 
-    ofstream TotalTime;
-    TotalTime.open("TotalTime.txt");
-    high_resolution_clock::time_point t_start = high_resolution_clock::now();
-
-
-    double ld = 900;
-    double thickness = 300;
-    double d = 20;
-    double disp = 200;
-
-    Vector3d l;
-    Vector3d center;
-    l << ld / d, ld / d, thickness / d;
-    //l << 40.0, 40.0, 8.0;
-    center << l(0) / 2, l(1) / 2, l(2) / 2;
+    srand((unsigned)(time(0)));
 
     int Nx, Ny, Nz;
-    //Nx = 103; Ny = 103; Nz = 16;
-    Nx = round(l(0) + 1); Ny = round(l(1) + 1); Nz = round(l(2) + 1);
-    cout << center << endl;
-    //Nx = 23; Ny = 23; Nz = 10;
+    Nx = 90; Ny = 90; Nz = 20;
+
     int N = 0;
     VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
     list<Structure> ln;
     Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
-    Vector3i direction;
+    double d;
 
-    //l << 20.0, 20.0, 9.0;
-    //center << 10.0, 10.0, 4.5;
-    //Vector3d l1;
-    //Vector3d center1;
+    Vector3d center;
+    Vector3d l;
 
-    //l1 << 5, 5, thickness / d;
-    //center1 << 2.5, 2.5, l1(2) / 2;
+    d = 20;
+
+    center << Nx / 2, Ny / 2, Nz / 2;
+    l << Nx - 1, Ny - 1, Nz - 1;
 
     Structure s1(S.get_total_space(), l, center);
 
@@ -3109,80 +3093,78 @@ int main() {
 
     S = S + s1;
 
-    Vector2d center1, center2;
-    center1 << round(200 / d), round(200 / d);
-    center2 << round(center1(0) + disp * cos(70 * PI / 180) / d), round(center1(1) + disp * sin(70 * PI / 180) / d);
-    list<double> r_list{ 160 / d, 140 / d };
-    list<Vector2d> center_list{ center1, center2 };
-    list<string> initials_list{ "ONES", "ONES" };
-    double r = 150 / d;
-
-    Vector3i bind(1, 1, round(l(2)));
-    //SpacePara spacepara(&S, bind, "ZEROS", "ONES", r);
-    SpacePara spacepara(&S, bind, "ZEROS", &initials_list, &r_list, &center_list);
-
-    //SpacePara spacepara(&S, bind, "ONES");
-
-
+    double lam = 700;
+    Vector3d n_K;
+    n_K << 0.0, 0.0, 1.0;
     double E0 = 1.0;
+    Vector3d n_E0;
+    n_E0 << 1.0, 0.0, 0.0;
+    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
 
 
-    double epsilon = 0.2;
-    //double epsilon = 1;
 
-    //double focus = (l(2) + 2) * d;   //nm       
-    //double focus = (l(2) + 2) * d;
-    //cout << focus << endl;
 
     int MAX_ITERATION_DDA = 10000;
     double MAX_ERROR = 0.00001;
-    //int MAX_ITERATION_EVO = 500;
-
-    //list<string> ObjectFunctionNames{ "IntegratedE" };
 
 
-    Vector3d n_K;
-    Vector3d n_E0;
+    bool HavePathRecord = true;
+    bool HavePenalty = false;
+    double PenaltyFactor = 0.0001;
 
-    n_K << 0.0, 0.0, -1.0;
-    n_E0 << 1.0, 0.0, 0.0;
+    Vector3i bind(1, 1, 20);
+    int number = 6;
+    double limitx1 = 4;
+    double limitx2 = 25;
+    double limity1 = 4;
+    double limity2 = 25;
 
+    SpacePara spacepara(&S, bind, number, limitx1, limitx2, limity1, limity2);
 
-    list<DDAModel> ModelList;
-    list<DDAModel*> ModelpointerList;
-
-    //double lam_min = 630;
-    //double lam_max = 700;
-    //double lam_interval = 1;
-    double lam = 700;
-    //int lam_num = round((lam_max - lam_min) / lam_interval) + 1;
 
     CoreStructure CStr(&spacepara, d);
-    string save_position = ".\\test_with_rect\\";
-    //string name = save_position + "IntegratedEwavedepend=" + to_string(d) + ".txt";
-
-    CStr.output_to_file(save_position, 0);
-    //S.show_something_about_Structures();
-    //ofstream fout(name);
-
-    Vector2cd material;
-    material = Get_2_material("Air", "SiO2", lam, "nm");
-
     AProductCore Core(&CStr, lam, material, "LDR");
     DDAModel TestModel(&Core, n_K, E0, n_E0);
+
+    string save_position = ".\\SiO2-rects\\";
+
     TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
     TestModel.update_E_in_structure();
     TestModel.solve_E();
-    TestModel.output_to_file(save_position, 0, lam);
+    //TestModel.output_to_file(save_position, 0, 0);
+    //CStr.output_to_file(save_position, 0);
+    ofstream Common;
+    Common.open(save_position + "Commondata.txt");
+    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+    Common << (spacepara.get_geometry()) << endl;
+    Common << d << endl;
+    Common << n_E0 << endl;
+    Common << n_K << endl;
 
+    int num_model = 15000;
+    int start_num = 0;
 
-
-    //AProductCore Core1(&CStr, lam(0), material, "LDR")
-
+    ofstream TotalTime;
+    TotalTime.open(save_position + "TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+    for (int i = 0; i <= num_model - 1; i++) {
+        SpacePara spacepara_tmp(&S, bind, number, limitx1, limitx2, limity1, limity2, spacepara.get_geometryPara());
+        CStr.UpdateStr(&spacepara_tmp);
+        CStr.output_to_file(save_position, start_num + i + 1, "Simple");
+        TestModel.UpdateAlpha();
+        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel.update_E_in_structure();
+        TestModel.solve_E();
+        TestModel.output_to_file(save_position, start_num + i + 1);
+    }
     high_resolution_clock::time_point t_end = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(t_end - t_start).count();
     TotalTime << duration / 1000 << endl;
     TotalTime.close();
+
+
+
+
 
     return 0;
 
