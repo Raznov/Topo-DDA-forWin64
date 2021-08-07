@@ -6,7 +6,7 @@ int main() {
 
     
 
-    string open_position = ".\\thick100-phi0theta0-lam500-size4000\\";
+    string open_position = ".\\thick100-phi0theta0-lam500-size4500\\";
     string name1 = open_position + "CoreStructure\\CoreStructure99.txt";
     ofstream TotalTime;
     TotalTime.open(open_position + "TotalTime.txt");
@@ -36,7 +36,7 @@ int main() {
     Vector3d l;
     Vector3d center;
     
-    l << 180.0, 180.0, 4.0;
+    l << 200.0, 200.0, 4.0;
     center << l(0) / 2, l(1) / 2, l(2) / 2;
 
     int Nx, Ny, Nz;
@@ -89,7 +89,7 @@ int main() {
     bool HaveAdjointHeritage = false;
     double PenaltyFactor = 1;
     list<list<double>*> ObjectParameters{ &ObjectParameter };
-    string save_position = ".\\thick100-phi0theta0-lam500-size4500\\";
+    string save_position = ".\\thick100-phi0theta0-lam500-size5000\\";
 
     Vector3d n_K;
     Vector3d n_E0;
