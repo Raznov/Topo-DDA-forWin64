@@ -42,7 +42,89 @@ VectorXi SpacePara::cut(VectorXi* big, VectorXi* smalll) {
     return geometry;
 }
 
-SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_) {
+SpacePara::SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_) {
+    space = space_;
+    bind << 1, 1, 1;                                    //---------Only work for 1,1,1
+    VectorXi* total_space = (*space).get_total_space();
+    int Nx, Ny, Nz, N;
+    tie(Nx, Ny, Nz, N) = (*space).get_Ns();
+    geometry = VectorXi::Zero(3 * N);
+    cout << N << endl;
+    list<Structure>* ln = (*space).get_ln();
+    list<Structure>::iterator it = (*ln).begin();
+    int n1 = 0;
+    for (int i = 0; i <= (*ln).size() - 1; i++) {
+        int n2 = 3 * ((*it).get_geometry_size());
+        for (int j = 0; j <= n2 - 1; j++) {
+            geometry(n1 + j) = (*((*it).get_geometry()))(j);
+        }
+        n1 = n1 + n2;
+        it++;
+    }
+
+    scope = find_scope_3_dim(&geometry);
+    MatrixXi scopefrozen = find_scope_3_dim(&geometry_);            //Only work for rect input with same height
+    int Nxfrozen, Nyfrozen, Nzfrozen, Nfrozen;
+    Nxfrozen = ceil(double(scopefrozen(0, 1) - scopefrozen(0, 0) + 1) / bind(0));
+    Nyfrozen = ceil(double(scopefrozen(1, 1) - scopefrozen(1, 0) + 1) / bind(1));
+    Nzfrozen = ceil(double(scopefrozen(2, 1) - scopefrozen(2, 0) + 1) / bind(2));
+    Nfrozen = Nxfrozen * Nyfrozen * Nzfrozen;
+
+    geometryPara = VectorXi::Zero(N);
+    int Nparax, Nparay, Nparaz, Npara;
+    Nparax = ceil(double(scope(0, 1) - scope(0, 0) + 1) / bind(0));
+    Nparay = ceil(double(scope(1, 1) - scope(1, 0) + 1) / bind(1));
+    Nparaz = ceil(double(scope(2, 1) - scope(2, 0) + 1) / bind(2));
+    Npara = Nparax * Nparay * Nparaz;
+    FreeparatoPara = VectorXi::Zero(Npara - Nfrozen);
+
+    Vector3i relativepos;
+    relativepos << int((Nparax - Nxfrozen) / 2), int((Nparay - Nyfrozen) / 2), int((Nparaz - Nzfrozen) / 2);  //Does not neceesarily /2=int, can have a bit deviation
+
+    cout << "Nparax" << Nparax << endl;
+    cout << "Nxfrozen" << Nxfrozen << endl;
+    cout << "relativepos" << relativepos << endl;
+
+    Para = initial_diel_func(initial_diel, Npara);
+    
+    int nfree = 0;
+    for (int i = 0; i <= Nparax - 1; i++) {
+        for (int j = 0; j <= Nparay - 1; j++) {
+            for (int k = 0; k <= Nparaz - 1; k++) {
+                int pos = k + Nparaz * (j + Nparay * i);
+                
+                if (relativepos(0) <= i && i <= Nparax - 1 - relativepos(0) 
+                    && relativepos(1) <= j && j <= Nparay - 1 - relativepos(1) 
+                    && relativepos(2) <= k && k <= Nparaz - 1 - relativepos(2)) 
+                {
+                    int pos_tmp = (k - relativepos(2)) + Nzfrozen * ((j - relativepos(1)) + Nyfrozen * (i - relativepos(0)));
+                    //cout << i << endl;
+                    //cout << j << endl;
+                    //cout << k << endl;
+                    //cout << pos_tmp << endl;
+                    Para(pos) = (diel_)(3 * pos_tmp);
+                }
+                else {
+                    FreeparatoPara(nfree)=pos;
+                    nfree += 1;
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i <= N - 1; i++) {
+        double x = geometry(3 * i);
+        double y = geometry(3 * i + 1);
+        double z = geometry(3 * i + 2);
+        int parax = floor((x - scope(0, 0)) / bind(0));
+        int paray = floor((y - scope(1, 0)) / bind(1));
+        int paraz = floor((z - scope(2, 0)) / bind(2));
+        int pos = paraz + Nparaz * (paray + Nparay * parax);
+        geometryPara(i) = pos;
+    }
+}
+
+SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_, VectorXi* FreeparatoPara_) {
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -66,7 +148,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, Vec
     geometryPara = *geometryPara_;
     Para = *Para_;
     
-    
+    FreeparatoPara = *FreeparatoPara_;
 
 }
 
@@ -101,6 +183,10 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel) {
     //cout << "(Npara, Nparay, Nparaz) " << "(" << Nparax << ", " << Nparay << ", " << Nparaz << ")" << endl;
     //cout << "Npara: " << Npara << endl;
     Para = initial_diel_func(initial_diel, Npara);
+    FreeparatoPara = VectorXi::Zero(Npara);
+    for (int i = 0; i <= Npara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
     for (int i = 0; i <= N - 1; i++) {
         double x = geometry(3 * i);
         double y = geometry(3 * i + 1);
@@ -151,6 +237,11 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, 
     cout << "ycenter" << ycenter << endl;
     cout << "zcenter" << zcenter << endl;
     Para = VectorXd::Zero(Npara);
+    FreeparatoPara = VectorXi::Zero(Npara);
+    for (int i = 0; i <= Npara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
+
     for (int i = 0; i <= Nparax - 1; i++) {
         for (int j = 0; j <= Nparay - 1; j++) {
             for (int k = 0; k <= Nparaz - 1; k++) {
@@ -193,6 +284,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, 
         }
     }
 
+    
 
     for (int i = 0; i <= N - 1; i++) {
         double x = geometry(3 * i);
@@ -235,6 +327,10 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_backgrou
     Nparaz = ceil(double(scope(2, 1) - scope(2, 0) + 1) / bind(2));
     Npara = Nparax * Nparay * Nparaz;
     Para = VectorXd::Zero(Npara);
+    FreeparatoPara = VectorXi::Zero(Npara);
+    for (int i = 0; i <= Npara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
 
     for (int i = 0; i <= Npara - 1; i++) {                          //First inital all to background
         Para(i) = initial_diel_func(initial_diel_background);
@@ -326,7 +422,10 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
     Nparaz = ceil(double(scope(2, 1) - scope(2, 0) + 1) / bind(2));
     Npara = Nparax * Nparay * Nparaz;
     Para = VectorXd::Zero(Npara);
-
+    FreeparatoPara = VectorXi::Zero(Npara);
+    for (int i = 0; i <= Npara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
 
     for (int i = 0; i <= Npara - 1; i++) {                          //First inital all to background
         Para(i) = initial_diel_func("ZEROS");
@@ -405,7 +504,10 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
     Nparaz = ceil(double(scope(2, 1) - scope(2, 0) + 1) / bind(2));
     Npara = Nparax * Nparay * Nparaz;
     Para = VectorXd::Zero(Npara);
-
+    FreeparatoPara = VectorXi::Zero(Npara);
+    for (int i = 0; i <= Npara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
 
     for (int i = 0; i <= Npara - 1; i++) {                          //First inital all to background
         Para(i) = initial_diel_func("ZEROS");
@@ -466,6 +568,10 @@ void SpacePara::ChangeBind(Vector3i bind_) {
     for (int i = 0; i <= Npara - 1; i++) {
         Para(i) = Paratogeometry[i][1] / Paratogeometry[i][0];
     }
+    FreeparatoPara = VectorXi::Zero(Npara);
+    for (int i = 0; i <= Npara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
 
     
 
@@ -490,4 +596,8 @@ VectorXd* SpacePara::get_Para() {
 
 Vector3i* SpacePara::get_bind() {
     return &bind;
+}
+
+VectorXi* SpacePara::get_Free() {
+    return &FreeparatoPara;
 }

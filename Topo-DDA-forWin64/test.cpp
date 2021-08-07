@@ -38,7 +38,7 @@ int main() {
     n_E0 << 1.0, 0.0, 0.0;
     Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
 
-   
+
 
 
     int MAX_ITERATION_DDA = 10000;
@@ -63,7 +63,7 @@ int main() {
     AProductCore Core(&CStr, lam, material, "LDR");
     DDAModel TestModel(&Core, n_K, E0, n_E0);
 
-    string save_position=".\\SiO2-rects\\";
+    string save_position = ".\\SiO2-rects\\";
 
     TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
     TestModel.update_E_in_structure();
@@ -78,13 +78,13 @@ int main() {
     Common << n_E0 << endl;
     Common << n_K << endl;
 
-    int num_model = 15000;
+    int num_model = 2;
     int start_num = 0;
 
     ofstream TotalTime;
-    TotalTime.open(save_position+"TotalTime.txt");
+    TotalTime.open(save_position + "TotalTime.txt");
     high_resolution_clock::time_point t_start = high_resolution_clock::now();
-    for (int i = 0; i <= num_model-1; i++) {
+    for (int i = 0; i <= num_model - 1; i++) {
         SpacePara spacepara_tmp(&S, bind, number, limitx1, limitx2, limity1, limity2, spacepara.get_geometryPara());
         CStr.UpdateStr(&spacepara_tmp);
         CStr.output_to_file(save_position, start_num + i + 1, "Simple");

@@ -387,7 +387,6 @@ if __name__ == "__main__":
     #if(it==99):
     #    EField(geometry_plot, diel, d, wl, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/", decimal=dec)
 """
-
 """
 #For several DDA calculation Structure
 
@@ -416,7 +415,6 @@ if __name__ == "__main__":
 
             it += 1
 """
-
 
 """
 #For several DDA calculation E field
@@ -470,6 +468,7 @@ if __name__ == "__main__":
                 Shape(geometry, diel, d, iteration=it, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
 
             it += 1
+
 """
 
 

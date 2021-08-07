@@ -30,17 +30,19 @@ void CoreStructure::UpdateStr(VectorXd step) {
     cout << "step in UpdateStr" << step.mean() << endl;
     VectorXi* geometryPara = (*spacepara).get_geometryPara();
     VectorXd* Para = (*spacepara).get_Para();
-    int Parasize = (*Para).size();
+    VectorXi* Free = (*spacepara).get_Free();
+
+    int Parasize = (*Free).size();
     if (Parasize != step.size()) {
-        cout << "ERROR: In CoreStructure::UpdateStr(VectorXd step), step.size!=Para.size";
+        cout << "ERROR: In CoreStructure::UpdateStr(VectorXd step), step.size!=FreePara.size";
     }
     for (int i = 0; i <= Parasize - 1; i++) {
-        (*Para)(i) += step(i);
-        if ((*Para)(i) >= 1) {
-            (*Para)(i) = 1;
+        (*Para)((*Free)(i)) += step(i);
+        if ((*Para)((*Free)(i)) >= 1) {
+            (*Para)((*Free)(i)) = 1;
         }
-        if ((*Para)(i) <= 0) {
-            (*Para)(i) = 0;
+        if ((*Para)((*Free)(i)) <= 0) {
+            (*Para)((*Free)(i)) = 0;
         }
     }
     for (int i = 0; i <= N - 1; i++) {
@@ -56,11 +58,16 @@ void CoreStructure::UpdateStr(SpacePara* spacepara_){
   
     VectorXi* geometryPara = (*spacepara).get_geometryPara();
     VectorXd* Para = (*spacepara).get_Para();
+    VectorXi* Free = (*spacepara).get_Free();
     VectorXd* Parareplace = (*spacepara_).get_Para();
-    int Parasize = (*Para).size();
+    VectorXi* Freereplace = (*spacepara_).get_Free();
+
     
-    for (int i = 0; i <= Parasize - 1; i++) {
+    for (int i = 0; i <= (*Para).size() - 1; i++) {
         (*Para)(i) = (*Parareplace)(i);
+    }
+    for (int i = 0; i <= (*Free).size() - 1; i++) {
+        (*Free)(i) = (*Freereplace)(i);
     }
     for (int i = 0; i <= N - 1; i++) {
         int position = (*geometryPara)(i);
