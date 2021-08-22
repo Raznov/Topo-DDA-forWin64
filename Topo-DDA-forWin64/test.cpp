@@ -7,7 +7,7 @@ int main() {
     srand((unsigned)(time(0)));
 
     int Nx, Ny, Nz;
-    Nx = 90; Ny = 90; Nz = 20;
+    Nx = 32; Ny = 32; Nz = 8;
 
     int N = 0;
     VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
@@ -21,7 +21,7 @@ int main() {
 
     d = 20;
 
-    center << Nx / 2, Ny / 2, Nz / 2;
+    center << double(Nx-1) / 2, double(Ny - 1) / 2, double(Nz - 1) / 2;
     l << Nx - 1, Ny - 1, Nz - 1;
 
     Structure s1(S.get_total_space(), l, center);
@@ -49,12 +49,12 @@ int main() {
     bool HavePenalty = false;
     double PenaltyFactor = 0.0001;
 
-    Vector3i bind(1, 1, 20);
-    int number = 6;
-    double limitx1 = 4;
-    double limitx2 = 25;
-    double limity1 = 4;
-    double limity2 = 25;
+    Vector3i bind(1, 1, 8);
+    int number = 5;
+    double limitx1 = 2;
+    double limitx2 = 9;
+    double limity1 = 2;
+    double limity2 = 9;
 
     SpacePara spacepara(&S, bind, number, limitx1, limitx2, limity1, limity2);
 
@@ -78,7 +78,7 @@ int main() {
     Common << n_E0 << endl;
     Common << n_K << endl;
 
-    int num_model = 2;
+    int num_model = 10;
     int start_num = 0;
 
     ofstream TotalTime;

@@ -250,10 +250,10 @@ Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center){
     int N=round((*total_space).size()/3);
     list<int> positions; 
     for(int i=0;i<=N-1;i++){
-        double x=(*total_space)(3*i)-center(0);
-        double y=(*total_space)(3*i+1)-center(1);
-        double z=(*total_space)(3*i+2)-center(2);
-        if((abs(x)<=l(0)/2)&&(abs(y)<=l(1)/2)&&(abs(z)<=l(2)/2)){
+        double x=double((*total_space)(3*i))-center(0);
+        double y=double((*total_space)(3*i+1))-center(1);
+        double z=double((*total_space)(3*i+2))-center(2);
+        if((abs(x)<=l(0)/2+0.001)&&(abs(y)<=l(1)/2 + 0.001)&&(abs(z)<=l(2)/2 + 0.001)){
             positions.push_back(i);
         }   
     }

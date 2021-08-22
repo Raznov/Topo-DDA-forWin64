@@ -10,9 +10,19 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.animation as ani
 from mpl_toolkits.mplot3d import Axes3D
+from scipy import ndimage
 import time
 
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
+
+def deleteindice(object, target, col):
+    result=[]
+    print(object.shape)
+    for i in range(object.shape[0]):
+        if object[i][col]!=target:
+            result+=[i]
+    
+    return result
 
 def Shape(geometry,diel,d,iteration=-1,position="./",decimal=0,FullLattice=False):
     """Plot the shape of object as dot matrix.
@@ -47,7 +57,7 @@ def Shape(geometry,diel,d,iteration=-1,position="./",decimal=0,FullLattice=False
         index = np.where(diel>0.5)
         diel = diel[index]
         geometry = geometry[index]
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111, projection='3d')
     geo_dic = set()
     surf_list = []
@@ -83,7 +93,7 @@ def Shape(geometry,diel,d,iteration=-1,position="./",decimal=0,FullLattice=False
         plt.savefig("Space.png")
     else:
         fig.suptitle("iteration{}".format(iteration))
-        plt.savefig(position+"{}Space.png".format(str(iteration).zfill(decimal))) 
+        plt.savefig(position+"{}Space.png".format(str(iteration).zfill(decimal)),dpi=1200) 
     #plt.show()
 
 def EField(geometry,diel,d,k_dir,E_dir,E_tot,iteration=-1,position="./",decimal=0,FullLattice=False):
@@ -146,7 +156,7 @@ def EField(geometry,diel,d,k_dir,E_dir,E_tot,iteration=-1,position="./",decimal=
     ax1.set_zlabel("z[nm]")
     ax1.grid(False)
     fig1.suptitle("E field - Arrow plot\n {}".format(E_dir))
-    plt.savefig("E_field_arrow.png")
+    plt.savefig(position+"{}E_field_arrow.png".format(str(iteration).zfill(decimal)))
 
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111, projection='3d')
@@ -226,6 +236,7 @@ def EField_slice(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1
 
     E_tot = E_tot.reshape(int(E_tot.size/3),3)
     E_tot_abs = np.abs(np.sqrt(np.sum((E_tot)**2,axis=1)))
+    
     slicedim=-1
     
 
@@ -243,12 +254,327 @@ def EField_slice(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1
     for i, ele in enumerate(E_tot_abs):
         if geometry[i][slicedim]==slicepos:
             Eslice[geometry[i][slicedim-2]][geometry[i][slicedim-1]]=ele
-    
-    fig1 = plt.figure()
-    plt.imshow(Eslice, cmap='jet', interpolation='bilinear')
-    plt.colorbar()
-    plt.savefig(position+"Model{} E_slice_{}.png".format(iteration, (["X", "Y", "Z"])[slicedim]))
 
+    """
+    if Xslice!=-1:
+        slicedim=0
+        Eslice=np.zeros((Z, Y))
+    if Yslice!=-1:
+        slicedim=1
+        Eslice=np.zeros((X, Z))
+    if Zslice!=-1:
+        slicedim=2
+        Eslice=np.zeros((Y, X))
+    
+    slicepos= max([Xslice, Yslice, Zslice])
+    for i, ele in enumerate(E_tot_abs):
+        if geometry[i][slicedim]==slicepos:
+            Eslice[geometry[i][slicedim-1]][geometry[i][slicedim-2]]=ele
+    """
+    rotated_img = ndimage.rotate(Eslice, 90)
+    
+    fig1 = plt.figure(figsize=(10, 10))
+    plt.imshow(rotated_img, cmap='jet', interpolation='bilinear')
+    plt.colorbar()
+    plt.savefig(position+"Model{} E_slice_{}.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=1200) 
+
+def EField_slice_dirx(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1,iteration=-1,position="./",decimal=0,FullLattice=False):
+    """Plot the E field of object as arrow matrix.
+    # Input:
+    # --SC         SolutionClass
+    #   Solved Solution Class.
+    # --idx1,idx2  int
+    #   Indexs of the target instance.
+    """
+    #print(geometry)
+
+    N=round(np.shape(geometry)[0]/3)
+    print(N)
+    geometry=np.reshape(geometry,(N,3))
+    
+    print(geometry.shape)
+    #diel=np.reshape(diel,(N,3))
+    #diel=diel[:,0]
+    
+
+    for i in range(3):
+        geometry[:,i] -= np.amin(geometry[:,i])
+    
+    #print(geometry)
+    [X,Y,Z] = list(np.amax(geometry,axis=0)+1)
+    Axis_max = max(X,Y,Z)*1.2*d
+    
+    print("{}, {}, {}".format(X,Y,Z))
+
+    E_tot = E_tot.reshape(int(E_tot.size/3),3)
+    E_tot_abs = np.real(E_tot[:, 0])
+    print(E_tot_abs.shape)
+    slicedim=-1
+    
+
+    if Xslice!=-1:
+        slicedim=0
+        Eslice=np.zeros((Y, Z))
+    if Yslice!=-1:
+        slicedim=1
+        Eslice=np.zeros((Z, X))
+    if Zslice!=-1:
+        slicedim=2
+        Eslice=np.zeros((X, Y))
+    
+    slicepos= max([Xslice, Yslice, Zslice])
+    for i, ele in enumerate(E_tot_abs):
+        if geometry[i][slicedim]==slicepos:
+            Eslice[geometry[i][slicedim-2]][geometry[i][slicedim-1]]=ele
+
+    """
+    if Xslice!=-1:
+        slicedim=0
+        Eslice=np.zeros((Z, Y))
+    if Yslice!=-1:
+        slicedim=1
+        Eslice=np.zeros((X, Z))
+    if Zslice!=-1:
+        slicedim=2
+        Eslice=np.zeros((Y, X))
+    
+    slicepos= max([Xslice, Yslice, Zslice])
+    for i, ele in enumerate(E_tot_abs):
+        if geometry[i][slicedim]==slicepos:
+            Eslice[geometry[i][slicedim-1]][geometry[i][slicedim-2]]=ele
+    """
+    rotated_img = ndimage.rotate(Eslice, 90)
+    
+    fig1 = plt.figure(figsize=(10, 10))
+    plt.imshow(rotated_img, cmap='jet', interpolation='bilinear')
+    plt.colorbar()
+    plt.savefig(position+"Model{} E_slice_{}_xdir.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=1200) 
+
+def EField_slice_diry(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1,iteration=-1,position="./",decimal=0,FullLattice=False):
+    """Plot the E field of object as arrow matrix.
+    # Input:
+    # --SC         SolutionClass
+    #   Solved Solution Class.
+    # --idx1,idx2  int
+    #   Indexs of the target instance.
+    """
+    #print(geometry)
+
+    N=round(np.shape(geometry)[0]/3)
+    print(N)
+    geometry=np.reshape(geometry,(N,3))
+    
+    print(geometry.shape)
+    #diel=np.reshape(diel,(N,3))
+    #diel=diel[:,0]
+    
+
+    for i in range(3):
+        geometry[:,i] -= np.amin(geometry[:,i])
+    
+    #print(geometry)
+    [X,Y,Z] = list(np.amax(geometry,axis=0)+1)
+    Axis_max = max(X,Y,Z)*1.2*d
+    
+    print("{}, {}, {}".format(X,Y,Z))
+
+    E_tot = E_tot.reshape(int(E_tot.size/3),3)
+    E_tot_abs = np.real(E_tot[:, 1])
+    print(E_tot_abs.shape)
+    slicedim=-1
+    
+
+    if Xslice!=-1:
+        slicedim=0
+        Eslice=np.zeros((Y, Z))
+    if Yslice!=-1:
+        slicedim=1
+        Eslice=np.zeros((Z, X))
+    if Zslice!=-1:
+        slicedim=2
+        Eslice=np.zeros((X, Y))
+    
+    slicepos= max([Xslice, Yslice, Zslice])
+    for i, ele in enumerate(E_tot_abs):
+        if geometry[i][slicedim]==slicepos:
+            Eslice[geometry[i][slicedim-2]][geometry[i][slicedim-1]]=ele
+
+    """
+    if Xslice!=-1:
+        slicedim=0
+        Eslice=np.zeros((Z, Y))
+    if Yslice!=-1:
+        slicedim=1
+        Eslice=np.zeros((X, Z))
+    if Zslice!=-1:
+        slicedim=2
+        Eslice=np.zeros((Y, X))
+    
+    slicepos= max([Xslice, Yslice, Zslice])
+    for i, ele in enumerate(E_tot_abs):
+        if geometry[i][slicedim]==slicepos:
+            Eslice[geometry[i][slicedim-1]][geometry[i][slicedim-2]]=ele
+    """
+    rotated_img = ndimage.rotate(Eslice, 90)
+    
+    fig1 = plt.figure(figsize=(10, 10))
+    plt.imshow(rotated_img, cmap='jet', interpolation='bilinear')
+    plt.colorbar()
+    plt.savefig(position+"Model{} E_slice_{}_ydir.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=1200) 
+
+def EField_slice_dirz(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1,iteration=-1,position="./",decimal=0,FullLattice=False):
+    """Plot the E field of object as arrow matrix.
+    # Input:
+    # --SC         SolutionClass
+    #   Solved Solution Class.
+    # --idx1,idx2  int
+    #   Indexs of the target instance.
+    """
+    #print(geometry)
+
+    N=round(np.shape(geometry)[0]/3)
+    print(N)
+    geometry=np.reshape(geometry,(N,3))
+    
+    print(geometry.shape)
+    #diel=np.reshape(diel,(N,3))
+    #diel=diel[:,0]
+    
+
+    for i in range(3):
+        geometry[:,i] -= np.amin(geometry[:,i])
+    
+    #print(geometry)
+    [X,Y,Z] = list(np.amax(geometry,axis=0)+1)
+    Axis_max = max(X,Y,Z)*1.2*d
+    
+    print("{}, {}, {}".format(X,Y,Z))
+
+    E_tot = E_tot.reshape(int(E_tot.size/3),3)
+    E_tot_abs = np.real(E_tot[:, 2])
+    print(E_tot_abs.shape)
+    slicedim=-1
+    
+
+    if Xslice!=-1:
+        slicedim=0
+        Eslice=np.zeros((Y, Z))
+    if Yslice!=-1:
+        slicedim=1
+        Eslice=np.zeros((Z, X))
+    if Zslice!=-1:
+        slicedim=2
+        Eslice=np.zeros((X, Y))
+    
+    slicepos= max([Xslice, Yslice, Zslice])
+    for i, ele in enumerate(E_tot_abs):
+        if geometry[i][slicedim]==slicepos:
+            Eslice[geometry[i][slicedim-2]][geometry[i][slicedim-1]]=ele
+
+    """
+    if Xslice!=-1:
+        slicedim=0
+        Eslice=np.zeros((Z, Y))
+    if Yslice!=-1:
+        slicedim=1
+        Eslice=np.zeros((X, Z))
+    if Zslice!=-1:
+        slicedim=2
+        Eslice=np.zeros((Y, X))
+    
+    slicepos= max([Xslice, Yslice, Zslice])
+    for i, ele in enumerate(E_tot_abs):
+        if geometry[i][slicedim]==slicepos:
+            Eslice[geometry[i][slicedim-1]][geometry[i][slicedim-2]]=ele
+    """
+    rotated_img = ndimage.rotate(Eslice, 90)
+    
+    fig1 = plt.figure(figsize=(10, 10))
+    plt.imshow(rotated_img, cmap='jet', interpolation='bilinear')
+    plt.colorbar()
+    plt.savefig(position+"Model{} E_slice_{}_zdir.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=1200) 
+
+
+def EField_slice_arrow(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1,iteration=-1,position="./",decimal=0,FullLattice=False):
+    """Plot the E field of object as arrow matrix.
+    # Input:
+    # --SC         SolutionClass
+    #   Solved Solution Class.
+    # --idx1,idx2  int
+    #   Indexs of the target instance.
+    """
+    #print(geometry)
+
+    N=round(np.shape(geometry)[0]/3)
+    print(N)
+    geometry=np.reshape(geometry,(N,3))
+    
+    print(geometry.shape)
+    #diel=np.reshape(diel,(N,3))
+    #diel=diel[:,0]
+    
+
+    for i in range(3):
+        geometry[:,i] -= np.amin(geometry[:,i])
+    
+    #print(geometry)
+    [X,Y,Z] = list(np.amax(geometry,axis=0)+1)
+    Axis_max = max(X,Y,Z)*1.2*d
+    
+    print("{}, {}, {}".format(X,Y,Z))
+
+    E_tot = E_tot.reshape(int(E_tot.size/3),3)
+    E_tot_abs = np.abs(np.sqrt(np.sum((E_tot)**2,axis=1)))
+    
+    slicedim=-1
+    
+    
+    slicepos= max([Xslice, Yslice, Zslice])
+    ##-------------------------------arrow field---------------------
+    
+    E_tot_dir_real=np.real(E_tot)    
+
+
+
+
+    if Xslice!=-1:
+        
+        deletelist=deleteindice(geometry, slicepos, 0)
+        geometryslice=np.delete(geometry, deletelist, 0)
+        E_tot_dir_real_slice=np.delete(E_tot_dir_real, deletelist, 0)
+
+    if Yslice!=-1:
+        
+        deletelist=deleteindice(geometry, slicepos, 1)
+        geometryslice=np.delete(geometry, deletelist, 0)
+        E_tot_dir_real_slice=np.delete(E_tot_dir_real, deletelist, 0)
+    if Zslice!=-1:
+       
+        deletelist=deleteindice(geometry, slicepos, 2)
+        geometryslice=np.delete(geometry, deletelist, 0)
+        E_tot_dir_real_slice=np.delete(E_tot_dir_real, deletelist, 0)
+    
+    
+    fig2 = plt.figure(figsize=(10,10))
+    ax2 = fig2.add_subplot(111, projection='3d')
+    ax2.quiver(geometryslice[:,0]*d,geometryslice[:,1]*d,geometryslice[:,2]*d,E_tot_dir_real_slice[:,0],E_tot_dir_real_slice[:,1],E_tot_dir_real_slice[:,2], length=60, arrow_length_ratio=0.3, linewidth=0.5)
+    #print(geometryslice.shape)
+    ax2.set_xlim(-(Axis_max-X*d)/2,(Axis_max+X*d)/2)
+    ax2.set_ylim(-(Axis_max-Y*d)/2,(Axis_max+Y*d)/2)
+    ax2.set_zlim(-(Axis_max-Z*d)/2,(Axis_max+Z*d)/2)
+    ax2.set_xlabel("x[nm]")
+    ax2.set_ylabel("y[nm]")
+    ax2.set_zlabel("z[nm]")
+    ax2.grid(False)
+    
+    fig2.suptitle("E field - Arrow plot\n {}".format(E_dir))
+    plt.show()
+    ax2.view_init(elev=0, azim=0)
+    plt.savefig(position+"{}E_field_arrow at {}degree.png".format(str(iteration).zfill(decimal), "0"), dpi=1200)
+    ax2.view_init(elev=45, azim=30)
+    plt.savefig(position+"{}E_field_arrow at {}degree.png".format(str(iteration).zfill(decimal), "45"), dpi=1200)
+    #ax2.view_init(elev=90, azim=0)
+    #plt.savefig(position+"{}E_field_arrow at {}degree.png".format(str(iteration).zfill(decimal), "90"), dpi=1200)
     
 
     
@@ -496,6 +822,39 @@ if __name__ == "__main__":
         
         diel=np.real(CoreStructure[(0):(3*N)])
         E_tot=(Modelresults[(0):(3*N)])
-        zslice=10
+        zslice=7
+        #EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")         #----------electric field intensity-----------
+        EField_slice_dirx(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")     #----------real Ex-----------------
+        EField_slice_diry(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")     #----------real Ey-----------------
+        EField_slice_dirz(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")     #----------real Ez-----------------
+        #EField_slice_arrow(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")   #-----------Vector field (Ex.real, Ey.real, Ez.real) in a cross section----------
 
-        EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")
+
+
+"""
+if __name__ == "__main__":
+
+    objective_number = 1
+    pos="./" + sys.argv[1] + "/"
+    it_start = sys.argv[2]
+    it_end = sys.argv[3]
+    
+    datacommon=np.genfromtxt(pos+"Commondata.txt")
+    N=int(np.real(datacommon[3]))
+    geometry=np.real(datacommon[4:(3*N+4)]).astype(int)
+    d=np.real(datacommon[3*N+4])
+    E_dir=np.real(datacommon[(3*N+5):(3*N+8)])
+    k_dir=np.real(datacommon[(3*N+8):(3*N+11)])
+    
+    dec = 5
+    for it in range(int(it_start), int(it_end)+1):
+        pos="./" + sys.argv[1] + "/"
+        CoreStructure=np.genfromtxt(os.path.join(pos+"CoreStructure","CoreStructure"+str(it)+".txt"),dtype=complex)
+        Modelresults=np.genfromtxt(os.path.join(pos+"Model_output","Model_results"+"it"+str(it)+".txt"),dtype=complex)
+        
+        diel=np.real(CoreStructure[(0):(3*N)])
+        E_tot=(Modelresults[(0):(3*N)])
+        
+
+        EField(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, position=pos+"E-field/")
+"""
