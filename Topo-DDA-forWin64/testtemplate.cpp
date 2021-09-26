@@ -3070,7 +3070,7 @@ int main() {
     srand((unsigned)(time(0)));
 
     int Nx, Ny, Nz;
-    Nx = 90; Ny = 90; Nz = 20;
+    Nx = 31; Ny = 31; Nz = 7;
 
     int N = 0;
     VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
@@ -3112,12 +3112,12 @@ int main() {
     bool HavePenalty = false;
     double PenaltyFactor = 0.0001;
 
-    Vector3i bind(1, 1, 20);
-    int number = 6;
-    double limitx1 = 4;
-    double limitx2 = 25;
-    double limity1 = 4;
-    double limity2 = 25;
+    Vector3i bind(1, 1, 7);
+    int number = 5;
+    double limitx1 = 2;
+    double limitx2 = 9;
+    double limity1 = 2;
+    double limity2 = 9;
 
     SpacePara spacepara(&S, bind, number, limitx1, limitx2, limity1, limity2);
 
@@ -3169,6 +3169,7 @@ int main() {
     return 0;
 
 }
+
 
 //2021-7-29
 int main() {
@@ -3455,6 +3456,967 @@ int main() {
 
     cout << "nK" << n_K << endl;
     cout << "nE0" << n_E0 << endl;
+
+    AngleInfo.close();
+    nEInfo.close();
+    cout << "Number of DDA Model : " << ModelList.size() << endl;
+
+    list<DDAModel>::iterator it1 = ModelList.begin();
+    for (int i = 0; i <= ModelList.size() - 1; i++) {
+        ModelpointerList.push_back(&(*it1));
+        it1++;
+    }
+
+
+    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, &CStr, ModelpointerList);
+
+
+    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+
+
+
+
+
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
+
+    return 0;
+
+}
+
+//radnom 3D SiO2
+int main() {
+
+    srand((unsigned)(time(0)));
+
+    int Nx, Ny, Nz;
+    Nx = 32; Ny = 32; Nz = 8;
+
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    double d;
+
+    Vector3d center;
+    Vector3d l;
+
+    d = 20;
+
+    center << double(Nx - 1) / 2, double(Ny - 1) / 2, double(Nz - 1) / 2;
+    l << Nx - 1, Ny - 1, Nz - 1;
+
+    Structure s1(S.get_total_space(), l, center);
+
+
+
+    S = S + s1;
+
+    double lam = 710;
+    Vector3d n_K;
+    n_K << 0.0, 0.0, 1.0;
+    double E0 = 1.0;
+    Vector3d n_E0;
+    n_E0 << 1.0, 0.0, 0.0;
+    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
+
+
+
+
+    int MAX_ITERATION_DDA = 10000;
+    double MAX_ERROR = 0.00001;
+
+
+    bool HavePathRecord = true;
+    bool HavePenalty = false;
+    double PenaltyFactor = 0.0001;
+
+    Vector3i bind(1, 1, 1);
+    int maxnumber = 15;
+    int minnumber = 6;
+    int number = 0;
+    double limitx1 = 2;
+    double limitx2 = 5;
+    double limity1 = 2;
+    double limity2 = 5;
+    double limitz1 = 2;
+    double limitz2 = 5;
+
+    SpacePara spacepara(&S, bind, maxnumber, limitx1, limitx2, limity1, limity2, limitz1, limitz2);
+
+
+    CoreStructure CStr(&spacepara, d);
+    AProductCore Core(&CStr, lam, material, "LDR");
+    DDAModel TestModel(&Core, n_K, E0, n_E0);
+
+    string save_position = ".\\SiO2-rects-3D-710\\";
+
+    TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+    TestModel.update_E_in_structure();
+    TestModel.solve_E();
+    //TestModel.output_to_file(save_position, 0, 0);
+    //CStr.output_to_file(save_position, 0);
+    ofstream Common;
+    Common.open(save_position + "Commondata.txt");
+    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+    Common << (spacepara.get_geometry()) << endl;
+    Common << d << endl;
+    Common << n_E0 << endl;
+    Common << n_K << endl;
+
+    int num_model = 30000;
+    int start_num = 0;
+
+    ofstream TotalTime;
+    TotalTime.open(save_position + "TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+    for (int i = 0; i <= num_model - 1; i++) {
+        number = round(((double)rand() / RAND_MAX) * (maxnumber - minnumber + 1)) + minnumber;
+        SpacePara spacepara_tmp(&S, bind, number, limitx1, limitx2, limity1, limity2, limitz1, limitz2, spacepara.get_geometryPara());
+        CStr.UpdateStr(&spacepara_tmp);
+        CStr.output_to_file(save_position, start_num + i + 1, "Simple");
+        TestModel.UpdateAlpha();
+        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel.update_E_in_structure();
+        TestModel.solve_E();
+        TestModel.output_to_file(save_position, start_num + i + 1);
+    }
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
+
+
+
+
+
+    return 0;
+
+}
+
+//radnom 3D SiO2 several wavelength
+int main() {
+
+    srand((unsigned)(time(0)));
+
+    int Nx, Ny, Nz;
+    Nx = 32; Ny = 32; Nz = 8;
+
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    double d;
+
+    Vector3d center;
+    Vector3d l;
+
+    d = 20;
+
+    center << double(Nx - 1) / 2, double(Ny - 1) / 2, double(Nz - 1) / 2;
+    l << Nx - 1, Ny - 1, Nz - 1;
+
+    Structure s1(S.get_total_space(), l, center);
+
+
+
+    S = S + s1;
+
+    double lam1 = 650;
+    double lam2 = 700;
+    double lam3 = 750;
+    Vector3d n_K;
+    n_K << 0.0, 0.0, 1.0;
+    double E0 = 1.0;
+    Vector3d n_E0;
+    n_E0 << 1.0, 0.0, 0.0;
+    Vector2cd material1 = Get_2_material("Air", "SiO2", lam1, "nm");
+    Vector2cd material2 = Get_2_material("Air", "SiO2", lam2, "nm");
+    Vector2cd material3 = Get_2_material("Air", "SiO2", lam3, "nm");
+
+
+
+
+    int MAX_ITERATION_DDA = 10000;
+    double MAX_ERROR = 0.00001;
+
+
+    bool HavePathRecord = true;
+    bool HavePenalty = false;
+    double PenaltyFactor = 0.0001;
+
+    Vector3i bind(1, 1, 1);
+    int maxnumber = 15;
+    int minnumber = 6;
+    int number = 0;
+    double limitx1 = 2;
+    double limitx2 = 5;
+    double limity1 = 2;
+    double limity2 = 5;
+    double limitz1 = 2;
+    double limitz2 = 5;
+
+    SpacePara spacepara(&S, bind, maxnumber, limitx1, limitx2, limity1, limity2, limitz1, limitz2);
+
+
+    CoreStructure CStr(&spacepara, d);
+    AProductCore Core1(&CStr, lam1, material1, "LDR");
+    AProductCore Core2(&CStr, lam2, material2, "LDR");
+    AProductCore Core3(&CStr, lam3, material3, "LDR");
+    DDAModel TestModel1(&Core1, n_K, E0, n_E0);
+    DDAModel TestModel2(&Core2, n_K, E0, n_E0);
+    DDAModel TestModel3(&Core3, n_K, E0, n_E0);
+
+    string save_position = ".\\SiO2-rects-3D-650~750\\";
+
+    TestModel1.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+    TestModel1.update_E_in_structure();
+    TestModel1.solve_E();
+    TestModel2.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+    TestModel2.update_E_in_structure();
+    TestModel2.solve_E();
+    TestModel3.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+    TestModel3.update_E_in_structure();
+    TestModel3.solve_E();
+    //TestModel.output_to_file(save_position, 0, 0);
+    //CStr.output_to_file(save_position, 0);
+    ofstream Common;
+    Common.open(save_position + "Commondata.txt");
+    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+    Common << (spacepara.get_geometry()) << endl;
+    Common << d << endl;
+    Common << n_E0 << endl;
+    Common << n_K << endl;
+
+    int num_model = 10;
+    int start_num = 0;
+
+    ofstream TotalTime;
+    TotalTime.open(save_position + "TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+    for (int i = 0; i <= num_model - 1; i++) {
+        number = round(((double)rand() / RAND_MAX) * (maxnumber - minnumber + 1)) + minnumber;
+        SpacePara spacepara_tmp(&S, bind, number, limitx1, limitx2, limity1, limity2, limitz1, limitz2, spacepara.get_geometryPara());
+        CStr.UpdateStr(&spacepara_tmp);
+        CStr.output_to_file(save_position, start_num + i + 1, "Simple");
+        TestModel1.UpdateAlpha();
+        TestModel1.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel1.update_E_in_structure();
+        TestModel1.solve_E();
+        TestModel1.output_to_file(save_position, lam1, start_num + i + 1);
+
+        TestModel2.UpdateAlpha();
+        TestModel2.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel2.update_E_in_structure();
+        TestModel2.solve_E();
+        TestModel2.output_to_file(save_position, lam2, start_num + i + 1);
+
+        TestModel3.UpdateAlpha();
+        TestModel3.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel3.update_E_in_structure();
+        TestModel3.solve_E();
+        TestModel3.output_to_file(save_position, lam3, start_num + i + 1);
+    }
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
+
+
+
+
+
+    return 0;
+
+}
+
+//2021-9-1 4848 and 6464
+int main() {
+
+    srand((unsigned)(time(0)));
+
+    int Nx, Ny, Nz;
+    Nx = 48; Ny = 48; Nz = 8;
+
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    double d;
+
+    Vector3d center;
+    Vector3d l;
+
+    d = 20;
+
+    center << double(Nx - 1) / 2, double(Ny - 1) / 2, double(Nz - 1) / 2;
+    l << Nx - 1, Ny - 1, Nz - 1;
+
+    Structure s1(S.get_total_space(), l, center);
+
+
+
+    S = S + s1;
+
+    double lam = 700;
+    Vector3d n_K;
+    n_K << 0.0, 0.0, 1.0;
+    double E0 = 1.0;
+    Vector3d n_E0;
+    n_E0 << 1.0, 0.0, 0.0;
+    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
+
+
+
+
+    int MAX_ITERATION_DDA = 10000;
+    double MAX_ERROR = 0.00001;
+
+
+    bool HavePathRecord = true;
+    bool HavePenalty = false;
+    double PenaltyFactor = 0.0001;
+
+    Vector3i bind(1, 1, 1);
+    int maxnumber = 34;
+    int minnumber = 14;
+    int number = 0;
+    double limitx1 = 2;
+    double limitx2 = 5;
+    double limity1 = 2;
+    double limity2 = 5;
+    double limitz1 = 2;
+    double limitz2 = 5;
+
+    SpacePara spacepara(&S, bind, maxnumber, limitx1, limitx2, limity1, limity2, limitz1, limitz2);
+
+
+    CoreStructure CStr(&spacepara, d);
+    AProductCore Core(&CStr, lam, material, "LDR");
+    DDAModel TestModel(&Core, n_K, E0, n_E0);
+
+    string save_position = ".\\SiO2-rects-3D-700-48488-3414020502050205\\";
+
+    TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+    TestModel.update_E_in_structure();
+    TestModel.solve_E();
+    //TestModel.output_to_file(save_position, 0, 0);
+    //CStr.output_to_file(save_position, 0);
+    ofstream Common;
+    Common.open(save_position + "Commondata.txt");
+    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+    Common << (spacepara.get_geometry()) << endl;
+    Common << d << endl;
+    Common << n_E0 << endl;
+    Common << n_K << endl;
+
+    int num_model = 30000;
+    int start_num = 0;
+
+    ofstream TotalTime;
+    TotalTime.open(save_position + "TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+    for (int i = 0; i <= num_model - 1; i++) {
+        number = round(((double)rand() / RAND_MAX) * (maxnumber - minnumber + 1)) + minnumber;
+        SpacePara spacepara_tmp(&S, bind, number, limitx1, limitx2, limity1, limity2, limitz1, limitz2, spacepara.get_geometryPara());
+        CStr.UpdateStr(&spacepara_tmp);
+        CStr.output_to_file(save_position, start_num + i + 1, "Simple");
+        TestModel.UpdateAlpha();
+        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel.update_E_in_structure();
+        TestModel.solve_E();
+        TestModel.output_to_file(save_position, start_num + i + 1);
+    }
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
+
+
+
+
+
+    return 0;
+
+}
+
+//32328-opt
+int main() {
+    string save_position = ".\\32328-opt-z4\\";
+
+    ofstream TotalTime;
+    TotalTime.open(save_position + "TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+
+    int Nx, Ny, Nz;
+    Nx = 32; Ny = 32; Nz = 8;
+
+    Vector3d l;
+    Vector3d center;
+    double d = 20;
+
+    center << double(Nx - 1) / 2, double(Ny - 1) / 2, double(Nz - 1) / 2;
+    l << Nx - 1, Ny - 1, Nz - 1;
+
+    cout << center << endl;
+    //Nx = 23; Ny = 23; Nz = 10;
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    Vector3i direction;
+
+    //l << 20.0, 20.0, 9.0;
+    //center << 10.0, 10.0, 4.5;
+    Structure s1(S.get_total_space(), l, center);
+
+
+
+    S = S + s1;
+
+    Vector3i bind(1, 1, 1);
+    SpacePara spacepara(&S, bind, "ONES");
+
+
+
+
+    double E0 = 1.0;
+
+
+    double epsilon = 10;
+
+    //double focus = (l(2) + 2) * d;   //nm
+
+    double focus = 4 * d;
+    cout << focus << endl;
+
+    int MAX_ITERATION_DDA = 100000;
+    double MAX_ERROR = 0.00001;
+    int MAX_ITERATION_EVO = 200;
+
+    list<string> ObjectFunctionNames{ "PointE" };
+
+    double exponent = 2;
+    double ratio = 4;
+
+    list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };
+
+    bool HavePathRecord = false;
+    bool HavePenalty = false;
+    bool HaveOriginHeritage = true;
+    bool HaveAdjointHeritage = false;
+    double PenaltyFactor = 0.0001;
+    list<list<double>*> ObjectParameters{ &ObjectParameter };
+
+
+    Vector3d n_K;
+    Vector3d n_E0;
+
+
+
+    list<DDAModel> ModelList;
+    list<DDAModel*> ModelpointerList;
+
+    ofstream AngleInfo("AngleInfo.txt");
+    ofstream nEInfo("nEInfo.txt");
+
+    int theta_num = 1;
+    VectorXd theta(theta_num);
+    theta << 0;
+    int phi_num = 1;
+    VectorXd phi(phi_num);
+    phi << 0;
+    int lam_num = 1;
+    VectorXd lam(lam_num);
+    lam << 700;
+
+    CoreStructure CStr(&spacepara, d);
+    list<AProductCore> CoreList;
+    list<AProductCore*> CorePointList;
+    Vector2cd material;
+    material = Get_2_material("Air", "SiO2", lam(0), "nm");
+    //AProductCore Core1(&CStr, lam(0), material, "LDR");
+
+    AProductCore Core1(&CStr, lam(0), material, "LDR");
+    //material = Get_2_material("Air", "2.5", lam(1), "nm");
+    //AProductCore Core2(&CStr, lam(1), material, "LDR");
+    //material = Get_2_material("Air", "2.5", lam(2), "nm");
+    //AProductCore Core3(&CStr, lam(2), material, "LDR");
+    CorePointList.push_back(&Core1);
+    //CorePointList.push_back(&Core2);
+    //CorePointList.push_back(&Core3);
+
+    /*
+    for (int k = 0; k <= lam_num - 1; k++) {
+        Vector2cd material = Get_2_material("Air", "SiO2", lam(k), "nm");
+        AProductCore Core_tmp(&CStr, lam(k), material);
+        CoreList.push_back(Core_tmp);
+    }
+    */
+
+    list<AProductCore*>::iterator it = CorePointList.begin();
+    for (int k = 0; k <= lam_num - 1; k++) {
+        AProductCore* Core = (*it);
+        for (int i = 0; i <= theta_num - 1; i++) {
+            for (int j = 0; j <= phi_num - 1; j++) {
+                if (theta(i) != 0) {
+                    double theta_tmp = theta(i) * M_PI / 180;
+                    double phi_tmp = phi(j) * M_PI / 180;
+                    n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+                    n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+                    if (CheckPerp(n_E0, n_K) == false) {
+                        cout << "----------------------------------------theta" << theta[i] << "phi" << phi[j] << "Not perpendicular---------------------------------------" << endl;
+                    }
+                    if (k == 0) {
+                        AngleInfo << theta[i] << endl;
+                        AngleInfo << phi[j] << endl;
+                        nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+                    }
+                    DDAModel Model(Core, n_K, E0, n_E0);
+                    ModelList.push_back(Model);
+                }
+            }
+        }
+
+        double theta_tmp = 0 * M_PI / 180;
+        double phi_tmp = 0 * M_PI / 180;
+        n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+        n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+        if (CheckPerp(n_E0, n_K) == false) {
+            cout << "----------------------------------------theta" << 0 << "phi" << 0 << "Not perpendicular---------------------------------------" << endl;
+        }
+        if (k == 0) {
+            AngleInfo << 0.0 << endl;
+            AngleInfo << 0.0 << endl;
+            nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+        }
+        DDAModel Model(Core, n_K, E0, n_E0);
+        ModelList.push_back(Model);
+
+        it++;
+    }
+
+
+
+
+    AngleInfo.close();
+    nEInfo.close();
+    cout << "Number of DDA Model : " << ModelList.size() << endl;
+
+    list<DDAModel>::iterator it1 = ModelList.begin();
+    for (int i = 0; i <= ModelList.size() - 1; i++) {
+        ModelpointerList.push_back(&(*it1));
+        it1++;
+    }
+
+
+    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, &CStr, ModelpointerList);
+
+
+    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+
+    double outputtime = EModel.get_output_time();
+
+
+
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << "TotalTime: " << duration / 1000 << endl;
+    TotalTime << "OutputTime: " << outputtime << endl;
+    TotalTime.close();
+
+    return 0;
+
+}
+
+//verify nn results
+int main() {
+
+    list<int> itchecklist{ 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130 ,140, 150, 160, 170, 180, 190, 200 };
+
+    for (list<int>::const_iterator itcheckit = itchecklist.begin(); itcheckit != itchecklist.end(); itcheckit++) {
+        int itcheck = *itcheckit;
+        //string open_position = "E:\\EM-Field-Surrogate-Solver-based-on-DDA\\32328-opt-nn-200-10-10-learn1\\";
+        string open_position = "E:\\EM-Field-Surrogate-Solver-based-on-DDA\\Local files\\Optimization results\\4layer-lr0.0005\\32328-opt-nn-100-1-10-0.7-learn0.5-initialONE-weightdecay0.0-pointEmax\\";
+        string name1 = open_position + "Commondata.txt";
+
+        ifstream fin1(name1);
+        int Nx, Ny, Nz;
+        int Ntmp;
+        fin1 >> Nx;
+        fin1 >> Ny;
+        fin1 >> Nz;
+        fin1 >> Ntmp;
+        VectorXi geometry = VectorXi::Zero(3 * Ntmp);
+        for (int i = 0; i <= Ntmp - 1; i++) {
+            fin1 >> geometry(3 * i);
+            fin1 >> geometry(3 * i + 1);
+            fin1 >> geometry(3 * i + 2);
+        }
+        double d;
+        fin1 >> d;
+        fin1.close();
+
+
+        string name2, name3;
+        name2 = open_position + "CoreStructure\\CoreStructure" + to_string(itcheck) + ".txt";
+        name3 = open_position + "Model_output\\Model_resultsit" + to_string(itcheck) + ".txt";
+        ifstream fin2(name2), fin3(name3);
+
+        VectorXi geometryPara = VectorXi::Zero(Ntmp);
+        int parasize = Ntmp;
+        VectorXd Para = VectorXd::Zero(parasize);
+        Vector3i bind(1, 1, 1);
+
+        for (int i = 0; i <= Ntmp - 1; i++) {
+            double x = geometry(3 * i);
+            double y = geometry(3 * i + 1);
+            double z = geometry(3 * i + 2);
+            int pos = z + Nz * (y + Ny * x);
+            geometryPara(i) = pos;
+        }
+
+        for (int i = 0; i <= parasize - 1; i++) {
+            double fake;
+            fin2 >> Para(i);
+            fin2 >> fake;
+            fin2 >> fake;
+        }
+        cout << parasize << endl;
+        VectorXi FreeparatoPara = VectorXi::Zero(parasize);
+        for (int i = 0; i <= parasize - 1; i++) {
+            FreeparatoPara(i) = i;
+        }
+        fin2.close();
+        fin3.close();
+
+
+        int N = 0;
+        VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+        list<Structure> ln;
+        Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+        Structure s1(S.get_total_space(), &geometry);
+
+        S = S + s1;
+
+
+        SpacePara spacepara(&S, bind, &geometryPara, &Para, &FreeparatoPara);
+
+
+        double E0 = 1.0;
+
+
+        //double epsilon = 1;
+
+        //double focus = (l(2) + 2) * d;   //nm       
+        //double focus = (l(2) + 2) * d;
+        //cout << focus << endl;
+
+        int MAX_ITERATION_DDA = 10000;
+        double MAX_ERROR = 0.00001;
+
+
+        Vector3d n_K;
+        Vector3d n_E0;
+
+        n_K << 0.0, 0.0, 1.0;
+        n_E0 << 1.0, 0.0, 0.0;
+
+
+
+        CoreStructure CStr(&spacepara, d);
+
+        string save_position1 = open_position + "CoreStructure_verify\\";
+        string save_position2 = open_position + "Model_output_verify\\";
+
+        CStr.output_to_file(save_position1, itcheck, "simplify");
+        double lam = 700;
+        Vector2cd material;
+        material = Get_2_material("Air", "SiO2", lam, "nm");
+        AProductCore Core(&CStr, lam, material, "LDR");
+        DDAModel TestModel(&Core, n_K, E0, n_E0);
+        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel.update_E_in_structure();
+        TestModel.solve_E();
+        TestModel.output_to_file(save_position2, itcheck);
+    }
+
+    return 0;
+
+}
+
+//32328-fullrandom
+int main() {
+
+    srand((unsigned)(time(0)));
+
+    int Nx, Ny, Nz;
+    Nx = 32; Ny = 32; Nz = 8;
+
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    double d;
+
+    Vector3d center;
+    Vector3d l;
+
+    d = 20;
+
+    center << double(Nx - 1) / 2, double(Ny - 1) / 2, double(Nz - 1) / 2;
+    l << Nx - 1, Ny - 1, Nz - 1;
+
+    Structure s1(S.get_total_space(), l, center);
+
+
+
+    S = S + s1;
+
+    double lam = 700;
+    Vector3d n_K;
+    n_K << 0.0, 0.0, 1.0;
+    double E0 = 1.0;
+    Vector3d n_E0;
+    n_E0 << 1.0, 0.0, 0.0;
+    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
+
+
+
+
+    int MAX_ITERATION_DDA = 10000;
+    double MAX_ERROR = 0.00001;
+
+
+    bool HavePathRecord = true;
+    bool HavePenalty = false;
+    double PenaltyFactor = 0.0001;
+
+    Vector3i bind(1, 1, 1);
+
+    SpacePara spacepara(&S, bind, "RANDOM");
+
+    CoreStructure CStr(&spacepara, d);
+    AProductCore Core(&CStr, lam, material, "LDR");
+    DDAModel TestModel(&Core, n_K, E0, n_E0);
+
+    string save_position = ".\\32328-random\\";
+
+    TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+    TestModel.update_E_in_structure();
+    TestModel.solve_E();
+    //TestModel.output_to_file(save_position, 0, 0);
+    //CStr.output_to_file(save_position, 0);
+    ofstream Common;
+    Common.open(save_position + "Commondata.txt");
+    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+    Common << (spacepara.get_geometry()) << endl;
+    Common << d << endl;
+    Common << n_E0 << endl;
+    Common << n_K << endl;
+
+    int num_model = 30000;
+    int start_num = 0;
+
+    ofstream TotalTime;
+    TotalTime.open(save_position + "TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+    for (int i = 0; i <= num_model - 1; i++) {
+
+        SpacePara spacepara_tmp(&S, bind, "RANDOM", spacepara.get_geometryPara());
+        CStr.UpdateStr(&spacepara_tmp);
+        CStr.output_to_file(save_position, start_num + i + 1, "Simple");
+        TestModel.UpdateAlpha();
+        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        TestModel.update_E_in_structure();
+        TestModel.solve_E();
+        TestModel.output_to_file(save_position, start_num + i + 1);
+    }
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    TotalTime << duration / 1000 << endl;
+    TotalTime.close();
+
+
+
+
+
+    return 0;
+
+}
+
+//Optimization of focal metasurfaces
+int main() {
+
+    string save_position = ".\\thick400-diel2d5-phi0theta0-lam500-size2000-focus-m150\\";
+    ofstream TotalTime;
+    TotalTime.open(save_position + "TotalTime.txt");
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+
+
+
+    Vector3d l;
+    Vector3d center;
+    l << 80.0, 80.0, 16.0;
+    //l << 40.0, 40.0, 8.0;
+    center << l(0) / 2, l(1) / 2, l(2) / 2;
+
+    int Nx, Ny, Nz;
+    //Nx = 103; Ny = 103; Nz = 16;
+    Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);
+    cout << center << endl;
+    //Nx = 23; Ny = 23; Nz = 10;
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    Vector3i direction;
+
+    //l << 20.0, 20.0, 9.0;
+    //center << 10.0, 10.0, 4.5;
+    Structure s1(S.get_total_space(), l, center);
+
+
+
+    S = S + s1;
+
+    Vector3i bind(1, 1, 1);
+    SpacePara spacepara(&S, bind, "ONES");
+
+    double d = 25;
+
+
+    double E0 = 1.0;
+
+
+    double epsilon = 10;
+
+    //double focus = (l(2) + 2) * d;   //nm       
+    double focus = (l(2) - 6) * d;
+    cout << focus << endl;
+
+    int MAX_ITERATION_DDA = 100000;
+    double MAX_ERROR = 0.00001;
+    int MAX_ITERATION_EVO = 200;
+
+    list<string> ObjectFunctionNames{ "PointE" };
+
+    double exponent = 2;
+    double ratio = 4;
+
+    list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };
+
+    bool HavePathRecord = false;
+    bool HavePenalty = false;
+    bool HaveOriginHeritage = true;
+    bool HaveAdjointHeritage = false;
+    double PenaltyFactor = 0.0001;
+    list<list<double>*> ObjectParameters{ &ObjectParameter };
+
+
+    Vector3d n_K;
+    Vector3d n_E0;
+
+
+
+    list<DDAModel> ModelList;
+    list<DDAModel*> ModelpointerList;
+
+    ofstream AngleInfo(save_position + "AngleInfo.txt");
+    ofstream nEInfo(save_position + "nEInfo.txt");
+
+    int theta_num = 1;
+    VectorXd theta(theta_num);
+    theta << 0;
+    int phi_num = 1;
+    VectorXd phi(phi_num);
+    phi << 0;
+    int lam_num = 1;
+    VectorXd lam(lam_num);
+    lam << 500;
+
+    CoreStructure CStr(&spacepara, d);
+    list<AProductCore> CoreList;
+    list<AProductCore*> CorePointList;
+    Vector2cd material;
+    material = Get_2_material("Air", "2.5", lam(0), "nm");
+    //AProductCore Core1(&CStr, lam(0), material, "LDR");
+
+
+    AProductCore Core1(&CStr, lam(0), material, "LDR");
+
+    CorePointList.push_back(&Core1);
+
+
+    ofstream Common;
+    Common.open(save_position + "Commondata.txt");
+    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+    Common << (spacepara.get_geometry()) << endl;
+    Common << d << endl;
+    Common << n_E0 << endl;
+    Common << n_K << endl;
+
+    /*
+    for (int k = 0; k <= lam_num - 1; k++) {
+        Vector2cd material = Get_2_material("Air", "SiO2", lam(k), "nm");
+        AProductCore Core_tmp(&CStr, lam(k), material);
+        CoreList.push_back(Core_tmp);
+    }
+    */
+
+    list<AProductCore*>::iterator it = CorePointList.begin();
+    for (int k = 0; k <= lam_num - 1; k++) {
+        AProductCore* Core = (*it);
+        for (int i = 0; i <= theta_num - 1; i++) {
+            for (int j = 0; j <= phi_num - 1; j++) {
+                if (theta(i) != 0) {
+                    double theta_tmp = theta(i) * M_PI / 180;
+                    double phi_tmp = phi(j) * M_PI / 180;
+                    n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+                    n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+                    if (CheckPerp(n_E0, n_K) == false) {
+                        cout << "----------------------------------------theta" << theta[i] << "phi" << phi[j] << "Not perpendicular---------------------------------------" << endl;
+                    }
+                    if (k == 0) {
+                        AngleInfo << theta[i] << endl;
+                        AngleInfo << phi[j] << endl;
+                        nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+                    }
+                    DDAModel Model(Core, n_K, E0, n_E0);
+                    ModelList.push_back(Model);
+                }
+            }
+        }
+
+        double theta_tmp = 0 * M_PI / 180;
+        double phi_tmp = 0 * M_PI / 180;
+        n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+        n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+        if (CheckPerp(n_E0, n_K) == false) {
+            cout << "----------------------------------------theta" << 0 << "phi" << 0 << "Not perpendicular---------------------------------------" << endl;
+        }
+        if (k == 0) {
+            AngleInfo << 0.0 << endl;
+            AngleInfo << 0.0 << endl;
+            nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+        }
+        DDAModel Model(Core, n_K, E0, n_E0);
+        ModelList.push_back(Model);
+
+        it++;
+    }
+
+
+
 
     AngleInfo.close();
     nEInfo.close();

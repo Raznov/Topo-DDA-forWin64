@@ -24,6 +24,10 @@
 #include <cuda_runtime_api.h>
 #include <cuda.h>
 #include "cufft.h"
+#include "direct.h"
+
+
+
 
 using namespace std;
 using namespace Eigen;
@@ -51,6 +55,7 @@ MatrixXi find_scope_3_dim(VectorXi* x);
 VectorXd initial_diel_func(string initial_diel, int N);
 double initial_diel_func(string initial_diel);
 
+int makedirect(string name);
 
 class Structure{
     private:
@@ -123,13 +128,16 @@ public:
     SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_, VectorXi* FreeparatoPara_);
     SpacePara(Space* space_, Vector3i bind_, string initial_diel); //l, center similar to bulk build in Structure class. Every 'bind' nearby dipoles correspond 
                                                                     //to 1 parameter in this bulk. bind=(2,2,2): 2*2*2; bind=(1,1,3):1*1*3
+    SpacePara(Space* space_, Vector3i bind_, string initial_diel, VectorXi* geometryPara_);
     SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type);   //ONly for 2d cylinder or spheres. r is raidus/d.
 
     SpacePara(Space* space_, Vector3i bind_, string initial_diel_background, list<string>* initial_diel_list, list<double>* r_list, list<Vector2d>* center_list);
     //Build 2d cylinders with diel in the list, rest of the diel is the backgroudn diel.
 
     SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2);  //random rect in a region with extruded 2D geometry
+    SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2);  //random rect with 3D
     SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, VectorXi* geometryPara_);
+    SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_);
 
 
     void ChangeBind(Vector3i bind_);                                  //Change bind number
@@ -315,6 +323,7 @@ public:
     void output_to_file();
     void output_to_file(string save_position, int iteration, int ModelLabel);              //especially used for EvoOptimization
     void output_to_file(string save_position, int iteration);             //For simplify output
+    void output_to_file(string save_position, double wavelength, int iteration);
     void InitializeP(VectorXcd& Initializer);
     VectorXcd* get_P();
     Vector3d get_nE0();
@@ -346,6 +355,7 @@ class ObjectiveDDAModel;
 
 class EvoDDAModel {
 private:
+    double output_time;
     CoreStructure* CStr;
     list<DDAModel*> ModelList;                    //List of DDA models sharing the same AProductCore : "Core"
     int ModelNum;                                 //number of DDA model
@@ -396,6 +406,7 @@ public:
     //The objective choosing function:
     ObjectiveDDAModel* ObjectiveFactory(string ObjectName, list<double> ObjectParameters, DDAModel* ObjDDAModel);
 
+    double get_output_time();
     double L1Norm();
 
 

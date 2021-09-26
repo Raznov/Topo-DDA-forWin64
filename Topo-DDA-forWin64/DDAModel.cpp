@@ -584,8 +584,37 @@ void DDAModel::output_to_file(string save_position, int iteration, int ModelLabe
 void DDAModel::output_to_file(string save_position, int iteration) {
 
     string name;
+    name = save_position + "Model_results" + "it" + to_string(iteration) + ".txt";
+    //name = save_position + "Model_output_verify\\" + "Model_results" + "it" + to_string(iteration) + ".txt";
+    ofstream fout(name);
+    /*
+    for (int i = 0; i <= P.size() - 1; i++) {
+        if (P(i).imag() < 0) {
+            fout << P(i).real() << P(i).imag() << "j" << endl;
+        }
+        else {
+            fout << P(i).real() << "+" << P(i).imag() << "j" << endl;
+        }
 
-    name = save_position + "Model_output\\" + "Model_results" + "it" + to_string(iteration) + ".txt";
+    }
+    */
+    for (int i = 0; i <= EResult.size() - 1; i++) {
+        if (EResult(i).imag() < 0) {
+            fout << EResult(i).real() << EResult(i).imag() << "j" << endl;
+        }
+        else {
+            fout << EResult(i).real() << "+" << EResult(i).imag() << "j" << endl;
+        }
+
+    }
+    fout.close();
+}
+
+void DDAModel::output_to_file(string save_position, double wavelength, int iteration) {
+
+    string name;
+
+    name = save_position + "Model_output" + to_string(int(wavelength)) + "\\Model_results" + "it" + to_string(iteration) + ".txt";
     ofstream fout(name);
     /*
     for (int i = 0; i <= P.size() - 1; i++) {

@@ -93,7 +93,8 @@ void CoreStructure::output_to_file(string save_position, int iteration, string m
     if (mode == "normal") {
         string name;
         //name=save_position+"AProductCoreit" + to_string(iteration) + ".txt";
-        name = save_position + "CoreStructure\\CoreStructure" + to_string(iteration) + ".txt";
+        name = save_position + "CoreStructure" + to_string(iteration) + ".txt";
+        //name = save_position + "CoreStructure_verify\\CoreStructure" + to_string(iteration) + ".txt";
         ofstream fout(name);
         fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
         fout << R << endl;
@@ -104,7 +105,8 @@ void CoreStructure::output_to_file(string save_position, int iteration, string m
     else {
         string name;
         //name=save_position+"AProductCoreit" + to_string(iteration) + ".txt";
-        name = save_position + "CoreStructure\\CoreStructure" + to_string(iteration) + ".txt";
+        name = save_position + "CoreStructure" + to_string(iteration) + ".txt";
+        //name = save_position + "CoreStructure_verify\\CoreStructure" + to_string(iteration) + ".txt";
         ofstream fout(name);
         fout << diel_old << endl;
         fout.close();

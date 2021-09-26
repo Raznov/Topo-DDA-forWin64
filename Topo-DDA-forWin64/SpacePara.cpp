@@ -200,6 +200,44 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel) {
 
 }
 
+SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, VectorXi* geometryPara_) {
+    space = space_;
+    bind = bind_;
+    VectorXi* total_space = (*space).get_total_space();
+    int Nx, Ny, Nz, N;
+    tie(Nx, Ny, Nz, N) = (*space).get_Ns();
+    geometry = VectorXi::Zero(3 * N);
+
+    list<Structure>* ln = (*space).get_ln();
+    list<Structure>::iterator it = (*ln).begin();
+    int n1 = 0;
+    for (int i = 0; i <= (*ln).size() - 1; i++) {
+        int n2 = 3 * ((*it).get_geometry_size());
+        for (int j = 0; j <= n2 - 1; j++) {
+            geometry(n1 + j) = (*((*it).get_geometry()))(j);
+        }
+        n1 = n1 + n2;
+        it++;
+    }
+
+    scope = find_scope_3_dim(&geometry);
+    geometryPara = *geometryPara_;
+    int Nparax, Nparay, Nparaz, Npara;
+    Nparax = ceil(double(scope(0, 1) - scope(0, 0) + 1) / bind(0));
+    Nparay = ceil(double(scope(1, 1) - scope(1, 0) + 1) / bind(1));
+    Nparaz = ceil(double(scope(2, 1) - scope(2, 0) + 1) / bind(2));
+    Npara = Nparax * Nparay * Nparaz;
+    //cout << "scope" << endl << scope << endl;
+    //cout << "(Npara, Nparay, Nparaz) " << "(" << Nparax << ", " << Nparay << ", " << Nparaz << ")" << endl;
+    //cout << "Npara: " << Npara << endl;
+    Para = initial_diel_func(initial_diel, Npara);
+    FreeparatoPara = VectorXi::Zero(Npara);
+    for (int i = 0; i <= Npara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
+
+}
+
 SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type) {
     space = space_;
     bind = bind_;
@@ -476,6 +514,92 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
   
 }
 
+SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2) {
+    space = space_;
+    bind = bind_;
+    VectorXi* total_space = (*space).get_total_space();
+    int Nx, Ny, Nz, N;
+    tie(Nx, Ny, Nz, N) = (*space).get_Ns();
+    geometry = VectorXi::Zero(3 * N);
+
+    list<Structure>* ln = (*space).get_ln();
+    list<Structure>::iterator it = (*ln).begin();
+    int n1 = 0;
+    for (int i = 0; i <= (*ln).size() - 1; i++) {
+        int n2 = 3 * ((*it).get_geometry_size());
+        for (int j = 0; j <= n2 - 1; j++) {
+            geometry(n1 + j) = (*((*it).get_geometry()))(j);
+        }
+        n1 = n1 + n2;
+        it++;
+    }
+
+    scope = find_scope_3_dim(&geometry);
+    geometryPara = VectorXi::Zero(N);
+    int Nparax, Nparay, Nparaz, Npara;
+    Nparax = ceil(double(scope(0, 1) - scope(0, 0) + 1) / bind(0));
+    Nparay = ceil(double(scope(1, 1) - scope(1, 0) + 1) / bind(1));
+    Nparaz = ceil(double(scope(2, 1) - scope(2, 0) + 1) / bind(2));
+    Npara = Nparax * Nparay * Nparaz;
+    Para = VectorXd::Zero(Npara);
+    FreeparatoPara = VectorXi::Zero(Npara);
+    for (int i = 0; i <= Npara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
+
+    for (int i = 0; i <= Npara - 1; i++) {                          //First inital all to background
+        Para(i) = initial_diel_func("ZEROS");
+    }
+
+    int xcenter, ycenter, zcenter;
+    int lx, ly, lz;
+
+
+    for (int m = 0; m < number; m++) {
+        xcenter = round(((double)rand() / RAND_MAX) * (double(scope(0, 1) - scope(0, 0) + 1))) + scope(0, 0);
+        ycenter = round(((double)rand() / RAND_MAX) * (double(scope(1, 1) - scope(1, 0) + 1))) + scope(1, 0);
+        zcenter = round(((double)rand() / RAND_MAX) * (double(scope(2, 1) - scope(2, 0) + 1))) + scope(2, 0);
+        lx = round(((double)rand() / RAND_MAX) * (limitx2 - limitx1) + limitx1);
+        ly = round(((double)rand() / RAND_MAX) * (limity2 - limity1) + limity1);
+        lz = round(((double)rand() / RAND_MAX) * (limitz2 - limitz1) + limitz1);
+
+
+        cout << "xcenter=" << xcenter << " ycenter=" << ycenter << " zcenter=" << zcenter << endl;
+        cout << "lx=" << lx << " " << "ly=" << ly << " " << "lz=" << lz << endl;
+
+
+
+        for (int i = 0; i <= Nparax - 1; i++) {
+            for (int j = 0; j <= Nparay - 1; j++) {
+                for (int k = 0; k <= Nparaz - 1; k++) {
+                    int pos = k + Nparaz * (j + Nparay * i);
+                    double x, y, z;      //center of one 2D para region
+                    x = bind(0) * (2 * i + 1) / 2;
+                    y = bind(1) * (2 * j + 1) / 2;
+                    z = bind(2) * (2 * k + 1) / 2;
+
+                    if ((abs(x - xcenter) <= lx) && (abs(y - ycenter) <= ly) && (abs(z - zcenter) <= lz)) {
+                        Para(pos) = initial_diel_func("ONES");
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i <= N - 1; i++) {
+        double x = geometry(3 * i);
+        double y = geometry(3 * i + 1);
+        double z = geometry(3 * i + 2);
+        int parax = floor((x - scope(0, 0)) / bind(0));
+        int paray = floor((y - scope(1, 0)) / bind(1));
+        int paraz = floor((z - scope(2, 0)) / bind(2));
+        int pos = paraz + Nparaz * (paray + Nparay * parax);
+        geometryPara(i) = pos;
+    }
+
+
+}
+
 SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, VectorXi* geometryPara_) {
     space = space_;
     bind = bind_;
@@ -537,6 +661,81 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
             }
         }
     }
+}
+
+SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_) {
+    space = space_;
+    bind = bind_;
+    VectorXi* total_space = (*space).get_total_space();
+    int Nx, Ny, Nz, N;
+    tie(Nx, Ny, Nz, N) = (*space).get_Ns();
+    geometry = VectorXi::Zero(3 * N);
+
+    list<Structure>* ln = (*space).get_ln();
+    list<Structure>::iterator it = (*ln).begin();
+    int n1 = 0;
+    for (int i = 0; i <= (*ln).size() - 1; i++) {
+        int n2 = 3 * ((*it).get_geometry_size());
+        for (int j = 0; j <= n2 - 1; j++) {
+            geometry(n1 + j) = (*((*it).get_geometry()))(j);
+        }
+        n1 = n1 + n2;
+        it++;
+    }
+
+    scope = find_scope_3_dim(&geometry);
+    geometryPara = *geometryPara_;
+    int Nparax, Nparay, Nparaz, Npara;
+    Nparax = ceil(double(scope(0, 1) - scope(0, 0) + 1) / bind(0));
+    Nparay = ceil(double(scope(1, 1) - scope(1, 0) + 1) / bind(1));
+    Nparaz = ceil(double(scope(2, 1) - scope(2, 0) + 1) / bind(2));
+    Npara = Nparax * Nparay * Nparaz;
+    Para = VectorXd::Zero(Npara);
+    FreeparatoPara = VectorXi::Zero(Npara);
+    for (int i = 0; i <= Npara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
+
+    for (int i = 0; i <= Npara - 1; i++) {                          //First inital all to background
+        Para(i) = initial_diel_func("ZEROS");
+    }
+
+    int xcenter, ycenter, zcenter;
+    int lx, ly, lz;
+
+
+    for (int m = 0; m < number; m++) {
+        xcenter = round(((double)rand() / RAND_MAX) * (double(scope(0, 1) - scope(0, 0) + 1))) + scope(0, 0);
+        ycenter = round(((double)rand() / RAND_MAX) * (double(scope(1, 1) - scope(1, 0) + 1))) + scope(1, 0);
+        zcenter = round(((double)rand() / RAND_MAX) * (double(scope(2, 1) - scope(2, 0) + 1))) + scope(2, 0);
+        lx = round(((double)rand() / RAND_MAX) * (limitx2 - limitx1) + limitx1);
+        ly = round(((double)rand() / RAND_MAX) * (limity2 - limity1) + limity1);
+        lz = round(((double)rand() / RAND_MAX) * (limitz2 - limitz1) + limitz1);
+
+
+        //cout << "xcenter=" << xcenter << " ycenter=" << ycenter << " zcenter=" << zcenter << endl;
+        //cout << "lx=" << lx << " " << "ly=" << ly << " " << "lz=" << lz << endl;
+
+
+
+        for (int i = 0; i <= Nparax - 1; i++) {
+            for (int j = 0; j <= Nparay - 1; j++) {
+                for (int k = 0; k <= Nparaz - 1; k++) {
+                    int pos = k + Nparaz * (j + Nparay * i);
+                    double x, y, z;      //center of one 2D para region
+                    x = bind(0) * (2 * i + 1) / 2;
+                    y = bind(1) * (2 * j + 1) / 2;
+                    z = bind(2) * (2 * k + 1) / 2;
+
+                    if ((abs(x - xcenter) <= lx) && (abs(y - ycenter) <= ly) && (abs(z - zcenter) <= lz)) {
+                        Para(pos) = initial_diel_func("ONES");
+                    }
+                }
+            }
+        }
+    }
+
+
 }
 
 void SpacePara::ChangeBind(Vector3i bind_) {

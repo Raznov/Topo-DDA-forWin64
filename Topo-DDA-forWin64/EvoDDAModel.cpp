@@ -1,6 +1,9 @@
 #include "definition.h"
 
+
+
 EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>* ObjectParameters_, double epsilon_fix_, bool HavePathRecord_, bool HavePenalty_, bool HaveOriginHeritage_, bool HaveAdjointHeritage_, double PenaltyFactor_, string save_position_, CoreStructure* CStr_, list<DDAModel*> ModelList_){
+    output_time = 0.0;
     ObjectFunctionNames = ObjectFunctionNames_;
     save_position = save_position_;
     ObjectParameters = ObjectParameters_;
@@ -268,7 +271,13 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         VectorXd objarray = VectorXd::Zero(ModelNum);
         list<DDAModel*>::iterator it_ModelList = ModelList.begin();
         list<ObjectiveDDAModel*>::iterator it_ObjList = ObjList.begin();
-        (*CStr).output_to_file(save_position, iteration);
+
+        high_resolution_clock::time_point out_start = high_resolution_clock::now();
+        (*CStr).output_to_file(save_position + "CoreStructure\\", iteration, "simple");
+        high_resolution_clock::time_point out_end = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>(out_end - out_start).count();
+        output_time += duration;
+
         list<VectorXcd>::iterator it_PforOrigin = PforOrigin.begin();
         for (int i = 0; i <= ModelNum - 1; i++) {
             //cout << (*(it_PforOrigin))(0) << endl;
@@ -282,7 +291,14 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             if (iteration == MAX_ITERATION_EVO - 1) {                                    //useless fix, not gonna to use RResultswithc = true feature in the future
                 (*(*it_ModelList)).solve_E();
             }
-            //(*(*it_ModelList)).output_to_file(save_position + "Model_output\\", iteration, i);
+
+            (*(*it_ModelList)).solve_E();
+            out_start = high_resolution_clock::now();
+            //(*(*it_ModelList)).output_to_file(save_position + "Model_output\\", iteration);
+            out_end = high_resolution_clock::now();
+            duration = duration_cast<milliseconds>(out_end - out_start).count();
+            output_time += duration;
+
             objarray(i) = (*(*it_ObjList)).GetVal();
 
             Originiterations << (*(*it_ModelList)).get_ITERATION() << endl;
@@ -1037,5 +1053,8 @@ double EvoDDAModel::L1Norm(){
     return Penalty;
 }
 
+double EvoDDAModel::get_output_time() {
+    return output_time / 1000;      //seconds
+}
 
 
