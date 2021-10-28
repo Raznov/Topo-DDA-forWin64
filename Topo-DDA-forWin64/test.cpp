@@ -4,22 +4,21 @@
 
 int main() {
 
-    string save_position = "";
     ofstream TotalTime;
-    TotalTime.open(save_position + "TotalTime.txt");
+    TotalTime.open("TotalTime.txt");
     high_resolution_clock::time_point t_start = high_resolution_clock::now();
 
 
 
     Vector3d l;
     Vector3d center;
-    l << 80.0, 80.0, 16.0;
-    //l << 40.0, 40.0, 8.0;
+    //l << 31.0, 31.0, 9.0;
+    l << 20.0, 20.0, 16.0;
     center << l(0) / 2, l(1) / 2, l(2) / 2;
 
     int Nx, Ny, Nz;
     //Nx = 103; Ny = 103; Nz = 16;
-    Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);
+    Nx = round(l(0) + 1); Ny = round(l(1) + 1); Nz = round(l(2) + 1);
     cout << center << endl;
     //Nx = 23; Ny = 23; Nz = 10;
     int N = 0;
@@ -36,40 +35,44 @@ int main() {
 
 
     S = S + s1;
+    double d = 25;
 
     Vector3i bind(1, 1, 1);
-    SpacePara spacepara(&S, bind, "ONES");
+    //SpacePara spacepara(&S, bind, "ONES", "ZEROS", r);
 
-    double d = 25;
+    SpacePara spacepara(&S, bind, "RANDOM");
 
 
     double E0 = 1.0;
 
 
-    double epsilon = 10;
+    double epsilon = 0.2;
+    //double epsilon = 1;
 
     //double focus = (l(2) + 2) * d;   //nm       
-    double focus = (l(2) - 8) * d;
+    double focus = 8 * d;
+    
     cout << focus << endl;
 
     int MAX_ITERATION_DDA = 100000;
     double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = 200;
+    int MAX_ITERATION_EVO = 50;
 
-    list<string> ObjectFunctionNames{ "PointE" };
+    //list<string> ObjectFunctionNames{ "IntegratedE" };
+    list<string> ObjectFunctionNames{ "pointE" };
 
     double exponent = 2;
     double ratio = 4;
 
-    list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };
+    list<double> ObjectParameter{ center(0)*d, center(1)*d, focus };
 
     bool HavePathRecord = false;
     bool HavePenalty = false;
-    bool HaveOriginHeritage = true;
+    bool HaveOriginHeritage = false;
     bool HaveAdjointHeritage = false;
-    double PenaltyFactor = 0.0001;
+    double PenaltyFactor = 1;
     list<list<double>*> ObjectParameters{ &ObjectParameter };
-
+    string save_position = ".\\300nm-SiO2-8-period\\";
 
     Vector3d n_K;
     Vector3d n_E0;
@@ -90,20 +93,14 @@ int main() {
     phi << 0;
     int lam_num = 1;
     VectorXd lam(lam_num);
-    lam << 500;
+    lam << 300;
 
     CoreStructure CStr(&spacepara, d);
     list<AProductCore> CoreList;
     list<AProductCore*> CorePointList;
     Vector2cd material;
-    material = Get_2_material("Air", "2.5", lam(0), "nm");
+    material = Get_2_material("Air", "SiO2", lam(0), "nm");
     //AProductCore Core1(&CStr, lam(0), material, "LDR");
-
-
-    AProductCore Core1(&CStr, lam(0), material, "LDR");
-
-    CorePointList.push_back(&Core1);
-
 
     ofstream Common;
     Common.open(save_position + "Commondata.txt");
@@ -112,6 +109,22 @@ int main() {
     Common << d << endl;
     Common << n_E0 << endl;
     Common << n_K << endl;
+
+    int m, n;
+    double Lm, Ln;
+    m = 50;
+    n = 50;
+    Lm = 32 * d;
+    Ln = 32 * d;
+    //AProductCore Core1(&CStr, lam(0), material, m, n, Lm, Ln, "FCD");
+    AProductCore Core1(&CStr, lam(0), material, "FCD");
+    //material = Get_2_material("Air", "2.5", lam(1), "nm");
+    //AProductCore Core2(&CStr, lam(1), material, "LDR");
+    //material = Get_2_material("Air", "2.5", lam(2), "nm");
+    //AProductCore Core3(&CStr, lam(2), material, "LDR");
+    CorePointList.push_back(&Core1);
+    //CorePointList.push_back(&Core2);
+    //CorePointList.push_back(&Core3);
 
     /*
     for (int k = 0; k <= lam_num - 1; k++) {
@@ -164,7 +177,8 @@ int main() {
     }
 
 
-
+    cout << "nK" << n_K << endl;
+    cout << "nE0" << n_E0 << endl;
 
     AngleInfo.close();
     nEInfo.close();

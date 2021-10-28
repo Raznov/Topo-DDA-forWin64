@@ -14,6 +14,13 @@ from scipy import ndimage
 import time
 
 #matplotlib.use('Agg')
+plotdpi=100
+shapebarrier=0.5
+#plotfor="_verify"
+plotfor=""
+plotlimit=None
+Elimitlow=0.7
+Elimithigh=2.1
 
 def deleteindice(object, target, col):
     result=[]
@@ -54,7 +61,7 @@ def Shape(geometry,diel,d,iteration=-1,position="./",decimal=0,FullLattice=False
     colorset = cm.ScalarMappable(norm=norm, cmap=cmaparg)
     colorset.set_array([])
     if FullLattice:
-        index = np.where(diel>0.5)
+        index = np.where(diel>shapebarrier)
         diel = diel[index]
         geometry = geometry[index]
     fig = plt.figure(figsize=(10,10))
@@ -93,7 +100,7 @@ def Shape(geometry,diel,d,iteration=-1,position="./",decimal=0,FullLattice=False
         plt.savefig("Space.png")
     else:
         fig.suptitle("iteration{}".format(iteration))
-        plt.savefig(position+"{}Space.png".format(str(iteration).zfill(decimal)),dpi=1200) 
+        plt.savefig(position+"{}Space.png".format(str(iteration).zfill(decimal)),dpi=plotdpi) 
     #plt.show()
 
 def EField(geometry,diel,d,k_dir,E_dir,E_tot,iteration=-1,position="./",decimal=0,FullLattice=False):
@@ -277,8 +284,10 @@ def EField_slice(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1
     
     fig1 = plt.figure(figsize=(10, 10))
     plt.imshow(rotated_img, cmap='jet', interpolation='bilinear')
+    if plotlimit:
+        plt.clim(Elimitlow, Elimithigh)
     plt.colorbar()
-    plt.savefig(position+"Model{} E_slice_{}at{}.png".format(iteration, (["X", "Y", "Z"])[slicedim], slicepos), dpi=1200) 
+    plt.savefig(position+"Model{} E_slice_{}at{}.png".format(iteration, (["X", "Y", "Z"])[slicedim], slicepos), dpi=plotdpi) 
 
 def EField_slice_dirx(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1,iteration=-1,position="./",decimal=0,FullLattice=False):
     """Plot the E field of object as arrow matrix.
@@ -350,7 +359,7 @@ def EField_slice_dirx(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zsli
     fig1 = plt.figure(figsize=(10, 10))
     plt.imshow(rotated_img, cmap='jet', interpolation='bilinear')
     plt.colorbar()
-    plt.savefig(position+"Model{} E_slice_{}_xdir.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=1200) 
+    plt.savefig(position+"Model{} E_slice_{}_xdir.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=plotdpi) 
 
 def EField_slice_diry(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1,iteration=-1,position="./",decimal=0,FullLattice=False):
     """Plot the E field of object as arrow matrix.
@@ -422,7 +431,7 @@ def EField_slice_diry(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zsli
     fig1 = plt.figure(figsize=(10, 10))
     plt.imshow(rotated_img, cmap='jet', interpolation='bilinear')
     plt.colorbar()
-    plt.savefig(position+"Model{} E_slice_{}_ydir.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=100) 
+    plt.savefig(position+"Model{} E_slice_{}_ydir.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=plotdpi) 
 
 def EField_slice_dirz(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1,iteration=-1,position="./",decimal=0,FullLattice=False):
     """Plot the E field of object as arrow matrix.
@@ -494,7 +503,7 @@ def EField_slice_dirz(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zsli
     fig1 = plt.figure(figsize=(10, 10))
     plt.imshow(rotated_img, cmap='jet', interpolation='bilinear')
     plt.colorbar()
-    plt.savefig(position+"Model{} E_slice_{}_zdir.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=100) 
+    plt.savefig(position+"Model{} E_slice_{}_zdir.png".format(iteration, (["X", "Y", "Z"])[slicedim]), dpi=plotdpi) 
 
 
 def EField_slice_arrow(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zslice=-1,iteration=-1,position="./",decimal=0,FullLattice=False):
@@ -572,9 +581,9 @@ def EField_slice_arrow(geometry,diel,d,k_dir,E_dir,E_tot,Xslice=-1,Yslice=-1,Zsl
     fig2.suptitle("E field - Arrow plot\n {}".format(E_dir))
     plt.show()
     ax2.view_init(elev=0, azim=0)
-    plt.savefig(position+"{}E_field_arrow at {}degree.png".format(str(iteration).zfill(decimal), "0"), dpi=1200)
+    plt.savefig(position+"{}E_field_arrow at {}degree.png".format(str(iteration).zfill(decimal), "0"), dpi=plotdpi)
     ax2.view_init(elev=45, azim=30)
-    plt.savefig(position+"{}E_field_arrow at {}degree.png".format(str(iteration).zfill(decimal), "45"), dpi=1200)
+    plt.savefig(position+"{}E_field_arrow at {}degree.png".format(str(iteration).zfill(decimal), "45"), dpi=plotdpi)
     #ax2.view_init(elev=90, azim=0)
     #plt.savefig(position+"{}E_field_arrow at {}degree.png".format(str(iteration).zfill(decimal), "90"), dpi=1200)
     
@@ -819,21 +828,21 @@ if __name__ == "__main__":
     
     dec = 5
     cutnumber=13
-    for filename in sorted(os.listdir(pos+"CoreStructure"), key = lambda x: int(x[cutnumber:x.index(".txt")])):
+    for filename in sorted(os.listdir(pos+"CoreStructure"+plotfor), key = lambda x: int(x[cutnumber:x.index(".txt")])):
         if filename.endswith(".txt"):
             #print(filename)
             nameit=int((filename[cutnumber:])[:-4])
             print(nameit)
-            CoreStructure=np.genfromtxt(os.path.join(pos+"CoreStructure","CoreStructure"+str(nameit)+".txt"),dtype=complex)
-            Modelresults=np.genfromtxt(os.path.join(pos+"Model_output","Model_results"+"it"+str(nameit)+".txt"),dtype=complex)
+            CoreStructure=np.genfromtxt(os.path.join(pos+"CoreStructure"+plotfor,"CoreStructure"+str(nameit)+".txt"),dtype=complex)
+            Modelresults=np.genfromtxt(os.path.join(pos+"Model_output"+plotfor,"Model_results"+"it"+str(nameit)+".txt"),dtype=complex)
         
             diel=np.real(CoreStructure[(0):(3*N)])
             E_tot=(Modelresults[(0):(3*N)])
-            zslice=5
+            zslice=8
             if(nameit >= int(it_start) and nameit <= int(it_end)):
-                #Shape(geometry, diel, d, iteration=nameit, position=pos+"Shape/", decimal=dec, FullLattice=False)
-                #Shape(geometry, diel, d, iteration=nameit, position=pos+"ShapeSolid/", decimal=dec, FullLattice=True)
-                EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=nameit, Zslice=zslice,position=pos+"E-field/")         #----------electric field intensity-----------
+                Shape(geometry, diel, d, iteration=nameit, position=pos+"ShapeSolid"+plotfor+"/", decimal=dec, FullLattice=True)
+                Shape(geometry, diel, d, iteration=nameit, position=pos+"Shape"+plotfor+"/", decimal=dec, FullLattice=False)
+                EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=nameit, Zslice=zslice,position=pos+"E-field"+plotfor+"/")         #----------electric field intensity-----------
                 #EField_slice_dirx(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")     #----------real Ex-----------------
                 #EField_slice_diry(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")     #----------real Ey-----------------
                 #EField_slice_dirz(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")     #----------real Ez-----------------
@@ -841,7 +850,7 @@ if __name__ == "__main__":
 
 
 
-"""
+
 pos="./" + sys.argv[1] + "/"
 filename=os.path.join(pos, 'Loss.txt')
 Loss=np.genfromtxt(filename)
@@ -850,7 +859,7 @@ fig=plt.figure()
 plt.plot(Loss[:,0],Loss[:,1])
 plt.xlim = (0,max(Loss[:,0]))
 plt.savefig(pos+"convergence.png")
-"""
+
 
 
 

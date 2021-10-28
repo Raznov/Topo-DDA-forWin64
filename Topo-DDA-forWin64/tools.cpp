@@ -1,5 +1,95 @@
 #include "definition.h"
 
+//One Evo data generation
+list<double> generatefocus(int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym, double d) {
+    //Center
+    Vector3d center = (lower_bound + upper_bound) / 2;
+    //Number of focus
+    int num = round(((double)rand() / RAND_MAX) * (max_num - min_num)) + min_num;
+    list<double> result;
+    if (sym) {
+        //For sym=ture, 2*num is generated. Symmetric distribution.
+        for (int i = 0; i <= num - 1; i++) {
+            double point1[3];
+            double point2[3];
+            for (int j = 0; j <= 2; j++) {
+                point1[j] = ((double)rand() / RAND_MAX) * (upper_bound(j) - lower_bound(j)) + lower_bound(j);
+                point2[j] = 2 * center(j) - point1[j];
+                //Point2 wont get out of boundary.
+                if (point2[j] > upper_bound[j]) {
+                    point2[j] = upper_bound[j];
+                }
+                if (point2[j] < lower_bound[j]) {
+                    point2[j] = lower_bound[j];
+                }
+            }
+            //Push the points into the list.
+            for (int j = 0; j <= 2; j++) {
+                result.push_back(point1[j] * d);
+            }
+
+            for (int j = 0; j <= 2; j++) {
+                result.push_back(point2[j] * d);
+            }
+        }
+
+    }
+    else {
+        //When sym=false, 1*num focus is generated.
+        for (int i = 0; i <= num - 1; i++) {
+            for (int j = 0; j <= 2; j++) {
+                double tmp = ((double)rand() / RAND_MAX) * (upper_bound(j) - lower_bound(j)) + lower_bound(j);
+                result.push_back(tmp * d);
+            }
+        }
+    }
+
+    /*
+    list<double>::iterator it = result.begin();
+    cout << endl;
+    for (int i = 0; i <= result.size() - 1; i++) {
+        cout << (*it) << ",";
+        it++;
+    }
+    cout << endl;
+    */
+    return result;
+}
+
+void Evo_Focus(SpacePara* spacepara_tmp, CoreStructure* CStr, DDAModel* TestModel, string save_position, int start_num, int max_evo,
+    int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym  //Parameters for focus generation
+) {
+
+    (*CStr).UpdateStr(spacepara_tmp);
+    //(*CStr).output_to_file(save_position, start_num, "Simple");
+    (*TestModel).UpdateAlpha();
+    double d = (*CStr).get_d();
+
+    double epsilon = 100;
+    bool HavePathRecord = false;
+    bool HavePenalty = false;
+    bool HaveOriginHeritage = false;
+    bool HaveAdjointHeritage = false;
+    double PenaltyFactor = 1;
+    list<DDAModel*> ModelpointerList;
+    ModelpointerList.push_back(TestModel);
+
+    list<string> ObjectFunctionNames{ "PointEList" };
+    list<double> ObjectParameters1 = generatefocus(min_num, max_num, lower_bound, upper_bound, sym, d);
+    list<list<double>*> ObjectParameters{ &ObjectParameters1 };
+
+    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, CStr, ModelpointerList);
+    
+    int MAX_ITERATION_DDA = 100000;
+    double MAX_ERROR = 0.00001;
+    int MAX_ITERATION_EVO = max_evo;
+
+    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam", start_num);
+
+    return;
+    
+}
+
 //Find the Max and Min of the input geometry in each direction
 MatrixXi find_scope_3_dim(VectorXi* x) {
     int N = round((*x).size() / 3);

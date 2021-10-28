@@ -55,6 +55,7 @@ MatrixXi find_scope_3_dim(VectorXi* x);
 VectorXd initial_diel_func(string initial_diel, int N);
 double initial_diel_func(string initial_diel);
 
+
 int makedirect(string name);
 
 class Structure{
@@ -399,7 +400,7 @@ public:
     tuple<VectorXd, VectorXcd> devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin);                       //partial derivative of obj to parameter and A to x times p
     VectorXcd devp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin);                       //partial derivative of obj to P. Size of P
 
-    void EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method);
+    void EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, double start_num=0);
     void EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, VectorXd* V_, VectorXd* S_);
     double CalTheObjForSingleStr(int MAX_ITERATION, double MAX_ERROR, int Name);                    //If you want to calculate the objective for single DDA structure.
 
@@ -444,6 +445,28 @@ private:
     Vector3cd E_ext;
 public:
     ObjectivePointEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
+};
+
+class ObjectivePointListEDDAModel : public ObjectiveDDAModel {
+private:
+    VectorXd x;
+    VectorXd y;
+    VectorXd z;      // Here x, y, z are absolute coordinates. (No need to multiply d).
+    int PNum;
+    double d;
+    int N;
+    VectorXcd* P;
+    VectorXi* R;
+    DDAModel* model;
+    EvoDDAModel* evomodel;
+    MatrixXcd E_sum;
+    MatrixXcd E_ext;
+public:
+    ObjectivePointListEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
     void SingleResponse(int idx, bool deduction);
     double GroupResponse();
     double GetVal();
@@ -529,7 +552,9 @@ public:
 
 
 
-
+void Evo_Focus(SpacePara* spacepara_tmp, CoreStructure* CStr, DDAModel* TestModel, string save_position, int start_num, int max_evo,
+    int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym  //Parameters for focus generation
+);
 
 
 
