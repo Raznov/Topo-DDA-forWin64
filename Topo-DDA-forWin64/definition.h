@@ -119,7 +119,7 @@ class SpacePara {
 private:
     Space* space;
     VectorXi geometry;                //3N dimension
-    VectorXi geometryPara;            //N dimension. N=number of dipoles. Each position sotres the para index in VectorXi Para : 0->Para[0]...
+    VectorXi geometryPara;            //N dimension. N=number of dipoles. Each position stores the para index in VectorXi Para : 0->Para[0]...
     VectorXd Para;                    //P dimension. P=number of parameters.
     MatrixXi scope;                   //[[xmin, xmax],[ymin, ymax],[zmin, zmax]]
     Vector3i bind;
@@ -555,7 +555,7 @@ public:
 void Evo_Focus(SpacePara* spacepara_tmp, CoreStructure* CStr, DDAModel* TestModel, string save_position, int start_num, int max_evo,
     int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym  //Parameters for focus generation
 );
-void Evo_single(string save_position, Vector3i bind, Vector3d l, int MAX_ITERATION_EVO);
+void Evo_single(string save_position, Vector3i bind, Vector3d l, int MAX_ITERATION_EVO, Vector3d move_focus);
 
 
 
