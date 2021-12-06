@@ -607,6 +607,17 @@ void DDAModel::output_to_file(string save_position, int iteration) {
         }
 
     }
+    
+    for (int i = 0; i <= P.size() - 1; i++) {
+        if (P(i).imag() < 0) {
+            fout << P(i).real() << P(i).imag() << "j" << endl;
+        }
+        else {
+            fout << P(i).real() << "+" << P(i).imag() << "j" << endl;
+        }
+
+    }
+    
     fout.close();
 }
 

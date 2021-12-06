@@ -3,15 +3,12 @@
 
 
 
-
-
-
 int main() {
 
-    string save_position = ".\\thick400-diel2d5-phi0theta0-lam500-size2000-d=50\\";       //output file
+    string save_position = ".\\thick400-SiO2-phi0theta0-lam500-size2000-theta30\\";       //output file
     Vector3d l;
     Vector3d center;
-    l << 40.0, 40.0, 8.0;    //Size of the initialization block. 81*81*17 pixels in total.
+    l << 80.0, 80.0, 16.0;    //Size of the initialization block. 81*81*17 pixels in total.
     center << l(0) / 2, l(1) / 2, l(2) / 2;      //Center of the block.
     int Nx, Ny, Nz;
     Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);   //Size of the design space. Notice that this sets the limits for coordinates, 
@@ -21,15 +18,18 @@ int main() {
     int N = 0;                                                          //N counts the number of pixels in the geometries simulated. Initail is one.
     Vector3i bind(1, 1, 1);                                             //binding in x,y,z. 2 means every 2 pixels will have the same material index. 3 means every 3.
                                                                         //This can be used to control the finest feature size of the designed structure.
-    double d = 50;                                                      //Size of pixel. Here 25nm.   
+    double d = 25;                                                      //Size of pixel. Here 25nm.   
     double E0 = 1.0;                                                    //Input field amplitude. 1V/m.
     double epsilon = 10;                                                //Fixed learning rate of the optimization.
-    double focus = (l(2) + 1) * d;   //nm                               //Focal spot is 50nm higher than the upper boundary of the intialization block.
-    cout << focus << endl;
+    //double focus = (l(2) + 2) * d;   //nm                               //Focal spot is 50nm higher than the upper boundary of the intialization block.
+    //cout << focus << endl;
+    double stheta, sphi;
+    stheta = M_PI / 6;
+    sphi = 0.0;
     int MAX_ITERATION_DDA = 100000;                                     //Number of maximum DDA iterations.
     double MAX_ERROR = 0.00001;                                         //Maximum error of DDA.
     int MAX_ITERATION_EVO = 200;                                        //Number of topology optimization.
-    list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };  //Focal spot postition.
+    list<double> ObjectParameter{ sin(stheta) * cos(sphi),sin(stheta) * sin(sphi),cos(stheta) };  //Focal spot postition.
     bool HavePathRecord = false;
     bool HavePenalty = false;
     bool HaveOriginHeritage = true;
@@ -47,7 +47,7 @@ int main() {
     VectorXd lam(lam_num);
     lam << 500;
     Vector2cd material;
-    material = Get_2_material("Air", "2.5", lam(0), "nm");              //Air as substrate. material with permittivity of 2.5 as design material.
+    material = Get_2_material("Air", "SiO2", lam(0), "nm");              //Air as substrate. material with permittivity of 2.5 as design material.
 
 
     ofstream TotalTime;
@@ -61,7 +61,7 @@ int main() {
     S = S + s1;                                                         //Add the geometry into the space.
     SpacePara spacepara(&S, bind, "ONES");                              //Initialize with material index of 1, which is permittivity=2.5 in this case.
                                                                         //SpacePara is where the parameter<->geometry link is established.
-    list<string> ObjectFunctionNames{ "PointE" };                       //Name of the object function.
+    list<string> ObjectFunctionNames{ "scattering0D" };                       //Name of the object function.
     list<list<double>*> ObjectParameters{ &ObjectParameter };
     list<DDAModel> ModelList;
     list<DDAModel*> ModelpointerList;
@@ -144,6 +144,9 @@ int main() {
     return 0;
 
 }
+
+
+
 
 
 

@@ -156,6 +156,7 @@
     <ClCompile Include="test.cpp" />
     <ClCompile Include="tools.cpp" />
     <ClCompile Include="SpacePara.cpp" />
+    <ClCompile Include="FOM.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu">

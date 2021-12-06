@@ -857,3 +857,11 @@ Vector2cd* AProductCore::get_material() {
 VectorXd* AProductCore::get_diel_old_max() {
     return (*CStr).get_diel_old_max();
 }
+
+double AProductCore::get_Lm() {
+    return Lm;
+}
+
+double AProductCore::get_Ln() {
+    return Ln;
+}

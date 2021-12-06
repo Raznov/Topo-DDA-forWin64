@@ -215,6 +215,89 @@ void Evo_single(string save_position, Vector3i bind, Vector3d l, int MAX_ITERATI
     return;
 }
 
+void eval_FOM(string name, DDAModel* TestModel, list<double> theta, list<double> phi) {
+    ofstream fout(name);
+
+    list<double> ObjectParameter;
+    list<double>::iterator itheta = theta.begin();
+    
+    for (int i = 0; i <= theta.size() - 1; i++) {
+        double ttheta = (*itheta);
+        itheta++;
+        list<double>::iterator iphi = phi.begin();
+        for (int j = 0; j <= phi.size() - 1; j++) {
+            double tphi = (*iphi);
+            iphi++;
+            ObjectParameter.push_back(sin(ttheta) * cos(tphi));
+            ObjectParameter.push_back(sin(ttheta) * sin(tphi));
+            ObjectParameter.push_back(cos(ttheta));
+            //cout << "(" << sin(ttheta) * cos(tphi) << " " << sin(ttheta) * sin(tphi) << " " << cos(ttheta) << ")" << endl;
+        }
+    }
+
+    FOMscattering0D FOMcal(ObjectParameter, TestModel);
+    list<double> FOMresults = FOMcal.GetVal();
+
+    itheta = theta.begin();
+    list<double>::iterator iresult = FOMresults.begin();
+    for (int i = 0; i <= theta.size() - 1; i++) {
+        double ttheta = (*itheta);
+        itheta++;
+        list<double>::iterator iphi = phi.begin();
+        for (int j = 0; j <= phi.size() - 1; j++) {
+            double tphi = (*iphi);
+            double tresult = (*iresult);
+            iphi++;
+            iresult++;
+            fout << (ttheta * 360) / (2 * M_PI) << " " << (tphi * 360) / (2 * M_PI) << " " << tresult << endl;
+        }
+    }
+
+    fout.close();
+
+}
+
+void eval_FOM_2Dperiod(string name, DDAModel* TestModel, list<double> theta, list<double> phi) {
+    ofstream fout(name);
+
+    list<double> ObjectParameter;
+    list<double>::iterator itheta = theta.begin();
+
+    for (int i = 0; i <= theta.size() - 1; i++) {
+        double ttheta = (*itheta);
+        itheta++;
+        list<double>::iterator iphi = phi.begin();
+        for (int j = 0; j <= phi.size() - 1; j++) {
+            double tphi = (*iphi);
+            iphi++;
+            ObjectParameter.push_back(sin(ttheta) * cos(tphi));
+            ObjectParameter.push_back(sin(ttheta) * sin(tphi));
+            ObjectParameter.push_back(cos(ttheta));
+            //cout << "(" << sin(ttheta) * cos(tphi) << " " << sin(ttheta) * sin(tphi) << " " << cos(ttheta) << ")" << endl;
+        }
+    }
+
+    FOMscattering2D FOMcal(ObjectParameter, TestModel);
+    list<double> FOMresults = FOMcal.GetVal();
+
+    itheta = theta.begin();
+    list<double>::iterator iresult = FOMresults.begin();
+    for (int i = 0; i <= theta.size() - 1; i++) {
+        double ttheta = (*itheta);
+        itheta++;
+        list<double>::iterator iphi = phi.begin();
+        for (int j = 0; j <= phi.size() - 1; j++) {
+            double tphi = (*iphi);
+            double tresult = (*iresult);
+            iphi++;
+            iresult++;
+            fout << (ttheta * 360) / (2 * M_PI) << " " << (tphi * 360) / (2 * M_PI) << " " << tresult << endl;
+        }
+    }
+
+    fout.close();
+
+}
 //Find the Max and Min of the input geometry in each direction
 MatrixXi find_scope_3_dim(VectorXi* x) {
     int N = round((*x).size() / 3);
@@ -493,4 +576,23 @@ Vector3d nEPerpinXZ(double theta, double phi) {
 int makedirect(string name) {
     const char* tmp = name.c_str();
     return _mkdir(tmp);
+}
+
+list<double> makelist(double start, double end, double interval) {
+    list<double> result;
+    int number = floor((end - start) / interval + 1);
+    for (int i = 0; i <= number - 1; i++) {
+        result.push_back(start + i * interval);
+    }
+    return result;
+}
+
+list<double> makelist(double start, double end, int number) {
+    list<double> result;
+    double interval = (end - start) / (double(number) - 1.0);
+    for (int i = 0; i <= number - 1; i++) {
+        //cout << start + i * interval << endl;
+        result.push_back(start + i * interval);
+    }
+    return result;
 }

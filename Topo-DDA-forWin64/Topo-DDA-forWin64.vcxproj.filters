@@ -48,6 +48,9 @@
     <ClCompile Include="SpacePara.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
+    <ClCompile Include="FOM.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definition.h">
