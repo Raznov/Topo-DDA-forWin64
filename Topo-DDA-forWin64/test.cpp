@@ -5,18 +5,19 @@
 
 int main() {
 
-    string save_position = ".\\thick400-SiO2-phi0theta0-lam500-size2000-theta30\\";       //output file
+    string save_position = ".\\1um1um1um-SiO2-phi0theta0-lam500-theta90-2Dextrusion-yinput\\";       //output file
     Vector3d l;
     Vector3d center;
-    l << 80.0, 80.0, 16.0;    //Size of the initialization block. 81*81*17 pixels in total.
-    center << l(0) / 2, l(1) / 2, l(2) / 2;      //Center of the block.
+    l << 39.0, 39.0, 39.0;    //Size of the initialization block. 81*81*17 pixels in total.
+    
     int Nx, Ny, Nz;
-    Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);   //Size of the design space. Notice that this sets the limits for coordinates, 
+    Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 3);   //Size of the design space. Notice that this sets the limits for coordinates, 
                                                                         //but actual pixels outside the 81*81*7 are not included in simulation. 
                                                                         //However, if geometry has pixels outside this space, they will be cut off.
+    center << l(0) / 2, l(1) / 2, l(2) / 2;      //Center of the block.
     cout << center << endl;
     int N = 0;                                                          //N counts the number of pixels in the geometries simulated. Initail is one.
-    Vector3i bind(1, 1, 1);                                             //binding in x,y,z. 2 means every 2 pixels will have the same material index. 3 means every 3.
+    Vector3i bind(1, 1, 40);                                             //binding in x,y,z. 2 means every 2 pixels will have the same material index. 3 means every 3.
                                                                         //This can be used to control the finest feature size of the designed structure.
     double d = 25;                                                      //Size of pixel. Here 25nm.   
     double E0 = 1.0;                                                    //Input field amplitude. 1V/m.
@@ -24,11 +25,11 @@ int main() {
     //double focus = (l(2) + 2) * d;   //nm                               //Focal spot is 50nm higher than the upper boundary of the intialization block.
     //cout << focus << endl;
     double stheta, sphi;
-    stheta = M_PI / 6;
+    stheta = M_PI / 2;
     sphi = 0.0;
     int MAX_ITERATION_DDA = 100000;                                     //Number of maximum DDA iterations.
     double MAX_ERROR = 0.00001;                                         //Maximum error of DDA.
-    int MAX_ITERATION_EVO = 200;                                        //Number of topology optimization.
+    int MAX_ITERATION_EVO = 100;                                        //Number of topology optimization.
     list<double> ObjectParameter{ sin(stheta) * cos(sphi),sin(stheta) * sin(sphi),cos(stheta) };  //Focal spot postition.
     bool HavePathRecord = false;
     bool HavePenalty = false;
@@ -39,10 +40,10 @@ int main() {
     Vector3d n_E0;                                                      //Electric field polarization direction.
     int theta_num = 1;                                                  //Number of theta
     VectorXd theta(theta_num);
-    theta << 0;                                                         //Theta values.
+    theta << 90;                                                         //Theta values.
     int phi_num = 1;                                                    //Number of phi
     VectorXd phi(phi_num);
-    phi << 0;                                                           //Phi values. For details of how theta and phi are defined, read tutorial.
+    phi << 90;                                                           //Phi values. For details of how theta and phi are defined, read tutorial.
     int lam_num = 1;
     VectorXd lam(lam_num);
     lam << 500;
@@ -146,8 +147,84 @@ int main() {
 }
 
 
+/*
+int main() {
+
+    int Nx, Ny, Nz;
+    Nx = 42; Ny = 42; Nz = 42;
+
+    int N = 0;
+    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    list<Structure> ln;
+    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+
+    double d;
+    double r;
+    Vector3d center;
+
+    d = 25;
+    //r = 60 / d;
+    
 
 
+    Vector3d l;
+    l << 39, 39, 39;
+    center << l(0) / 2, l(1) / 2, l(2) / 2;
+    cout << center << endl;
+    //Structure s1(S.get_total_space(), r, center);
+    Structure s1(S.get_total_space(), l, center);
+
+    S = S + s1;
+
+
+
+    double lam = 500;
+    Vector3d n_K;
+    n_K << 0.0, 0.0, 1.0;
+    double E0 = 1.0;
+    Vector3d n_E0;
+    n_E0 << 1.0, 0.0, 0.0;
+    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
+    int MAX_ITERATION_DDA = 10000;
+    double MAX_ERROR = 0.00001;
+    Vector3i bind(1, 1, 1);
+    SpacePara spacepara(&S, bind, "ONES");
+    CoreStructure CStr(&spacepara, d);
+    AProductCore Core(&CStr, lam, material, "LDR");
+    DDAModel TestModel(&Core, n_K, E0, n_E0);
+
+    TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+    TestModel.update_E_in_structure();
+    TestModel.solve_E();
+
+
+
+    string save_position = ".\\1um1um1um-SiO2-scatter-d25-lam500\\";
+    CStr.output_to_file(save_position + "CoreStructure\\", 0, "simple");
+    TestModel.output_to_file(save_position + "Model_output\\", 0);
+
+
+    ofstream Common;
+    Common.open(save_position + "Commondata.txt");
+    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+    Common << (spacepara.get_geometry()) << endl;
+    Common << d << endl;
+    Common << n_E0 << endl;
+    Common << n_K << endl;
+
+    string name = save_position + "theta90phi0to360.txt";
+    list<double> theta{ M_PI / 2 };
+    double start = 0;
+    double end = M_PI/2;
+    int number = 2;
+    list<double> phi = makelist(start, end, number);
+    eval_FOM(name, &TestModel, theta, phi);
+
+    
+    return 0;
+
+}
+*/
 
 
 

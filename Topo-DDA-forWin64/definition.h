@@ -603,7 +603,7 @@ public:
 
 class FOMscattering2D{
 private:
-    
+    VectorXd FOMParameters;
     double d;
     int N;
     VectorXcd* P;
@@ -613,13 +613,15 @@ private:
     int Paralength;
     list<Vector3d> n_K_s_l;
     double ATUC;
+    double E0;
+    Vector3d n_E0;
     //Matrix3d FconstM;
     
 
 public:
     FOMscattering2D(list<double> parameters, DDAModel* model_);
     list<double> GetVal();                                                        //Return list of far field abs(Es) at specified directions
-    double FTUCnsquare(Vector3d n_K_s);
+    Vector3cd FTUC(Vector3d n_K_s);
 };
 
 class FOMscattering0D {

@@ -497,6 +497,7 @@ Objectivescattering0D::Objectivescattering0D(list<double> parameters, DDAModel* 
         Vector3cd PSum_tmp;
         PSum_tmp = Vector3cd::Zero();
         PSum_l.push_back(PSum_tmp);
+        
     }
 
     
@@ -526,28 +527,28 @@ double Objectivescattering0D::GetVal() {
 */
 
 void Objectivescattering0D::SingleResponse(int idx, bool deduction) {
-    list<Matrix3d>::iterator it1 = (FconstM_l).begin();
+    //list<Matrix3d>::iterator it1 = (FconstM_l).begin();
     list<Vector3d>::iterator it2 = (n_K_s_l).begin();
     list<Vector3cd>::iterator it3 = (PSum_l).begin();
     for (int i = 0; i <= int(round(Paralength / 3) - 1); i++) {
-        Matrix3d FconstM = (*it1);
+        //Matrix3d FconstM = (*it1);
         Vector3d n_K_s = (*it2);
         double nkx = n_K_s(0);
         double nky = n_K_s(1);
         double nkz = n_K_s(2);
-        double phaseterm = -d * K * (nkx * ((*R)(3 * i) - 32.5) + nky * ((*R)(3 * i + 1) - 32.5) + nkz * ((*R)(3 * i + 2) - 32.5));  //From equation 17. Time term will be eliminated
+        double phaseterm = -d * K * (nkx * ((*R)(3 * idx) - 32.5) + nky * ((*R)(3 * idx + 1) - 32.5) + nkz * ((*R)(3 * idx + 2) - 32.5));  //From equation 17. Time term will be eliminated
         complex<double> phase = cos(phaseterm) + sin(phaseterm) * 1i;
         if (deduction == false) {
             (*it3)(0) += (*P)(3 * idx) * phase;
             (*it3)(1) += (*P)(3 * idx + 1) * phase;
             (*it3)(2) += (*P)(3 * idx + 2) * phase;
+
         }
         else {
             (*it3)(0) -= (*P)(3 * idx) * phase;
             (*it3)(1) -= (*P)(3 * idx + 1) * phase;
             (*it3)(2) -= (*P)(3 * idx + 2) * phase;
         }
-        it1++;
         it2++;
         it3++;
     }
@@ -567,7 +568,6 @@ double Objectivescattering0D::GetVal() {
     Reset();
     for (int idx = 0; idx < N; idx++) {
         SingleResponse(idx, false);
-        // cout << E_sum(0) << endl;
     }
     return GroupResponse();
 }
@@ -589,11 +589,17 @@ double Objectivescattering0D::FTUCnsquare() {
         FTUC(0) = (*it1)(0, 0) * (*it2)(0) + (*it1)(0, 1) * (*it2)(1) + (*it1)(0, 2) * (*it2)(2);
         FTUC(1) = (*it1)(1, 0) * (*it2)(0) + (*it1)(1, 1) * (*it2)(1) + (*it1)(1, 2) * (*it2)(2);
         FTUC(2) = (*it1)(2, 0) * (*it2)(0) + (*it1)(2, 1) * (*it2)(1) + (*it1)(2, 2) * (*it2)(2);
+
+
         it1++;
         it2++;
         result += norm(FTUC(0)) + norm(FTUC(1)) + norm(FTUC(2));                                 //In C++, norm is the square of magnitude.
+        
+
     }
+
     return result/double(round(Paralength / 3));
+    
 }
 
 
