@@ -417,6 +417,8 @@ complex<double> Get_material(string mat, double wl, string unit){
     diel_dic.insert(pair<string,string>("4.0","diel/Diel4.0"));
     diel_dic.insert(pair<string,string>("4.5","diel/Diel4.5"));
     diel_dic.insert(pair<string,string>("5.0","diel/Diel5.0"));
+    diel_dic.insert(pair<string, string>("H2O", "diel/H2O"));
+    diel_dic.insert(pair<string, string>("TiN", "diel/TiN-Pfluger"));
     wl=wl/unit_dic[unit];
     string real="Re_eps.txt";
     string imag="Im_eps.txt";

@@ -290,7 +290,7 @@ void ObjectivePointIDDAModel::Reset() {
 
 ObjectiveIntegratedEDDAModel::ObjectiveIntegratedEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
     Have_Penalty = HavePenalty_;
-    Have_Devx = true;
+    Have_Devx = false;
     model = model_;
     evomodel = evomodel_;
     AProductCore* Core = (*model).get_Core();
@@ -370,7 +370,7 @@ ObjectiveMidAvgEDDAModel::ObjectiveMidAvgEDDAModel(list<double> parameters, DDAM
     r = PointEParameters(0);
     
     Have_Penalty = HavePenalty_;
-    Have_Devx = true;
+    Have_Devx = false;
     model = model_;
     evomodel = evomodel_;
     AProductCore* Core = (*model).get_Core();
@@ -441,6 +441,7 @@ void ObjectiveMidAvgEDDAModel::Reset() {
     E = VectorXcd::Zero(N * 3);
 }
 
+
 Objectivescattering0D::Objectivescattering0D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
     Paralength = (parameters).size();
     VectorXd FOMParameters = VectorXd::Zero(Paralength);
@@ -506,26 +507,6 @@ Objectivescattering0D::Objectivescattering0D(list<double> parameters, DDAModel* 
 
 }
 
-/*
-double Objectivescattering0D::GetVal() {
-    list<double> result;
-    int listlength = (n_K_s_l).size();
-    list<Vector3d>::iterator it = n_K_s_l.begin();
-    for (int i = 0; i <= listlength - 1; i++) {
-        double tmp = this->FTUCnsquare((*it));
-        double tmpresult = tmp / (pow(K, 2) * pow(E0, 2));
-        result.push_back(tmpresult);
-        //cout << "(" << (*it)(0) << " " << (*it)(1) << " " << (*it)(2) << ") " << tmp<<" "<<tmpresult<<endl;
-
-        it++;
-
-
-    }
-
-    return result;
-}
-*/
-
 void Objectivescattering0D::SingleResponse(int idx, bool deduction) {
     //list<Matrix3d>::iterator it1 = (FconstM_l).begin();
     list<Vector3d>::iterator it2 = (n_K_s_l).begin();
@@ -578,7 +559,6 @@ void Objectivescattering0D::Reset() {
     }
 }
 
-
 double Objectivescattering0D::FTUCnsquare() {
 
     list<Matrix3d>::iterator it1 = (FconstM_l).begin();
@@ -602,7 +582,66 @@ double Objectivescattering0D::FTUCnsquare() {
     
 }
 
+ObjectiveAbs::ObjectiveAbs(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+    Have_Penalty = HavePenalty_;
+    Have_Devx = true;
+    model = model_;
+    evomodel = evomodel_;
+    AProductCore* Core = (*model).get_Core();
+    N = (*Core).get_N();
+    Nx = (*Core).get_Nx();
+    Ny = (*Core).get_Ny();
+    Nz = (*Core).get_Nz();
+    d = (*Core).get_d();
+    al = (*model).get_al();
+    P = (*model).get_P();
+    E = VectorXcd::Zero(N * 3);
+    R = (*Core).get_R();
+    Cabs = 0.0;
+    E0 = (*model).get_E0();
+    double lam = (*Core).get_lam();
+    cout << "lam" << lam << endl;
+    K = 2 * M_PI / lam;
+    K3 = pow(K, 3);
+}
 
+void ObjectiveAbs::SingleResponse(int idx, bool deduction) {
+    complex<double> al_tmp = (*al)(3 * idx);
+    Vector3cd P_tmp((*P)(3 * idx), (*P)(3 * idx + 1), (*P)(3 * idx + 2));
+
+    if (deduction == false) {
+        complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);                    
+        Cabs += (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());
+    }
+    else {
+        complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);                    //Eigen dot product is conjugate linear in the first variable, and linear in the second one.
+        Cabs -= (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());  //The Eigen Vector norm turns out to be the square-root term, instead of the one with square like C++ complex number norm.
+    }
+    return;
+}
+
+double ObjectiveAbs::GroupResponse() {
+
+    if (Have_Penalty) {
+        return log10(Cabs * (4 * M_PI * K / pow(E0, 2))) - (*evomodel).L1Norm();
+    }
+    else {
+        return log10(Cabs * (4 * M_PI * K / pow(E0, 2)));
+    }
+
+}
+
+double ObjectiveAbs::GetVal() {
+    Reset();
+    for (int idx = 0; idx < N; idx++) {
+        SingleResponse(idx, false);
+    }
+    return GroupResponse();
+}
+
+void ObjectiveAbs::Reset() {
+    Cabs = 0.0;
+}
 /*
 Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
     VectorXd PointEParameters = VectorXd::Zero((parameters).size());

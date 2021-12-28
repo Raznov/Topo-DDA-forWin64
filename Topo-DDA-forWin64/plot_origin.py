@@ -996,12 +996,12 @@ if __name__ == "__main__":
             diel=np.real(CoreStructure[(0):(3*N)])
             E_tot=(Modelresults[(0):(3*N)])
             P_tot=(Modelresults[(3*N):(6*N)])
-            zslice=32
+            zslice=7
             if(nameit >= int(it_start) and nameit <= int(it_end)):
-                #Shape(geometry, diel, d, iteration=nameit, position=pos+"ShapeSolid"+plotfor+"/", decimal=dec, FullLattice=True)
-                #Shape(geometry, diel, d, iteration=nameit, position=pos+"Shape"+plotfor+"/", decimal=dec, FullLattice=False)
+                Shape(geometry, diel, d, iteration=nameit, position=pos+"ShapeSolid"+plotfor+"/", decimal=dec, FullLattice=True)
+                Shape(geometry, diel, d, iteration=nameit, position=pos+"Shape"+plotfor+"/", decimal=dec, FullLattice=False)
                 EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=nameit, Zslice=zslice,position=pos+"E-field"+plotfor+"/")         #----------electric field intensity-----------
-                P_slice(geometry, diel, d, k_dir, E_dir, P_tot, iteration=nameit, Zslice=zslice,position=pos+"E-field"+plotfor+"/")         #----------For p----------------
+                #P_slice(geometry, diel, d, k_dir, E_dir, P_tot, iteration=nameit, Zslice=zslice,position=pos+"E-field"+plotfor+"/")         #----------For p----------------
                 #EField_slice_dirx(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")     #----------real Ex-----------------
                 #EField_slice_diry(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")     #----------real Ey-----------------
                 #EField_slice_dirz(geometry, diel, d, k_dir, E_dir, E_tot, iteration=it, Zslice=zslice,position=pos+"E-field/")     #----------real Ez-----------------

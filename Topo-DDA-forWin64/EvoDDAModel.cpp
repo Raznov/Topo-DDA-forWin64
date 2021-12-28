@@ -101,7 +101,7 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
 
 }
 
-tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin){
+tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin){
     int N = (*CurrentModel).get_N();
     SpacePara* spacepara = (*CurrentModel).get_spacepara();
     VectorXi* geometryPara = (*spacepara).get_geometryPara();
@@ -196,6 +196,136 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
     }
 
     return make_tuple(devx, Adevxp);  
+}
+
+tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin) {
+    int N = (*CurrentModel).get_N();
+    SpacePara* spacepara = (*CurrentModel).get_spacepara();
+    VectorXi* geometryPara = (*spacepara).get_geometryPara();
+    VectorXd* Para = (*spacepara).get_Para();
+    VectorXi* Free = (*spacepara).get_Free();
+    //vector<list<int>>* Paratogeometry = (*spacepara).get_Paratogeometry();
+    
+    /*
+    list<int> tmplist = (*Paratogeometry)[3000];
+    list<int>::iterator tmpit = (*Paratogeometry)[2021].begin();
+    for (int i = 0; i <= (*Paratogeometry)[3000].size() - 1; i++) {
+        cout << (*tmpit) << endl;
+        tmpit++;
+    }
+    */
+    
+    VectorXd* diel_old = (*CurrentModel).get_diel_old();
+    Vector2cd* material = (*CurrentModel).get_material();
+    double lam = (*CurrentModel).get_lam();
+    double K = 2 * M_PI / lam;
+    double d = (*CurrentModel).get_d();
+    Vector3d n_E0 = (*CurrentModel).get_nE0();
+    Vector3d n_K = (*CurrentModel).get_nK();
+    VectorXcd* al = (*CurrentModel).get_al();
+    VectorXcd* P = (*CurrentModel).get_P();
+
+    VectorXcd Adevxp = VectorXcd::Zero(3 * N);
+
+    int n_para = (*Free).size();
+    int n_para_all = (*Para).size();
+
+    VectorXd devx = VectorXd::Zero(n_para);
+    
+    //cout << "n_para:  " << n_para << endl;
+    //cout << "geometry_Para size: " << (*geometryPara).size() << endl;
+    
+
+
+
+    vector<list<int>> Paratogeometry(n_para_all);
+    for (int i = 0; i <= N - 1; i++) {
+        (Paratogeometry[(*geometryPara)(i)]).push_back(i);
+    }
+
+    for (int i = 0; i <= n_para - 1; i++) {
+        int FreeParaPos = (*Free)(i);
+
+        double diel_old_origin = (*Para)(FreeParaPos);
+        double diel_old_tmp = diel_old_origin;
+        int sign = 0;
+        if (diel_old_origin >= epsilon) {
+            sign = -1;
+        }
+        else {
+            sign = 1;
+        }
+        diel_old_tmp += sign * epsilon;
+
+
+
+        //because i am changing diel_old_tmp as local variable and this does not influence diel_old, the singleresponse will not respond to this change
+        //if (objective->Have_Devx) objective->SingleResponse(position1, true);
+
+        //complex<double> diel_tmp = (*material)(0) + diel_old_tmp * ((*material)(1) - (*material)(0));
+
+        //if (objective->Have_Devx) objective->SingleResponse(position1, false);
+        //complex<double> oneoveralpha = (1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K));
+
+        
+
+        list<int>::iterator it = Paratogeometry[FreeParaPos].begin();
+        for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
+            //cout << (*it) << endl;
+            int position = *it;
+            complex<double> alphaorigin = (*al)(3 * position);
+            if (objective->Have_Devx) objective->SingleResponse(position, true);
+            (*CStr).UpdateStrSingle(position, diel_old_tmp);
+            (*CurrentModel).UpdateAlphaSingle(position);
+            if (objective->Have_Devx) objective->SingleResponse(position, false);
+            complex<double> change = ((*al)(3 * position) - alphaorigin) / (sign * epsilon);
+            Adevxp(3 * position) = change;
+            Adevxp(3 * position + 1) = change;
+            Adevxp(3 * position + 2) = change;
+
+            it++;
+        }
+
+        devx(i) = (objective->GroupResponse() - origin) / (sign * epsilon);  //If some obj has x dependency but you denote the havepenalty as false, it will still actually be calculated in an efficient way.
+        //devx(i) = (origin - origin) / (sign * epsilon);
+
+        it = Paratogeometry[FreeParaPos].begin();
+        for (int j = 0; j <= Paratogeometry[FreeParaPos].size() - 1; j++) {
+            int position = *it;
+            if (objective->Have_Devx) objective->SingleResponse(position, true);
+            (*CStr).UpdateStrSingle(position, diel_old_origin);
+            (*CurrentModel).UpdateAlphaSingle(position);
+            if (objective->Have_Devx) objective->SingleResponse(position, false);
+            it++;
+        }
+
+
+
+        /*
+        if(objective->Have_Devx) objective->SingleResponse(position1, true);
+
+        if(objective->Have_Devx) objective->SingleResponse(position1, false);
+
+        it2 = (*it1).begin();
+
+        for (int j = 0; j <= (*it1).size()-1; j++) {
+            int position2 = (*it2);
+
+            if(objective->Have_Devx) objective->SingleResponse(position2, true);
+
+            if(objective->Have_Devx) objective->SingleResponse(position2, false);
+
+            it2++;
+
+        }
+        */
+
+    }
+    for (int i = 0; i <= 3 * N - 1; i++) {
+        Adevxp(i) = Adevxp(i) * ((*P)(i));
+    }
+
+    return make_tuple(devx, Adevxp);
 }
 
 VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin){
@@ -1020,6 +1150,9 @@ ObjectiveDDAModel* EvoDDAModel::ObjectiveFactory(string ObjectName, list<double>
     }
     if (MajorObjectFunctionName == "scattering0D") {
         return new Objectivescattering0D(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    }
+    if (MajorObjectFunctionName == "Abs") {
+        return new ObjectiveAbs(ObjectParameters, ObjDDAModel, this, HavePenalty);
     }
 
     /*
