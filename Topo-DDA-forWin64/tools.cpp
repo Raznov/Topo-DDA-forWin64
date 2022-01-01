@@ -486,6 +486,18 @@ Vector2cd Get_2_material(string sub, string mat, double wl, string unit){
     return result;
 }
 
+VectorXcd Get_X_material(list<string> mat_l, double wl, string unit) {
+    list<string>::iterator it = mat_l.begin();
+    VectorXcd result = VectorXcd::Zero(mat_l.size());
+    int i = 0;
+    while (it != mat_l.end()) {
+        result(i) = Get_material(*it, wl, unit);
+        i++;
+        it++;
+    }
+    return result;
+}
+
 complex<double> Get_Alpha(double lam, double K, double d, complex<double> diel, Vector3d n_E0, Vector3d n_K){
     double b1 = -1.891531;
     double b2 = 0.1648469;

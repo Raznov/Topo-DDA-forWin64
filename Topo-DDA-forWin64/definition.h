@@ -13,6 +13,7 @@
 #include <map>
 #include <list>
 #include <tuple>
+#include <set>
 
 #include "Eigen/Dense"
 #include "Eigen/Core"
@@ -44,6 +45,7 @@ complex<double> Get_Alpha(double lam, double K, double d, complex<double> diel, 
 complex<double> Get_Alpha_FCD(double lam, double K, double d, complex<double> diel);
 complex<double> Get_material(string mat, double wl, string unit);                  //name of mat to get its diel function at certain wavlength              
 Vector2cd Get_2_material(string sub, string mat, double wl, string unit);          //a wrapper for Get_material
+VectorXcd Get_X_material(list<string> mat_l, double wl, string unit);
 double Average(VectorXcd* E, int N, double exponent);
 double Get_Max(VectorXcd* E, int N);
 double G(VectorXcd* E, int N, double exponent, double E0);
@@ -129,7 +131,7 @@ private:
     VectorXi FreeparatoPara;          //Position of free parameters inside Para. dimension<=P. FreeparatoPara[i] is the index of a free parameter inside Para.
     //vector<list<int>> Paratogeometry;  //P dimension. Each position stores a list of corresponding dipole index for parameter for this specific position.
 public:
-    SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_);
+    SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_); //Can freeze part of the parameter space
     SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_, VectorXi* FreeparatoPara_);
     SpacePara(Space* space_, Vector3i bind_, string initial_diel); //l, center similar to bulk build in Structure class. Every 'bind' nearby dipoles correspond 
                                                                     //to 1 parameter in this bulk. bind=(2,2,2): 2*2*2; bind=(1,1,3):1*1*3
@@ -146,7 +148,7 @@ public:
     SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, VectorXi* geometryPara_);
     SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_);
 
-
+    SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_);
     void ChangeBind(Vector3i bind_);                                  //Change bind number
     VectorXi cut(VectorXi* big, VectorXi* smalll);
 
@@ -255,7 +257,7 @@ private:
     //--------------------------------Not necessary for A matrix but should be the same for diff DDAModel using the same A matrix------------------------------
     
     //VectorXcd diel;                   //real diel after 0~1 corresponds to real numbers
-    Vector2cd material;
+    VectorXcd material;
     //VectorXcd diel_max;                         //corresponds to the previous maximum obj
     
     //------------------------------For FCD and LDR choice-----------------------
@@ -263,8 +265,8 @@ private:
     SiCi* SiCiValue;
 
 public:
-    AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material_, string AMatrixMethod_);
-    AProductCore(CoreStructure* CStr_, double lam_, Vector2cd material_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_);
+    AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, string AMatrixMethod_);
+    AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, int MAXm_, int MAXn_, double Lm_, double Ln_, string AMatrixMethod_);
     ~AProductCore();
     Matrix3cd A_dic_generator(double x, double y, double z);
     Matrix3cd A_dic_generator(double x, double y, double z, int m, int n);
@@ -286,7 +288,7 @@ public:
     double get_lam();
     //VectorXcd* get_diel();        
     VectorXd* get_diel_old();               
-    Vector2cd* get_material();
+    VectorXcd* get_material();
     //VectorXcd* get_diel_max();                        
     VectorXd* get_diel_old_max();
     Matrix3cd FCD_inter(double x, double y, double z);
@@ -359,7 +361,7 @@ public:
     SpacePara* get_spacepara();
     double get_lam();
     VectorXd* get_diel_old();
-    Vector2cd* get_material();
+    VectorXcd* get_material();
     VectorXd* get_diel_old_max();
 };
 

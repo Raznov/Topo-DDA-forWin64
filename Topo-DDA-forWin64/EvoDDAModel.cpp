@@ -109,7 +109,7 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAM
     VectorXi* Free = (*spacepara).get_Free();
 
     VectorXd* diel_old = (*CurrentModel).get_diel_old();
-    Vector2cd* material = (*CurrentModel).get_material();
+    VectorXcd* material = (*CurrentModel).get_material();
     double lam = (*CurrentModel).get_lam();
     double K = 2 * M_PI / lam;
     double d = (*CurrentModel).get_d();
@@ -153,8 +153,8 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAM
 
         //because i am changing diel_old_tmp as local variable and this does not influence diel_old, the singleresponse will not respond to this change
         //if (objective->Have_Devx) objective->SingleResponse(position1, true);
-
-        complex<double> diel_tmp = (*material)(0) + diel_old_tmp * ((*material)(1) - (*material)(0));
+        int labelfloor = int(floor((*Para)(FreeParaPos)));
+        complex<double> diel_tmp = (*material)(labelfloor) + (diel_old_tmp - double(labelfloor)) * ((*material)(labelfloor + 1) - (*material)(labelfloor));
 
         //if (objective->Have_Devx) objective->SingleResponse(position1, false);
         complex<double> oneoveralpha = (1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K));
@@ -216,7 +216,7 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
     */
     
     VectorXd* diel_old = (*CurrentModel).get_diel_old();
-    Vector2cd* material = (*CurrentModel).get_material();
+    VectorXcd* material = (*CurrentModel).get_material();
     double lam = (*CurrentModel).get_lam();
     double K = 2 * M_PI / lam;
     double d = (*CurrentModel).get_d();
@@ -256,16 +256,6 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
             sign = 1;
         }
         diel_old_tmp += sign * epsilon;
-
-
-
-        //because i am changing diel_old_tmp as local variable and this does not influence diel_old, the singleresponse will not respond to this change
-        //if (objective->Have_Devx) objective->SingleResponse(position1, true);
-
-        //complex<double> diel_tmp = (*material)(0) + diel_old_tmp * ((*material)(1) - (*material)(0));
-
-        //if (objective->Have_Devx) objective->SingleResponse(position1, false);
-        //complex<double> oneoveralpha = (1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K));
 
         
 

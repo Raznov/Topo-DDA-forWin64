@@ -21,6 +21,7 @@ plotfor=""
 plotlimit=None
 Elimitlow=0.7
 Elimithigh=2.1
+colormax=2
 
 def deleteindice(object, target, col):
     result=[]
@@ -56,7 +57,7 @@ def Shape(geometry,diel,d,iteration=-1,position="./",decimal=0,FullLattice=False
 
 
     cmaparg = 'Spectral_r'
-    minn, maxx = 0, 1
+    minn, maxx = 0, colormax
     norm = matplotlib.colors.Normalize(minn, maxx)
     colorset = cm.ScalarMappable(norm=norm, cmap=cmaparg)
     colorset.set_array([])
