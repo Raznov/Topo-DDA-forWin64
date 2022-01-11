@@ -150,6 +150,7 @@
     <ClCompile Include="CoreStructure.cpp" />
     <ClCompile Include="EvoDDAModel.cpp" />
     <ClCompile Include="DDAModel.cpp" />
+    <ClCompile Include="FilterOption.cpp" />
     <ClCompile Include="ObjectiveDDAModel.cpp" />
     <ClCompile Include="SiCi.cpp" />
     <ClCompile Include="Space.cpp" />

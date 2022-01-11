@@ -419,6 +419,7 @@ complex<double> Get_material(string mat, double wl, string unit){
     diel_dic.insert(pair<string,string>("5.0","diel/Diel5.0"));
     diel_dic.insert(pair<string, string>("H2O", "diel/H2O"));
     diel_dic.insert(pair<string, string>("TiN", "diel/TiN-Pfluger"));
+    diel_dic.insert(pair<string, string>("Ti", "diel/Ti-JC"));
     wl=wl/unit_dic[unit];
     string real="Re_eps.txt";
     string imag="Im_eps.txt";
@@ -609,4 +610,28 @@ list<double> makelist(double start, double end, int number) {
         result.push_back(start + i * interval);
     }
     return result;
+}
+
+double exp_update(const double x, const double x_max, const double y_min, const double y_max) {
+    return y_min + (y_max - y_min) * exp((x / x_max - 1.0));
+}
+
+double piecewise_update(const double x, const double x_max, const double y_min, const double y_max) {
+    if (x <= 0.4 * x_max) {
+        return y_min;
+    }
+    else if(0.4 * x_max < x&& x <= 0.6 * x_max) {
+        return y_min+(y_max-y_min)/10;
+    }
+    else if (0.6 * x_max < x && x <= 0.8 * x_max) {
+        return y_min + (y_max - y_min) / 5;
+    }
+    else {
+        return y_max;
+    }
+
+}
+
+double linear_update(const double x, const double x_max, const double y_min, const double y_max) {
+    return y_min + (y_max - y_min) * x / x_max;
 }

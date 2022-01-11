@@ -5,10 +5,10 @@
 
 int main() {
 
-    string save_position = ".\\200nm3-Air-TiN-Au-PointE7-lam500-period-ones-2D\\";       //output file
+    string save_position = ".\\200nm2-sub100nm-Air-TiN-Ti-PointE7-lam500-period-ones-r_filter2-beta80\\";       //output file
     Vector3d l;
     Vector3d center;
-    l << 19.0, 19.0, 19.0;    //Size of the initialization block. 81*81*17 pixels in total.
+    l << 19.0, 19.0, 29.0;    //Size of the initialization block. 81*81*17 pixels in total.
     center << l(0) / 2, l(1) / 2, l(2) / 2;      //Center of the block.
     int Nx, Ny, Nz;
     Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);   //Size of the design space. Notice that this sets the limits for coordinates, 
@@ -23,7 +23,8 @@ int main() {
     double epsilon = 100;                                                //Fixed learning rate of the optimization.
     //double focus = (l(2) + 2) * d;   //nm                               //Focal spot is 50nm higher than the upper boundary of the intialization block.
     //cout << focus << endl;
-    int MAX_ITERATION_DDA = 100000;                                     //Number of maximum DDA iterations.
+    int MAX_ITERATION_DDA = 100000;              
+    //Number of maximum DDA iterations.
     double MAX_ERROR = 0.00001;                                         //Maximum error of DDA.
     int MAX_ITERATION_EVO = 100;                                        //Number of topology optimization.
 
@@ -44,7 +45,7 @@ int main() {
     VectorXd lam(lam_num);
     lam << 500;
     VectorXcd material;
-    list<string> mat_l{ "Air", "TiN", "Au" };
+    list<string> mat_l{ "Air", "TiN", "Ti" };
     material = Get_X_material(mat_l, lam(0), "nm");              //Air as substrate. material with permittivity of 2.5 as design material.
 
 
@@ -58,11 +59,11 @@ int main() {
 
     Vector3d l1, l2, l3, center1, center2, center3;
     l1 << 19.0, 19.0, 11.0;
-    center1 << l1(0) / 2, l1(1) / 2, 13.5;
-    l2 << 19.0, 19.0, 3;
-    center2 << l2(0) / 2, l2(1) / 2, 5.5;
-    l3 << 19.0, 19.0, 3;
-    center3 << l3(0) / 2, l3(1) / 2, 1.5;
+    center1 << l1(0) / 2, l1(1) / 2, 23.5;
+    l2 << 19.0, 19.0, 7.0;
+    center2 << l2(0) / 2, l2(1) / 2, 13.5;
+    l3 << 19.0, 19.0, 9.0;
+    center3 << l3(0) / 2, l3(1) / 2, 4.5;
 
     Structure s1(S.get_total_space(), l1, center1);                       //Initialize the block which is 80*80*16 in terms of intervals or 81*81*17 in terms of pixels.
     Structure s2(S.get_total_space(), l2, center2);
@@ -80,10 +81,13 @@ int main() {
     list<VectorXi*> FPGeometryl{ s1geometry };
     list<VectorXi*> BPGeometryl{ s2geometry, s3geometry };
     list<double> BParal{ 1.0, 2.0 };
-    SpacePara spacepara(&S, bind, "ONES", FPGeometryl, BPGeometryl, BParal);
+    bool Filter = true;
+    double r_f = 2.0;
+    FilterOption filteropt(0.0, 80.0, 0.5, "piecewise", r_f);
+    SpacePara spacepara(&S, bind, "ONES", FPGeometryl, BPGeometryl, BParal, Filter, &filteropt);
     //SpacePara is where the parameter<->geometry link is established.
     list<string> ObjectFunctionNames{ "PointE" };                       //Name of the object function.
-    list<double> ObjectParameter{ center2(0) * d,center2(1) * d,7.0 * d };  //Focal spot postition.
+    list<double> ObjectParameter{ center2(0) * d,center2(1) * d,17.0 * d };  //Focal spot postition.
     list<list<double>*> ObjectParameters{ &ObjectParameter };
     list<DDAModel> ModelList;
     list<DDAModel*> ModelpointerList;

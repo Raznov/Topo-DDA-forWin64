@@ -1,5 +1,17 @@
 #include "definition.h"
 
+double calweight(int xo, int yo, int x, int y, double r) {
+    return r - sqrt(double(x - xo) * double(x - xo) + double(y - yo) * double(y - yo));
+}
+
+bool circlerange(int xo, int yo, int x, int y, double r) {
+    if (double(x - xo) * double(x - xo) + double(y - yo) * double(y - yo) <= r * r - 0.01) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 
 int Get3divSize(VectorXi* geometry) {
     int N = (*geometry).size();
@@ -147,6 +159,7 @@ VectorXi SpacePara::cut(VectorXi* big, VectorXi* smalll) {
 }
 
 SpacePara::SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_) {
+    Filter = false;
     space = space_;
     bind << 1, 1, 1;                                    //---------Only work for 1,1,1
     VectorXi* total_space = (*space).get_total_space();
@@ -236,6 +249,7 @@ SpacePara::SpacePara(Space* space_, string initial_diel, VectorXi geometry_, Vec
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_, VectorXi* FreeparatoPara_) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -264,6 +278,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, Vec
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -312,6 +327,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel) {
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel1, string initial_diel2) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -399,6 +415,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel1, string
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, VectorXi* geometryPara_) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -437,6 +454,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, VectorX
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -535,6 +553,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, 
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_background, list<string>* initial_diel_list, list<double>* r_list, list<Vector2d>* center_list){
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -629,6 +648,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel_backgrou
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -710,6 +730,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -795,6 +816,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, VectorXi* geometryPara_) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -859,6 +881,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -935,6 +958,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
 }
 
 SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_) {
+    Filter = false;
     space = space_;
     bind = bind_;
     VectorXi* total_space = (*space).get_total_space();
@@ -1063,6 +1087,162 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<Ve
     }
 }
 
+SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_, bool Filter_, FilterOption* Filterstats_) {
+    Filter = Filter_;
+    space = space_;
+    bind = bind_;
+    VectorXi* total_space = (*space).get_total_space();
+    int Nx, Ny, Nz, N;
+    tie(Nx, Ny, Nz, N) = (*space).get_Ns();
+    geometry = VectorXi::Zero(3 * N);
+
+    list<Structure>* ln = (*space).get_ln();
+    list<Structure>::iterator it = (*ln).begin();
+    int n1 = 0;
+    for (int i = 0; i <= int((*ln).size()) - 1; i++) {
+        int n2 = 3 * ((*it).get_geometry_size());
+        for (int j = 0; j <= n2 - 1; j++) {
+            geometry(n1 + j) = (*((*it).get_geometry()))(j);
+        }
+        n1 = n1 + n2;
+        it++;
+    }
+    geometryPara = VectorXi::Zero(N);
+    scope = find_scope_3_dim(&geometry);
+
+    VectorXi FParaGeometry = ConnectGeometry(FParaGeometry_);
+    set<vector<int>> FParaGeometrySet = Get3divSet(&FParaGeometry);
+    MatrixXi FParascope = find_scope_3_dim(&FParaGeometry);
+    int NFparax, NFparay, NFparaz, NFpara;
+    NFparax = ceil(double(FParascope(0, 1) - FParascope(0, 0) + 1) / bind(0));
+    NFparay = ceil(double(FParascope(1, 1) - FParascope(1, 0) + 1) / bind(1));
+    NFparaz = ceil(double(FParascope(2, 1) - FParascope(2, 0) + 1) / bind(2));
+    NFpara = NFparax * NFparay * NFparaz;
+
+    VectorXd Para1 = initial_diel_func(initial_diel, NFpara);
+    FreeparatoPara = VectorXi::Zero(NFpara);                              //Points to the position of free para in Para. In this function, actually it is the first NFpara elements in Para.
+    for (int i = 0; i <= NFpara - 1; i++) {
+        FreeparatoPara(i) = i;
+    }
+
+    if (int(BParaGeometry_.size()) != int(BPara_.size())) {
+        cout << "SpacePara::SpacePara(Space* space_, string initial_diel, Vector3i bind_, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_): BParaGeometry_.size() != BPara_.size()" << endl;
+        throw 1;
+    }
+    list<VectorXi*>::iterator it1 = BParaGeometry_.begin();
+    list<int> BParaDividePos;
+    int Npara = NFpara;
+    while (it1 != BParaGeometry_.end()) {
+        BParaDividePos.push_back(Npara);       //The first pos for BPara is NFpara. So this line is in front of the update.
+        Npara += Get3divSize(*it1);
+        it1++;
+    }
+    Para = VectorXd::Zero(Npara);
+    for (int i = 0; i <= NFpara - 1; i++) {
+        Para(i) = Para1(i);
+    }
+
+    it1 = BParaGeometry_.begin();
+    list<double>::iterator it2 = BPara_.begin();
+    int Parapos = NFpara;
+    while (it2 != BPara_.end()) {
+        int tmpN = Get3divSize(*it1);
+        for (int i = 0; i <= tmpN - 1; i++) {
+            Para(Parapos) = (*it2);
+            Parapos++;
+        }
+        it1++;
+        it2++;
+    }
+
+    list<set<vector<int>>> BParaGeometrySetList = Get3divSetList(BParaGeometry_);
+
+    VectorXi BParaCurrentPos = VectorXi::Zero(BParaGeometry_.size());
+    list<int>::iterator it_tmp2 = BParaDividePos.begin();
+
+    //cout << BParaGeometry_.size() - 1 << endl;
+    //cout << int(BParaGeometry_.size()) - 1 << endl;                       These two are actually different when size=0
+
+    for (int i = 0; i <= int(BParaGeometry_.size()) - 1; i++) {
+        BParaCurrentPos(i) = (*it_tmp2);
+        it_tmp2++;
+    }
+
+    for (int i = 0; i <= N - 1; i++) {
+        int x = geometry(3 * i);
+        int y = geometry(3 * i + 1);
+        int z = geometry(3 * i + 2);
+        vector<int> tmp{ x,y,z };
+        if (FParaGeometrySet.count(tmp)) {
+            int parax = floor((double(x) - FParascope(0, 0)) / bind(0));
+            int paray = floor((double(y) - FParascope(1, 0)) / bind(1));
+            int paraz = floor((double(z) - FParascope(2, 0)) / bind(2));
+            int pos = paraz + NFparaz * (paray + NFparay * parax);
+            geometryPara(i) = pos;                                     //The first NFpara elements in Para is the elements in FreeParatoPara 
+        }
+        else {
+            int j = 0;
+            list<set<vector<int>>>::iterator it_tmp1 = BParaGeometrySetList.begin();
+
+            while (it_tmp1 != BParaGeometrySetList.end()) {
+                if ((*it_tmp1).count(tmp)) {
+                    geometryPara(i) = BParaCurrentPos(j);
+                    BParaCurrentPos(j) = BParaCurrentPos(j) + 1;
+                }
+                it_tmp1++;
+                j++;
+            }
+        }
+    }
+    if (Filter == true) {
+        Para_origin = Para;
+        Para_filtered = Para;
+        Filterstats = Filterstats_;
+        if (Filterstats == NULL) {
+            cout << "ERROR: SpacePara::SpacePara: Filter==true then Filterstats must be passed in." << endl;
+            throw 1;
+        }
+        vector<vector<int>> Paratogeometry(Npara);
+        for (int i = 0; i <= N - 1; i++) {
+            (Paratogeometry[geometryPara(i)]).push_back(i);
+        }
+
+        //Only works when freepara is 2D binding (Only do the filter in 2D)
+        FreeWeight = vector<vector<WeightPara>>(NFpara);
+        for (int i = 0; i <= NFpara - 1; i++) {
+            int poso = Paratogeometry[FreeparatoPara(i)][0];                 //As 2D extrusion is assumed, different z does not matter
+            int xo = geometry(3 * poso);
+            int yo = geometry(3 * poso + 1);
+            int zo = geometry(3 * poso + 2);
+
+            double rfilter = (*Filterstats).get_rfilter();
+
+            for (int j = 0; j <= NFpara - 1; j++) {
+                //bool inornot = false;
+                for (int k = 0; k <= Paratogeometry[FreeparatoPara(j)].size() - 1; k++) {
+                    int posr = Paratogeometry[FreeparatoPara(j)][k];
+                    
+                    int xr = geometry(3 * posr);
+                    int yr = geometry(3 * posr + 1);
+                    int zr = geometry(3 * posr + 2);
+                    if ((zo==zr) && (circlerange(xo, yo, xr, yr, rfilter))) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = FreeparatoPara(j);
+                        double weight = calweight(xo, yo, xr, yr, rfilter);
+                        FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                        break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j.
+                    }
+
+                }
+                
+            }
+        }
+    }
+
+
+}
 
 void SpacePara::ChangeBind(Vector3i bind_) {
     bind = bind_;
@@ -1124,10 +1304,46 @@ VectorXd* SpacePara::get_Para() {
     return &Para;
 }
 
+VectorXd* SpacePara::get_Para_origin() {
+    if (!Filter) {
+        cout << "ERROR: SpacePara::get_Para_origin()--Filter can not be false" << endl;
+        throw 1;
+    }
+    return &Para_origin;
+}
+
+VectorXd* SpacePara::get_Para_filtered() {
+    if (!Filter) {
+        cout << "ERROR: SpacePara::get_Para_filtered()--Filter can not be false" << endl;
+        throw 1;
+    }
+    return &Para_filtered;
+}
+
 Vector3i* SpacePara::get_bind() {
     return &bind;
 }
 
 VectorXi* SpacePara::get_Free() {
     return &FreeparatoPara;
+}
+
+bool SpacePara::get_Filter() {
+    return Filter;
+}
+
+FilterOption* SpacePara::get_Filterstats() {
+    if (!Filter) {
+        cout << "ERROR: SpacePara::get_Filterstats()--Filter can not be false" << endl;
+        throw 1;
+    }
+    return Filterstats;
+}
+
+vector<vector<WeightPara>>* SpacePara::get_FreeWeight() {
+    if (!Filter) {
+        cout << "ERROR: SpacePara::get_FreeWeight()---Filter can not be false" << endl;
+        throw 1;
+    }
+    return &FreeWeight;
 }
