@@ -23,7 +23,8 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     int Ny = (*Core).get_Ny();
     int Nz = (*Core).get_Nz();
     double lam = (*Core).get_lam();
-    double K = 2 * M_PI / lam;
+    double nback = (*Core).get_nback();
+    double K = (*Core).get_K();
     double d = (*Core).get_d();
     VectorXi* R = (*Core).get_R();
     VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
@@ -46,7 +47,11 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     diel = VectorXcd::Zero(N * 3);
     for (int i = 0; i < N * 3; i++) {
         int labelfloor = int(floor((*diel_old)(i)));
-        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i)-double(labelfloor)) * ((*material)(labelfloor + 1) - (*material)(labelfloor));
+        int labelnext = labelfloor + 1;
+        if (labelfloor >= 1) {
+            labelnext = labelfloor;
+        }
+        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i)-double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
         diel(i) = diel_tmp;
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }  
@@ -75,7 +80,7 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     int Ny = (*Core).get_Ny();
     int Nz = (*Core).get_Nz();
     double lam = (*Core).get_lam();
-    double K = 2 * M_PI / lam;
+    double K = (*Core).get_K();
     double d = (*Core).get_d();
     VectorXi* R = (*Core).get_R();
     VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
@@ -104,7 +109,11 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     diel = VectorXcd::Zero(N * 3);
     for (int i = 0; i < N * 3; i++) {
         int labelfloor = int(floor((*diel_old)(i)));
-        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i) - double(labelfloor)) * ((*material)(labelfloor + 1) - (*material)(labelfloor));
+        int labelnext = labelfloor + 1;
+        if (labelfloor >= 1) {
+            labelnext = labelfloor;
+        }
+        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
         diel(i) = diel_tmp;
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }
@@ -440,7 +449,7 @@ void DDAModel::change_E(VectorXcd E_){
 void DDAModel::reset_E(){
     int N = (*Core).get_N();
     double lam = (*Core).get_lam();
-    double K = 2 * M_PI / lam;
+    double K = (*Core).get_K();
     double d = (*Core).get_d();
     VectorXi* R = (*Core).get_R();
     for (int i=0;i<N;i++) {
@@ -455,11 +464,15 @@ void DDAModel::UpdateAlpha() {
     VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
     VectorXcd* material = (*Core).get_material();
     double lam = (*Core).get_lam();
-    double K = 2 * M_PI / lam;
+    double K = (*Core).get_K();
     double d = (*Core).get_d();
     for (int i = 0; i <= (*diel_old).size() - 1; i++) {
         int labelfloor = int(floor((*diel_old)(i)));
-        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i) - double(labelfloor)) * ((*material)(labelfloor + 1) - (*material)(labelfloor));
+        int labelnext = labelfloor + 1;
+        if (labelfloor >= 1) {
+            labelnext = labelfloor;
+        }
+        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
         diel(i) = diel_tmp;
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }
@@ -470,7 +483,7 @@ void DDAModel::UpdateAlphaSingle(int idx) {
     VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
     VectorXcd* material = (*Core).get_material();
     double lam = (*Core).get_lam();
-    double K = 2 * M_PI / lam;
+    double K = (*Core).get_K();
     double d = (*Core).get_d();
 
     /*
@@ -492,7 +505,11 @@ void DDAModel::UpdateAlphaSingle(int idx) {
     }
     */
     int labelfloor = int(floor((*diel_old)(3 * idx)));
-    std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(3 * idx) - double(labelfloor)) * ((*material)(labelfloor + 1) - (*material)(labelfloor));
+    int labelnext = labelfloor + 1;
+    if (labelfloor >= 1) {
+        labelnext = labelfloor;
+    }
+    std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(3 * idx) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
     diel(3 * idx) = diel_tmp;
     diel(3 * idx + 1) = diel_tmp;
     diel(3 * idx + 2) = diel_tmp;
@@ -507,7 +524,7 @@ void DDAModel::solve_E(){
         int N = (*Core).get_N();
         double d = (*Core).get_d();
         double lam = (*Core).get_lam();
-        double K = 2 * M_PI / lam;
+        double K = (*Core).get_K();
         VectorXi* R = (*Core).get_R();
         for (int j = 0;j<int(round(RResult.size()/3));j++){
             double x = d*RResult(3*j);
@@ -763,6 +780,10 @@ double DDAModel::get_d() {
 
 double DDAModel::get_lam() {
     return (*Core).get_lam();
+}
+
+double DDAModel::get_K() {
+    return (*Core).get_K();
 }
 
 VectorXd* DDAModel::get_diel_old() {

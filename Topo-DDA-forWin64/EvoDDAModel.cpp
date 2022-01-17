@@ -111,7 +111,7 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAM
     VectorXd* diel_old = (*CurrentModel).get_diel_old();
     VectorXcd* material = (*CurrentModel).get_material();
     double lam = (*CurrentModel).get_lam();
-    double K = 2 * M_PI / lam;
+    double K = (*CurrentModel).get_K();
     double d = (*CurrentModel).get_d();
     Vector3d n_E0 = (*CurrentModel).get_nE0();
     Vector3d n_K = (*CurrentModel).get_nK();
@@ -153,8 +153,12 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAM
 
         //because i am changing diel_old_tmp as local variable and this does not influence diel_old, the singleresponse will not respond to this change
         //if (objective->Have_Devx) objective->SingleResponse(position1, true);
-        int labelfloor = int(floor((*Para)(FreeParaPos)));
-        complex<double> diel_tmp = (*material)(labelfloor) + (diel_old_tmp - double(labelfloor)) * ((*material)(labelfloor + 1) - (*material)(labelfloor));
+        int labelfloor = int(floor((*diel_old)(i)));
+        int labelnext = labelfloor + 1;
+        if (labelfloor >= 1) {
+            labelnext = labelfloor;
+        }
+        std::complex<double> diel_tmp = (*material)(labelfloor) + ((*diel_old)(i) - double(labelfloor)) * ((*material)(labelnext) - (*material)(labelfloor));
 
         //if (objective->Have_Devx) objective->SingleResponse(position1, false);
         complex<double> oneoveralpha = (1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K));
@@ -218,7 +222,7 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
     VectorXd* diel_old = (*CurrentModel).get_diel_old();
     VectorXcd* material = (*CurrentModel).get_material();
     double lam = (*CurrentModel).get_lam();
-    double K = 2 * M_PI / lam;
+    double K = (*CurrentModel).get_K();
     double d = (*CurrentModel).get_d();
     Vector3d n_E0 = (*CurrentModel).get_nE0();
     Vector3d n_K = (*CurrentModel).get_nK();

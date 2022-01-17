@@ -5,7 +5,7 @@
 
 int main() {
 
-    string save_position = ".\\200nm2-sub100nm-Air-TiN-Ti-PointE7-lam500-period-ones-r_filter2-beta80\\";       //output file
+    string save_position = ".\\200nm2-sub100nm-H2O-TiN-Ti-PointE7-lam500-period-ones-r_filter2-beta80\\";       //output file
     Vector3d l;
     Vector3d center;
     l << 19.0, 19.0, 29.0;    //Size of the initialization block. 81*81*17 pixels in total.
@@ -23,7 +23,7 @@ int main() {
     double epsilon = 100;                                                //Fixed learning rate of the optimization.
     //double focus = (l(2) + 2) * d;   //nm                               //Focal spot is 50nm higher than the upper boundary of the intialization block.
     //cout << focus << endl;
-    int MAX_ITERATION_DDA = 100000;              
+    int MAX_ITERATION_DDA = 100000;
     //Number of maximum DDA iterations.
     double MAX_ERROR = 0.00001;                                         //Maximum error of DDA.
     int MAX_ITERATION_EVO = 100;                                        //Number of topology optimization.
@@ -45,7 +45,7 @@ int main() {
     VectorXd lam(lam_num);
     lam << 500;
     VectorXcd material;
-    list<string> mat_l{ "Air", "TiN", "Ti" };
+    list<string> mat_l{ "H2O", "TiN", "Ti" };
     material = Get_X_material(mat_l, lam(0), "nm");              //Air as substrate. material with permittivity of 2.5 as design material.
 
 
@@ -102,7 +102,8 @@ int main() {
     n = 50;
     Lm = 20 * d;
     Ln = 20 * d;
-    AProductCore Core1(&CStr, lam(0), material, m, n, Lm, Ln, "FCD");                //Matrix vector product is carried out in AProductCore class. So in this step, wavelength and actual permittivity comes in.
+    double nback = sqrt(real(material(0)));
+    AProductCore Core1(&CStr, lam(0), material, nback, m, n, Lm, Ln, "FCD");                //Matrix vector product is carried out in AProductCore class. So in this step, wavelength and actual permittivity comes in.
     CorePointList.push_back(&Core1);
     ofstream Common;
     Common.open(save_position + "Commondata.txt");
@@ -123,39 +124,23 @@ int main() {
                                                                       //And one AProductCore can be shared among several DDAModel, such that the memory consumption for multiple-angle optimization
                                                                       //should be similar to single-angle case. Of course, this is optimization for performance for a range of angles averaged. 
             for (int j = 0; j <= phi_num - 1; j++) {
-                if (theta(i) != 0) {
-                    double theta_tmp = theta(i) * M_PI / 180;
-                    double phi_tmp = phi(j) * M_PI / 180;
-                    n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
-                    n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
-                    if (CheckPerp(n_E0, n_K) == false) {
-                        cout << "----------------------------------------theta" << theta[i] << "phi" << phi[j] << "Not perpendicular---------------------------------------" << endl;
-                    }
-                    if (k == 0) {
-                        AngleInfo << theta[i] << endl;
-                        AngleInfo << phi[j] << endl;
-                        nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
-                    }
-                    DDAModel Model(Core, n_K, E0, n_E0);
-                    ModelList.push_back(Model);
+                double theta_tmp = theta(i) * M_PI / 180;
+                double phi_tmp = phi(j) * M_PI / 180;
+                n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+                n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+                if (CheckPerp(n_E0, n_K) == false) {
+                    cout << "----------------------------------------theta" << theta[i] << "phi" << phi[j] << "Not perpendicular---------------------------------------" << endl;
                 }
+                if (k == 0) {
+                    AngleInfo << theta[i] << endl;
+                    AngleInfo << phi[j] << endl;
+                    nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+                }
+                DDAModel Model(Core, n_K, E0, n_E0);
+                ModelList.push_back(Model);
+
             }
         }
-        double theta_tmp = 0 * M_PI / 180;
-        double phi_tmp = 0 * M_PI / 180;
-        n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
-        n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
-        if (CheckPerp(n_E0, n_K) == false) {
-            cout << "----------------------------------------theta" << 0 << "phi" << 0 << "Not perpendicular---------------------------------------" << endl;
-        }
-        if (k == 0) {
-            AngleInfo << 0.0 << endl;
-            AngleInfo << 0.0 << endl;
-            nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
-        }
-        DDAModel Model(Core, n_K, E0, n_E0);
-        ModelList.push_back(Model);
-
         it++;
     }
     AngleInfo.close();

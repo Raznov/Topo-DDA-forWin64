@@ -148,7 +148,8 @@ void Evo_single(string save_position, Vector3i bind, Vector3d l, int MAX_ITERATI
     list<AProductCore*> CorePointList;
     Vector2cd material;
     material = Get_2_material("Air", "2.5", lam(0), "nm");
-    AProductCore Core1(&CStr, lam(0), material, "LDR");
+    double nback = 1.0;
+    AProductCore Core1(&CStr, lam(0), material, nback, "LDR");
     CorePointList.push_back(&Core1);
     ofstream Common;
     Common.open(save_position + "Commondata.txt");
@@ -346,6 +347,7 @@ VectorXd initial_diel_func(string initial_diel, int N) {
     }
     else if (initial_diel.compare("RANDOM") == 0) {
         diel = VectorXd::Zero(N);
+        srand(time(0));
         for (int i = 0; i <= N - 1; i++) {
             double r = ((double)rand() / (RAND_MAX));
             diel(i) = r;
@@ -621,10 +623,10 @@ double piecewise_update(const double x, const double x_max, const double y_min, 
         return y_min;
     }
     else if(0.4 * x_max < x&& x <= 0.6 * x_max) {
-        return y_min+(y_max-y_min)/10;
+        return y_min+(y_max-y_min)/20;
     }
     else if (0.6 * x_max < x && x <= 0.8 * x_max) {
-        return y_min + (y_max - y_min) / 5;
+        return y_min + (y_max - y_min) / 10;
     }
     else {
         return y_max;
