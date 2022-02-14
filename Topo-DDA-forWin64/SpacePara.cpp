@@ -1,5 +1,34 @@
 #include "definition.h"
 
+void FCurrentinsert(map<vector<int>, int>* FCurrent, vector<int> currentxy, int* currentpos, string insertmode, vector<double>* symaxis) {
+    if (insertmode == "None") {
+        (*FCurrent).insert(pair<vector<int>, int>(currentxy, *currentpos));
+        (*currentpos) += 1;
+    }
+    else if(insertmode == "4fold") {
+        vector<int> sym1{ int(round(2 * (*symaxis)[0] - currentxy[0])), currentxy[1] };
+        vector<int> sym2{ int(round(2 * (*symaxis)[0] - currentxy[0])), int(round(2 * (*symaxis)[1] - currentxy[1])) };
+        vector<int> sym3{ currentxy[0], int(round(2 * (*symaxis)[1] - currentxy[1])) };
+        if ((*FCurrent).count(sym1)) {
+            (*FCurrent).insert(pair<vector<int>, int>(currentxy, (*FCurrent)[sym1]));
+        }
+        else if ((*FCurrent).count(sym2)) {
+            (*FCurrent).insert(pair<vector<int>, int>(currentxy, (*FCurrent)[sym2]));
+        }
+        else if ((*FCurrent).count(sym3)) {
+            (*FCurrent).insert(pair<vector<int>, int>(currentxy, (*FCurrent)[sym3]));
+        }
+        else {
+            (*FCurrent).insert(pair<vector<int>, int>(currentxy, *currentpos));
+            (*currentpos) += 1;
+        }
+    }
+    else {
+        cout << "FCurrentinsert: This sym mode not supported yet" << endl;
+        throw 1;
+    }
+}
+
 double calweight(int xo, int yo, int x, int y, double r) {
     return r - sqrt(double(x - xo) * double(x - xo) + double(y - yo) * double(y - yo));
 }
@@ -29,7 +58,7 @@ set<vector<int>> Get3divSet(VectorXi* geometry) {
         vector<int> tmp{ (*geometry)(3 * i), (*geometry)(3 * i + 1), (*geometry)(3 * i + 2) };
         if (result.count(tmp)) {
             cout << "set<vector<int>> Get3divSet(VectorXi* geometry): Element is present in the set" << endl;
-            throw i;
+            throw 1;
         }
         result.insert(tmp);
     }
@@ -1087,7 +1116,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<Ve
     }
 }
 
-SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_, bool Filter_, FilterOption* Filterstats_) {
+SpacePara::SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_list, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_, bool Filter_, FilterOption* Filterstats_, string symmetry, vector<double> symaxis) {
     Filter = Filter_;
     space = space_;
     bind = bind_;
@@ -1095,6 +1124,11 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<Ve
     int Nx, Ny, Nz, N;
     tie(Nx, Ny, Nz, N) = (*space).get_Ns();
     geometry = VectorXi::Zero(3 * N);
+
+    if (Filter && (bind(0) != 1.0) || bind(1) != 1.0) {
+        cout << "SpacePara--If Filter=True, bind(0) and bind(1) must be 1.0" << endl;
+        throw 1;
+    }
 
     list<Structure>* ln = (*space).get_ln();
     list<Structure>::iterator it = (*ln).begin();
@@ -1113,13 +1147,56 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<Ve
     VectorXi FParaGeometry = ConnectGeometry(FParaGeometry_);
     set<vector<int>> FParaGeometrySet = Get3divSet(&FParaGeometry);
     MatrixXi FParascope = find_scope_3_dim(&FParaGeometry);
-    int NFparax, NFparay, NFparaz, NFpara;
-    NFparax = ceil(double(FParascope(0, 1) - FParascope(0, 0) + 1) / bind(0));
-    NFparay = ceil(double(FParascope(1, 1) - FParascope(1, 0) + 1) / bind(1));
-    NFparaz = ceil(double(FParascope(2, 1) - FParascope(2, 0) + 1) / bind(2));
-    NFpara = NFparax * NFparay * NFparaz;
+    int NFpara;
+    //int NFparax, NFparay, NFparaz, NFpara;
+    //NFparax = ceil(double(FParascope(0, 1) - FParascope(0, 0) + 1) / bind(0));
+    //NFparay = ceil(double(FParascope(1, 1) - FParascope(1, 0) + 1) / bind(1));
+    //NFparaz = ceil(double(FParascope(2, 1) - FParascope(2, 0) + 1) / bind(2));
+    
+    
 
-    VectorXd Para1 = initial_diel_func(initial_diel, NFpara);
+    int dividesym;
+    if (symmetry == "None") {
+        dividesym = 1;
+    }
+    else if (symmetry == "4fold") {
+        dividesym = 4;
+    }
+    else {
+        cout << "SpacePara: not None nor 4 fold. Not supported" << endl;
+        throw 1;
+    }
+
+    NFpara = int(round((FParaGeometry.size() / 3 / bind(2) / dividesym)));
+
+    cout << "NFpara" << NFpara << endl;
+    VectorXd Para1 = VectorXd::Zero(NFpara);
+    list<VectorXd> Paratmplist;
+    int initialcount = 0;
+    if (FParaGeometry_.size() != initial_diel_list.size()) {
+        cout << "SpacePara::SpacePara(Space* space_, string initial_diel, Vector3i bind_, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_): FParaGeometry_.size() != initial_diel_list.size()" << endl;
+        throw 1;
+    }
+
+    int NFParacount = 0;
+    for (list<VectorXi*>::iterator it = FParaGeometry_.begin(); it != FParaGeometry_.end(); it++) {
+        int NFparatmp = int(round(((*it)->size() / 3 / bind(2) / dividesym)));
+        cout << "NFparatmp" << NFparatmp << endl;
+        ParaDividePos.push_back(NFParacount);
+        NFParacount += NFparatmp;
+        Paratmplist.push_back(initial_diel_func(initial_diel_list[initialcount], NFparatmp));
+        initialcount += 1;
+    }
+
+    int Paracurrentpos = 0;
+    for (list<VectorXd>::iterator it = Paratmplist.begin(); it != Paratmplist.end(); it++) {
+        for (int i = 0; i <= (*it).size() - 1; i++) {
+            Para1(Paracurrentpos) = (*it)(i);
+            Paracurrentpos += 1;
+        }
+    }
+
+    //VectorXd Para1 = initial_diel_func(initial_diel, NFpara);
     FreeparatoPara = VectorXi::Zero(NFpara);                              //Points to the position of free para in Para. In this function, actually it is the first NFpara elements in Para.
     for (int i = 0; i <= NFpara - 1; i++) {
         FreeparatoPara(i) = i;
@@ -1130,10 +1207,10 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<Ve
         throw 1;
     }
     list<VectorXi*>::iterator it1 = BParaGeometry_.begin();
-    list<int> BParaDividePos;
+    //list<int> BParaDividePos;
     int Npara = NFpara;
     while (it1 != BParaGeometry_.end()) {
-        BParaDividePos.push_back(Npara);       //The first pos for BPara is NFpara. So this line is in front of the update.
+        ParaDividePos.push_back(Npara);       //The first pos for BPara is NFpara. So this line is in front of the update.
         Npara += Get3divSize(*it1);
         it1++;
     }
@@ -1158,27 +1235,37 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<Ve
     list<set<vector<int>>> BParaGeometrySetList = Get3divSetList(BParaGeometry_);
 
     VectorXi BParaCurrentPos = VectorXi::Zero(BParaGeometry_.size());
-    list<int>::iterator it_tmp2 = BParaDividePos.begin();
+    //list<int>::iterator it_tmp2 = BParaDividePos.begin();
 
     //cout << BParaGeometry_.size() - 1 << endl;
     //cout << int(BParaGeometry_.size()) - 1 << endl;                       These two are actually different when size=0
 
     for (int i = 0; i <= int(BParaGeometry_.size()) - 1; i++) {
-        BParaCurrentPos(i) = (*it_tmp2);
-        it_tmp2++;
+        //BParaCurrentPos(i) = (*it_tmp2);
+        //it_tmp2++;
+        BParaCurrentPos(i) = ParaDividePos[i+(FParaGeometry_).size()];
+        //cout << BParaDividePos[i] << endl;
     }
-
+    //cout << "BParaDividePos.size()" << BParaDividePos.size() << endl;
+    
+    map<vector<int>, int> FCurrent;
+    int currentpos = 0;
     for (int i = 0; i <= N - 1; i++) {
         int x = geometry(3 * i);
         int y = geometry(3 * i + 1);
         int z = geometry(3 * i + 2);
         vector<int> tmp{ x,y,z };
         if (FParaGeometrySet.count(tmp)) {
-            int parax = floor((double(x) - FParascope(0, 0)) / bind(0));
-            int paray = floor((double(y) - FParascope(1, 0)) / bind(1));
-            int paraz = floor((double(z) - FParascope(2, 0)) / bind(2));
-            int pos = paraz + NFparaz * (paray + NFparay * parax);
-            geometryPara(i) = pos;                                     //The first NFpara elements in Para is the elements in FreeParatoPara 
+            //int parax = floor((double(x) - FParascope(0, 0)) / bind(0));
+            //int paray = floor((double(y) - FParascope(1, 0)) / bind(1));
+            //int paraz = floor((double(z) - FParascope(2, 0)) / bind(2));
+            vector<int> currentxy{ x,y };
+            if (!FCurrent.count(currentxy)) {
+                //FCurrent.insert(pair<vector<int>, int>(currentxy, currentpos));//Change this for all different symmetries
+                FCurrentinsert(&FCurrent, currentxy, &currentpos, symmetry, &symaxis);
+                //cout << currentpos << endl;
+            }
+            geometryPara(i) = FCurrent[currentxy];                                     //The first NFpara elements in Para is the elements in FreeParatoPara 
         }
         else {
             int j = 0;
@@ -1202,13 +1289,15 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<Ve
             cout << "ERROR: SpacePara::SpacePara: Filter==true then Filterstats must be passed in." << endl;
             throw 1;
         }
-        vector<vector<int>> Paratogeometry(Npara);
+        Paratogeometry = vector<vector<int>>(Npara);
         for (int i = 0; i <= N - 1; i++) {
             (Paratogeometry[geometryPara(i)]).push_back(i);
         }
 
         //Only works when freepara is 2D binding (Only do the filter in 2D)
         FreeWeight = vector<vector<WeightPara>>(NFpara);
+
+        /*
         for (int i = 0; i <= NFpara - 1; i++) {
             int poso = Paratogeometry[FreeparatoPara(i)][0];                 //As 2D extrusion is assumed, different z does not matter
             int xo = geometry(3 * poso);
@@ -1221,11 +1310,11 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<Ve
                 //bool inornot = false;
                 for (int k = 0; k <= Paratogeometry[FreeparatoPara(j)].size() - 1; k++) {
                     int posr = Paratogeometry[FreeparatoPara(j)][k];
-                    
+
                     int xr = geometry(3 * posr);
                     int yr = geometry(3 * posr + 1);
                     int zr = geometry(3 * posr + 2);
-                    if ((zo==zr) && (circlerange(xo, yo, xr, yr, rfilter))) {
+                    if ((zo == zr) && (circlerange(xo, yo, xr, yr, rfilter))) {
                         //1. Same xy plane 2. inside the circle in xy plane 
                         //para>=2 wont be in NFpara
                         int posweight = FreeparatoPara(j);
@@ -1236,11 +1325,92 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<Ve
                     }
 
                 }
-                
+
             }
         }
+        */
+
+        double rfilter = (*Filterstats).get_rfilter();
+        for (int i = 0; i <= NFpara - 1; i++) {
+            int poso = Paratogeometry[FreeparatoPara(i)][0];                 //As 2D extrusion is assumed, different z does not matter
+            int xo = geometry(3 * poso);
+            int yo = geometry(3 * poso + 1);
+            int zo = geometry(3 * poso + 2);
+
+            
+
+            for (int j = 0; j <= Npara - 1; j++) {
+                //bool inornot = false;
+                //cout << j << endl;
+                for (int k = 0; k <= Paratogeometry[j].size() - 1; k++) {
+                    int posr = Paratogeometry[j][k];
+
+                    int xr = geometry(3 * posr);
+                    int yr = geometry(3 * posr + 1);
+                    int zr = geometry(3 * posr + 2);
+                    if ((zo == zr) && (circlerange(xo, yo, xr, yr, rfilter))) {
+                        //1. Same xy plane 2. inside the circle in xy plane 
+                        //para>=2 wont be in NFpara
+                        int posweight = j;
+                        double weight = calweight(xo, yo, xr, yr, rfilter);
+                        FreeWeight[i].push_back(WeightPara{ weight,posweight });
+                        //break;
+                        //As soon as one in the entire z direction is verified, no need for looking at others for 1 j. But when there is symmetry, this is needed because same z can have differnt x, y.
+                    }
+
+                }
+
+            }
+        }
+
+
+
     }
 
+
+}
+
+void SpacePara::ChangeFilter() {
+    int Nx, Ny, Nz, N;
+    tie(Nx, Ny, Nz, N) = (*space).get_Ns();
+    int Npara = Para.size();
+    int NFpara = FreeparatoPara.size();
+
+    double rfilter = (*Filterstats).get_rfilter();
+    vector<vector<int>> Paratogeometry(Npara);
+    for (int i = 0; i <= N - 1; i++) {
+        (Paratogeometry[geometryPara(i)]).push_back(i);
+    }
+    vector<vector<WeightPara>> FreeWeight_tmp(NFpara);
+    for (int i = 0; i <= NFpara - 1; i++) {
+        int poso = Paratogeometry[FreeparatoPara(i)][0];                 //As 2D extrusion is assumed, different z does not matter
+        int xo = geometry(3 * poso);
+        int yo = geometry(3 * poso + 1);
+        int zo = geometry(3 * poso + 2);
+        for (int j = 0; j <= Npara - 1; j++) {
+            //bool inornot = false;
+            //cout << j << endl;
+            for (int k = 0; k <= Paratogeometry[j].size() - 1; k++) {
+                int posr = Paratogeometry[j][k];
+
+                int xr = geometry(3 * posr);
+                int yr = geometry(3 * posr + 1);
+                int zr = geometry(3 * posr + 2);
+                if ((zo == zr) && (circlerange(xo, yo, xr, yr, rfilter))) {
+                    //1. Same xy plane 2. inside the circle in xy plane 
+                    //para>=2 wont be in NFpara
+                    int posweight = j;
+                    double weight = calweight(xo, yo, xr, yr, rfilter);
+                    FreeWeight_tmp[i].push_back(WeightPara{ weight,posweight });
+                    break;
+                    //As soon as one in the entire z direction is verified, no need for looking at others for 1 j.
+                }
+
+            }
+
+        }
+    }
+    FreeWeight = FreeWeight_tmp;
 
 }
 
@@ -1346,4 +1516,12 @@ vector<vector<WeightPara>>* SpacePara::get_FreeWeight() {
         throw 1;
     }
     return &FreeWeight;
+}
+
+vector<int>* SpacePara::get_ParaDividePos() {
+    return &ParaDividePos;
+}
+
+vector<vector<int>>* SpacePara::get_Paratogeometry() {
+    return &Paratogeometry;
 }

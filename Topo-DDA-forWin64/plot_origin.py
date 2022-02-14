@@ -18,9 +18,9 @@ plotdpi=100
 shapebarrier=0.5
 #plotfor="_verify"
 plotfor=""
-plotlimit=None
-Elimitlow=0.7
-Elimithigh=2.1
+plotlimit=False
+Elimitlow=0.0
+Elimithigh=1.5
 colormax=2
 
 def deleteindice(object, target, col):
@@ -992,14 +992,14 @@ if __name__ == "__main__":
             nameit=int((filename[cutnumber:])[:-4])
             print(nameit)
             CoreStructure=np.genfromtxt(os.path.join(pos+"CoreStructure"+plotfor,"CoreStructure"+str(nameit)+".txt"),dtype=complex)
-            Modelresults=np.genfromtxt(os.path.join(pos+"Model_output"+plotfor,"Model_results"+"it"+str(nameit)+".txt"),dtype=complex)
+            Modelresults=np.genfromtxt(os.path.join(pos+"Model_output"+plotfor,"Model_results0"+"it"+str(nameit)+".txt"),dtype=complex)
         
             diel=np.real(CoreStructure[(0):(3*N)])
             E_tot=(Modelresults[(0):(3*N)])
             P_tot=(Modelresults[(3*N):(6*N)])
-            zslice=17
+            zslice=16
             if(nameit >= int(it_start) and nameit <= int(it_end)):
-                Shape(geometry, diel, d, iteration=nameit, position=pos+"ShapeSolid"+plotfor+"/", decimal=dec, FullLattice=True)
+                #Shape(geometry, diel, d, iteration=nameit, position=pos+"ShapeSolid"+plotfor+"/", decimal=dec, FullLattice=True)
                 Shape(geometry, diel, d, iteration=nameit, position=pos+"Shape"+plotfor+"/", decimal=dec, FullLattice=False)
                 EField_slice(geometry, diel, d, k_dir, E_dir, E_tot, iteration=nameit, Zslice=zslice,position=pos+"E-field"+plotfor+"/")         #----------electric field intensity-----------
                 #P_slice(geometry, diel, d, k_dir, E_dir, P_tot, iteration=nameit, Zslice=zslice,position=pos+"E-field"+plotfor+"/")         #----------For p----------------

@@ -320,7 +320,7 @@ double ObjectiveIntegratedEDDAModel::GroupResponse() {
     double diel_sum = 0;
     
     for (int i = 0; i < N; i++) {
-        if ((*R)(3*i+2) >= 8) {
+        if ((*R)(3*i+2) >= 27) {
             double E_sum_temp = 0;
             for (int j = 0; j < 3; j++) {
                 E_sum_temp += pow(abs(E(3 * i + j)), 2);
@@ -452,6 +452,7 @@ Objectivescattering0D::Objectivescattering0D(list<double> parameters, DDAModel* 
     }
     if (Paralength % 3 != 0) {
         cout << "FOMscattering2D ERROR: parameter must be times of 3." << endl;
+        throw 1;
     }
 
     Have_Penalty = HavePenalty_;
@@ -582,6 +583,321 @@ double Objectivescattering0D::FTUCnsquare() {
     
 }
 
+
+
+
+
+
+
+
+
+
+Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+    Paralength = (parameters).size();
+    VectorXd FOMParameters = VectorXd::Zero(Paralength);
+    list<double>::iterator it = (parameters).begin();
+    for (int i = 0; i <= int(Paralength - 1); i++) {
+        FOMParameters(i) = (*it);
+        it++;
+    }
+    if (Paralength % 2 != 0) {
+        cout << "Objectivescattering2D ERROR: parameter must be times of 2." << endl;
+        throw 1;
+    }
+
+    Have_Penalty = HavePenalty_;
+    Have_Devx = false;
+    model = model_;
+    evomodel = evomodel_;
+
+    AProductCore* Core = (*model).get_Core();
+    d = (*Core).get_d();
+    N = (*Core).get_N();                   //Number of dipoles
+    P = (*model).get_P();
+    R = (*Core).get_R();
+    Vector3d n_E0 = (*model).get_nE0();
+    Vector3d n_K = (*model).get_nK();
+    E0 = (*model).get_E0();
+    double lam = (*Core).get_lam();
+    cout << "lam" << lam << endl;
+    K = (*Core).get_K();
+
+    double Lm = (*Core).get_Lm();
+    double Ln = (*Core).get_Ln();
+    ATUC = Lm * Ln;
+
+
+    for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
+        Vector3d n_K_tmp;
+        n_K_tmp(0) = 2 * M_PI * FOMParameters(2 * i) / (Lm * K) + n_K(0);
+        n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
+        n_K_tmp(2) = sqrt(1 - pow(n_K_tmp(0), 2) - pow(n_K_tmp(1), 2));
+        n_K_s_l.push_back(n_K_tmp);
+
+        Matrix3d FconstM;
+        double nkx = n_K_tmp(0);
+        double nky = n_K_tmp(1);
+        double nkz = n_K_tmp(2);
+        double K3 = pow(K, 3);
+        FconstM(0, 0) = K3 * (1 - nkx * nkx);
+        FconstM(0, 1) = -K3 * nkx * nky;
+        FconstM(0, 2) = -K3 * nkx * nkz;
+        FconstM(1, 1) = K3 * (1 - nky * nky);
+        FconstM(1, 2) = -K3 * nky * nkz;
+        FconstM(2, 2) = K3 * (1 - nkz * nkz);
+        FconstM(1, 0) = FconstM(0, 1);
+        FconstM(2, 0) = FconstM(0, 2);
+        FconstM(2, 1) = FconstM(1, 2);
+        FconstM_l.push_back(FconstM);
+
+        Vector3cd PSum_tmp;
+        PSum_tmp = Vector3cd::Zero();
+        PSum_l.push_back(PSum_tmp);
+
+    }
+
+
+
+
+
+}
+
+void Objectivescattering2D::SingleResponse(int idx, bool deduction) {
+    //list<Matrix3d>::iterator it1 = (FconstM_l).begin();
+    list<Vector3d>::iterator it2 = (n_K_s_l).begin();
+    list<Vector3cd>::iterator it3 = (PSum_l).begin();
+    for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
+        //Matrix3d FconstM = (*it1);
+        Vector3d n_K_s = (*it2);
+        double nkx = n_K_s(0);
+        double nky = n_K_s(1);
+        double nkz = n_K_s(2);
+        double phaseterm = -d * K * (nkx * ((*R)(3 * idx)) + nky * ((*R)(3 * idx + 1)) + nkz * ((*R)(3 * idx + 2)));  //From equation 17. Time term will be eliminated
+        complex<double> phase = cos(phaseterm) + sin(phaseterm) * 1i;
+        if (deduction == false) {
+            (*it3)(0) += (*P)(3 * idx) * phase;
+            (*it3)(1) += (*P)(3 * idx + 1) * phase;
+            (*it3)(2) += (*P)(3 * idx + 2) * phase;
+
+        }
+        else {
+            (*it3)(0) -= (*P)(3 * idx) * phase;
+            (*it3)(1) -= (*P)(3 * idx + 1) * phase;
+            (*it3)(2) -= (*P)(3 * idx + 2) * phase;
+        }
+        it2++;
+        it3++;
+    }
+}
+
+double Objectivescattering2D::GroupResponse() {
+    if (Have_Penalty) {
+        return -(this->FTUCnsquareoversinal() * (pow(2 * M_PI, 2)) / (pow(K, 4) * pow(E0, 2) * pow(ATUC, 2)) - (*evomodel).L1Norm());
+    }
+    else {
+        return -this->FTUCnsquareoversinal() * (pow(2 * M_PI, 2)) / (pow(K, 4) * pow(E0, 2) * pow(ATUC, 2));                           //K does not depend on scattering angle, so it is fine to divide it here.
+    }
+
+}
+
+double Objectivescattering2D::GetVal() {
+    Reset();
+    for (int idx = 0; idx < N; idx++) {
+        SingleResponse(idx, false);
+    }
+    return GroupResponse();
+}
+
+void Objectivescattering2D::Reset() {
+    for (list<Vector3cd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
+        (*it) = Vector3cd::Zero();
+    }
+}
+
+double Objectivescattering2D::FTUCnsquareoversinal() {
+
+    list<Matrix3d>::iterator it1 = (FconstM_l).begin();
+    list<Vector3cd>::iterator it2 = (PSum_l).begin();
+    list<Vector3d>::iterator it3 = n_K_s_l.begin();
+    double result = 0.0;
+    for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
+        double ksz = (*it3)(2);
+        Vector3cd FTUC;
+        FTUC(0) = (*it1)(0, 0) * (*it2)(0) + (*it1)(0, 1) * (*it2)(1) + (*it1)(0, 2) * (*it2)(2);
+        FTUC(1) = (*it1)(1, 0) * (*it2)(0) + (*it1)(1, 1) * (*it2)(1) + (*it1)(1, 2) * (*it2)(2);
+        FTUC(2) = (*it1)(2, 0) * (*it2)(0) + (*it1)(2, 1) * (*it2)(1) + (*it1)(2, 2) * (*it2)(2);
+
+
+        it1++;
+        it2++;
+        it3++;
+        result += (norm(FTUC(0)) + norm(FTUC(1)) + norm(FTUC(2))) / (ksz * ksz);                                 //In C++, norm is the square of magnitude.
+
+
+    }
+
+    return result / double(round(Paralength / 2));
+
+}
+
+
+
+
+Objectivereflect2D::Objectivereflect2D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+    Paralength = (parameters).size();
+    VectorXd FOMParameters = VectorXd::Zero(Paralength);
+    list<double>::iterator it = (parameters).begin();
+    for (int i = 0; i <= int(Paralength - 1); i++) {
+        FOMParameters(i) = (*it);
+        it++;
+    }
+    if (Paralength % 2 != 0) {
+        cout << "Objectivereflect2D ERROR: parameter must be times of 2." << endl;
+        throw 1;
+    }
+
+    Have_Penalty = HavePenalty_;
+    Have_Devx = false;
+    model = model_;
+    evomodel = evomodel_;
+
+    AProductCore* Core = (*model).get_Core();
+    d = (*Core).get_d();
+    N = (*Core).get_N();                   //Number of dipoles
+    P = (*model).get_P();
+    R = (*Core).get_R();
+    Vector3d n_E0 = (*model).get_nE0();
+    Vector3d n_K = (*model).get_nK();
+    E0 = (*model).get_E0();
+    double lam = (*Core).get_lam();
+    cout << "lam" << lam << endl;
+    K = (*Core).get_K();
+
+    double Lm = (*Core).get_Lm();
+    double Ln = (*Core).get_Ln();
+    ATUC = Lm * Ln;
+
+
+    for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
+        Vector3d n_K_tmp;
+        n_K_tmp(0) = 2 * M_PI * FOMParameters(2 * i) / (Lm * K) + n_K(0);
+        n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
+        n_K_tmp(2) = sqrt(1 - pow(n_K_tmp(0), 2) - pow(n_K_tmp(1), 2));
+        n_K_s_l.push_back(n_K_tmp);
+
+        Matrix3d FconstM;
+        double nkx = n_K_tmp(0);
+        double nky = n_K_tmp(1);
+        double nkz = n_K_tmp(2);
+        double K3 = pow(K, 3);
+        FconstM(0, 0) = K3 * (1 - nkx * nkx);
+        FconstM(0, 1) = -K3 * nkx * nky;
+        FconstM(0, 2) = -K3 * nkx * nkz;
+        FconstM(1, 1) = K3 * (1 - nky * nky);
+        FconstM(1, 2) = -K3 * nky * nkz;
+        FconstM(2, 2) = K3 * (1 - nkz * nkz);
+        FconstM(1, 0) = FconstM(0, 1);
+        FconstM(2, 0) = FconstM(0, 2);
+        FconstM(2, 1) = FconstM(1, 2);
+        FconstM_l.push_back(FconstM);
+
+        Vector3cd PSum_tmp;
+        PSum_tmp = Vector3cd::Zero();
+        PSum_l.push_back(PSum_tmp);
+
+    }
+
+
+
+
+
+}
+
+void Objectivereflect2D::SingleResponse(int idx, bool deduction) {
+    //list<Matrix3d>::iterator it1 = (FconstM_l).begin();
+    list<Vector3d>::iterator it2 = (n_K_s_l).begin();
+    list<Vector3cd>::iterator it3 = (PSum_l).begin();
+    for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
+        //Matrix3d FconstM = (*it1);
+        Vector3d n_K_s = (*it2);
+        double nkx = n_K_s(0);
+        double nky = n_K_s(1);
+        double nkz = n_K_s(2);
+        double phaseterm = -d * K * (nkx * ((*R)(3 * idx)) + nky * ((*R)(3 * idx + 1)) + nkz * ((*R)(3 * idx + 2)));  //From equation 17. Time term will be eliminated
+        complex<double> phase = cos(phaseterm) + sin(phaseterm) * 1i;
+        if (deduction == false) {
+            (*it3)(0) += (*P)(3 * idx) * phase;
+            (*it3)(1) += (*P)(3 * idx + 1) * phase;
+            (*it3)(2) += (*P)(3 * idx + 2) * phase;
+
+        }
+        else {
+            (*it3)(0) -= (*P)(3 * idx) * phase;
+            (*it3)(1) -= (*P)(3 * idx + 1) * phase;
+            (*it3)(2) -= (*P)(3 * idx + 2) * phase;
+        }
+        it2++;
+        it3++;
+    }
+}
+
+double Objectivereflect2D::GroupResponse() {
+    if (Have_Penalty) {
+        return log10(this->FTUCnsquareoversinal() * (pow(2 * M_PI, 2)) / (pow(K, 4) * pow(E0, 2) * pow(ATUC, 2))) - (*evomodel).L1Norm();
+    }
+    else {
+        return log10(this->FTUCnsquareoversinal() * (pow(2 * M_PI, 2)) / (pow(K, 4) * pow(E0, 2) * pow(ATUC, 2)));                           //K does not depend on scattering angle, so it is fine to divide it here.
+    }
+
+}
+
+double Objectivereflect2D::GetVal() {
+    Reset();
+    for (int idx = 0; idx < N; idx++) {
+        SingleResponse(idx, false);
+    }
+    return GroupResponse();
+}
+
+void Objectivereflect2D::Reset() {
+    for (list<Vector3cd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
+        (*it) = Vector3cd::Zero();
+    }
+}
+
+double Objectivereflect2D::FTUCnsquareoversinal() {
+
+    list<Matrix3d>::iterator it1 = (FconstM_l).begin();
+    list<Vector3cd>::iterator it2 = (PSum_l).begin();
+    list<Vector3d>::iterator it3 = n_K_s_l.begin();
+    double result = 0.0;
+    for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
+        double ksz = (*it3)(2);
+        Vector3cd FTUC;
+        FTUC(0) = (*it1)(0, 0) * (*it2)(0) + (*it1)(0, 1) * (*it2)(1) + (*it1)(0, 2) * (*it2)(2);
+        FTUC(1) = (*it1)(1, 0) * (*it2)(0) + (*it1)(1, 1) * (*it2)(1) + (*it1)(1, 2) * (*it2)(2);
+        FTUC(2) = (*it1)(2, 0) * (*it2)(0) + (*it1)(2, 1) * (*it2)(1) + (*it1)(2, 2) * (*it2)(2);
+
+
+        it1++;
+        it2++;
+        it3++;
+        result += (norm(FTUC(0)) + norm(FTUC(1)) + norm(FTUC(2))) / (ksz * ksz);                                 //In C++, norm is the square of magnitude.
+
+
+    }
+
+    return result / double(round(Paralength / 2));
+
+}
+
+
+
+
+
+
+
+
 ObjectiveAbs::ObjectiveAbs(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
     Have_Penalty = HavePenalty_;
     Have_Devx = true;
@@ -640,6 +956,110 @@ double ObjectiveAbs::GetVal() {
 }
 
 void ObjectiveAbs::Reset() {
+    Cabs = 0.0;
+}
+
+
+
+ObjectiveAbsPartial::ObjectiveAbsPartial(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+    Have_Penalty = HavePenalty_;
+    Have_Devx = true;
+    model = model_;
+    evomodel = evomodel_;
+    AProductCore* Core = (*model).get_Core();
+    N = (*Core).get_N();
+    Nx = (*Core).get_Nx();
+    Ny = (*Core).get_Ny();
+    Nz = (*Core).get_Nz();
+    d = (*Core).get_d();
+    al = (*model).get_al();
+    P = (*model).get_P();
+    E = VectorXcd::Zero(N * 3);
+    R = (*Core).get_R();
+    Cabs = 0.0;
+    E0 = (*model).get_E0();
+    double lam = (*Core).get_lam();
+    cout << "lam" << lam << endl;
+    K = (*Core).get_K();
+    K3 = pow(K, 3);
+    SpacePara* spaceparatmp = (*((*Core).get_CStr())).get_spacepara();
+    vector<int>* ParaDividePos = (*spaceparatmp).get_ParaDividePos();
+    int NPara = (*((*spaceparatmp).get_Para())).size();
+    int numPara = (*ParaDividePos).size();
+    list<double>::iterator it = parameters.begin();
+    vector<int> startpos;
+    vector<int> endpos;
+    while (it != parameters.end()) {
+        int geometrylabel = int(round(*it));
+        if (geometrylabel >= numPara || geometrylabel < 0) {
+            cout << "ERROR:ObjectiveAbsPartial--geometrylabel out of range" << endl;
+            throw 1;
+        }
+        startpos.push_back((*ParaDividePos)[geometrylabel]);
+        cout << "startpos.back(): " << startpos.back() << endl;
+        if (geometrylabel == numPara - 1) {
+            endpos.push_back(NPara - 1);
+        }
+        else {
+            endpos.push_back((*ParaDividePos)[geometrylabel + 1] - 1);
+        }
+        cout << "endpos.back(): " << endpos.back() << endl;
+        it++;
+    }
+    vector<vector<int>>* Paratogeometry = (*spaceparatmp).get_Paratogeometry();
+    
+    for (int i = 0; i < startpos.size(); i++) {
+        for (int j = startpos[i]; j <= endpos[i]; j++) {
+            for (int k = 0; k < (*Paratogeometry)[j].size(); k++) {
+                integralpos.insert((*Paratogeometry)[j][k]);
+                //cout << (*Paratogeometry)[j][k] << endl;
+            }
+        }
+        
+    }
+
+
+}
+
+void ObjectiveAbsPartial::SingleResponse(int idx, bool deduction) {
+    if (integralpos.count(idx)) {
+        complex<double> al_tmp = (*al)(3 * idx);
+        Vector3cd P_tmp((*P)(3 * idx), (*P)(3 * idx + 1), (*P)(3 * idx + 2));
+
+        if (deduction == false) {
+            complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);
+            Cabs += (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());
+        }
+        else {
+            complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);                    //Eigen dot product is conjugate linear in the first variable, and linear in the second one.
+            Cabs -= (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());  //The Eigen Vector norm turns out to be the square-root term, instead of the one with square like C++ complex number norm.
+        }
+        return;
+    }
+
+    
+}
+
+double ObjectiveAbsPartial::GroupResponse() {
+
+    if (Have_Penalty) {
+        return log10(Cabs * (4 * M_PI * K / pow(E0, 2))) - (*evomodel).L1Norm();
+    }
+    else {
+        return log10(Cabs * (4 * M_PI * K / pow(E0, 2)));
+    }
+
+}
+
+double ObjectiveAbsPartial::GetVal() {
+    Reset();
+    for (int idx = 0; idx < N; idx++) {
+        SingleResponse(idx, false);
+    }
+    return GroupResponse();
+}
+
+void ObjectiveAbsPartial::Reset() {
     Cabs = 0.0;
 }
 /*
@@ -702,6 +1122,224 @@ double Objectivescattering2D::FTUCnsquare() {
 }
 */
 
+
+
+ObjectiveAbsPartialzslice::ObjectiveAbsPartialzslice(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+    Have_Penalty = HavePenalty_;
+    Have_Devx = true;
+    model = model_;
+    evomodel = evomodel_;
+    AProductCore* Core = (*model).get_Core();
+    N = (*Core).get_N();
+    Nx = (*Core).get_Nx();
+    Ny = (*Core).get_Ny();
+    Nz = (*Core).get_Nz();
+    d = (*Core).get_d();
+    al = (*model).get_al();
+    P = (*model).get_P();
+    E = VectorXcd::Zero(N * 3);
+    R = (*Core).get_R();
+    Cabs = 0.0;
+    E0 = (*model).get_E0();
+    double lam = (*Core).get_lam();
+    cout << "lam" << lam << endl;
+    K = (*Core).get_K();
+    K3 = pow(K, 3);
+    SpacePara* spaceparatmp = (*((*Core).get_CStr())).get_spacepara();
+    vector<int>* ParaDividePos = (*spaceparatmp).get_ParaDividePos();
+    int NPara = (*((*spaceparatmp).get_Para())).size();
+    int numPara = (*ParaDividePos).size();
+    list<double>::iterator it = parameters.begin();
+    vector<int> startpos;
+    vector<int> endpos;
+    while (it != parameters.end()) {
+        int geometrylabel = int(round(*it));
+        if (geometrylabel >= numPara || geometrylabel < 0) {
+            cout << "ERROR:ObjectiveAbsPartial--geometrylabel out of range" << endl;
+            throw 1;
+        }
+        startpos.push_back((*ParaDividePos)[geometrylabel]);
+        cout << "startpos.back(): " << startpos.back() << endl;
+        if (geometrylabel == numPara - 1) {
+            endpos.push_back(NPara - 1);
+        }
+        else {
+            endpos.push_back((*ParaDividePos)[geometrylabel + 1] - 1);
+        }
+        cout << "endpos.back(): " << endpos.back() << endl;
+        it++;
+    }
+    vector<vector<int>>* Paratogeometry = (*spaceparatmp).get_Paratogeometry();
+
+    for (int i = 0; i < startpos.size(); i++) {
+        for (int j = startpos[i]; j <= endpos[i]; j++) {
+            for (int k = 0; k < (*Paratogeometry)[j].size(); k++) {
+                integralpos.insert((*Paratogeometry)[j][k]);
+                //cout << (*Paratogeometry)[j][k] << endl;
+            }
+        }
+
+    }
+
+
+
+}
+
+void ObjectiveAbsPartialzslice::SingleResponse(int idx, bool deduction) {
+    if (integralpos.count(idx)) {
+        complex<double> al_tmp = (*al)(3 * idx);
+        Vector3cd P_tmp((*P)(3 * idx), (*P)(3 * idx + 1), (*P)(3 * idx + 2));
+
+        if (zslices.count((*R)(3 * idx + 2))) {
+            if (deduction == false) {
+                complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);
+                Cabs += (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());
+            }
+            else {
+                complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);                    //Eigen dot product is conjugate linear in the first variable, and linear in the second one.
+                Cabs -= (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());  //The Eigen Vector norm turns out to be the square-root term, instead of the one with square like C++ complex number norm.
+            }
+        }
+
+        
+        return;
+    }
+
+
+}
+
+double ObjectiveAbsPartialzslice::GroupResponse() {
+
+    if (Have_Penalty) {
+        return log10(Cabs * (4 * M_PI * K / pow(E0, 2))) - (*evomodel).L1Norm();
+    }
+    else {
+        return log10(Cabs * (4 * M_PI * K / pow(E0, 2)));
+    }
+
+}
+
+double ObjectiveAbsPartialzslice::GetVal() {
+    Reset();
+    for (int idx = 0; idx < N; idx++) {
+        SingleResponse(idx, false);
+    }
+    return GroupResponse();
+}
+
+void ObjectiveAbsPartialzslice::Reset() {
+    Cabs = 0.0;
+}
+
+
+
+
+ObjectiveIntegrateEPartial::ObjectiveIntegrateEPartial(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+    Have_Penalty = HavePenalty_;
+    Have_Devx = true;
+    model = model_;
+    evomodel = evomodel_;
+    AProductCore* Core = (*model).get_Core();
+    N = (*Core).get_N();
+    Nx = (*Core).get_Nx();
+    Ny = (*Core).get_Ny();
+    Nz = (*Core).get_Nz();
+    d = (*Core).get_d();
+    al = (*model).get_al();
+    P = (*model).get_P();
+    E = VectorXcd::Zero(N * 3);
+    R = (*Core).get_R();
+    Total = 0.0;
+    E0 = (*model).get_E0();
+    double lam = (*Core).get_lam();
+    cout << "lam" << lam << endl;
+    K = (*Core).get_K();
+    K3 = pow(K, 3);
+    SpacePara* spaceparatmp = (*((*Core).get_CStr())).get_spacepara();
+    vector<int>* ParaDividePos = (*spaceparatmp).get_ParaDividePos();
+    int NPara = (*((*spaceparatmp).get_Para())).size();
+    int numPara = (*ParaDividePos).size();
+    list<double>::iterator it = parameters.begin();
+    vector<int> startpos;
+    vector<int> endpos;
+    while (it != parameters.end()) {
+        int geometrylabel = int(round(*it));
+        if (geometrylabel >= numPara || geometrylabel < 0) {
+            cout << "ERROR:ObjectiveAbsPartial--geometrylabel out of range" << endl;
+            throw 1;
+        }
+        startpos.push_back((*ParaDividePos)[geometrylabel]);
+        if (geometrylabel == numPara - 1) {
+            endpos.push_back(NPara - 1);
+        }
+        else {
+            endpos.push_back((*ParaDividePos)[geometrylabel + 1] - 1);
+        }
+        it++;
+    }
+    vector<vector<int>>* Paratogeometry = (*spaceparatmp).get_Paratogeometry();
+
+    for (int i = 0; i < startpos.size(); i++) {
+        for (int j = startpos[i]; j <= endpos[i]; j++) {
+            for (int k = 0; k < (*Paratogeometry)[j].size(); k++) {
+                integralpos.insert((*Paratogeometry)[j][k]);
+                //cout << (*Paratogeometry)[j][k] << endl;
+            }
+        }
+
+    }
+
+
+}
+
+void ObjectiveIntegrateEPartial::SingleResponse(int idx, bool deduction) {
+    if (integralpos.count(idx)) {
+        complex<double> al_tmp = (*al)(3 * idx);
+        Vector3cd P_tmp((*P)(3 * idx), (*P)(3 * idx + 1), (*P)(3 * idx + 2));
+        Vector3cd E_tmp = al_tmp * P_tmp;
+
+        if (deduction == false) {
+            double E_tmp_square = 0.0;
+            for (int i = 0; i < 3; i++) {
+                E_tmp_square += norm(E_tmp(i));
+            }
+            Total += pow(E_tmp_square, 2);
+        }
+        else {
+            double E_tmp_square = 0.0;
+            for (int i = 0; i < 3; i++) {
+                E_tmp_square += norm(E_tmp(i));
+            }
+            Total -= pow(E_tmp_square, 2);
+        }
+        return;
+    }
+
+
+}
+
+double ObjectiveIntegrateEPartial::GroupResponse() {
+
+    if (Have_Penalty) {
+        return log10(Total) - (*evomodel).L1Norm();
+    }
+    else {
+        return log10(Total);
+    }
+
+}
+
+double ObjectiveIntegrateEPartial::GetVal() {
+    Reset();
+    for (int idx = 0; idx < N; idx++) {
+        SingleResponse(idx, false);
+    }
+    return GroupResponse();
+}
+
+void ObjectiveIntegrateEPartial::Reset() {
+    Total = 0.0;
+}
 
 
 

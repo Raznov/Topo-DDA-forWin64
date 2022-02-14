@@ -67,6 +67,10 @@ double linear_update(const double x, const double x_max, const double y_min, con
 int makedirect(string name);
 
 
+struct filterinfo {
+    int iteration;
+    double rfilter;
+};
 
 class FilterOption {
     private:
@@ -76,16 +80,18 @@ class FilterOption {
         double beta_min;
         double beta_max;
         double rfilter;
+        vector<filterinfo> rfilterlist;
         bool fixit;
         int MAX_ITERATION_FIXED;
 
     public:
-        FilterOption(double beta_min_, double beta_max_, double ita_, string beta_type_, double rfilter_, bool fixit_=false, int MAX_ITERATION_FIXED_=100);
+        FilterOption(double beta_min_, double beta_max_, double ita_, string beta_type_, vector<filterinfo> rfilterlist_, bool fixit_=false, int MAX_ITERATION_FIXED_=100);
         double get_beta();
         double get_ita();
         double get_rfilter();
         void update_beta(const int iteration, const int Max_iteration);
         double SmoothDensity(double input);
+        bool filterchange(int iteration);
 };
 
 class Structure{
@@ -110,7 +116,7 @@ class Structure{
         //--------------------------------------Support dependent para build-------------------------------------------------------------
         //Bulk
         Structure(VectorXi *total_space, Vector3d l, Vector3d center);    //Ractangular(both 2D and 3D). Para can only = 0&1 
-        
+        Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structure* Str);
         //Duplicate
         //Structure(VectorXi *total_space, Structure *s, Vector3i direction, int times, int para_);                     //Initializa a Structure by duplicating a existing structure along a certain direction for several times. Direction is normalized and can only be alone x, y or z.
         //The original structure is not included. original structure + new structure = times * original structure. If set para=2 and original para=1, then depend on origin str as geometry_dep. If para=2 and original para=2, will copy origin geometry_dep.
@@ -155,6 +161,7 @@ private:
     Space* space;
     VectorXi geometry;                //3N dimension
     VectorXi geometryPara;            //N dimension. N=number of dipoles. Each position stores the para index in VectorXi Para : 0->Para[0]...
+    vector<vector<int>> Paratogeometry;
     VectorXd Para;                    //P dimension. P=number of parameters. Same as Para_origin if Filter=False. Filtered and biased para if Filter=True.
     VectorXd Para_origin;             //Un-filtered, unbiased para. No use when Filter=False.
     VectorXd Para_filtered;           //Filtered but unbiased para. No use when Filter=False.
@@ -165,6 +172,7 @@ private:
     bool Filter;                      //True for with Filter. False for without Filter. Defualt as False for most initilizations.
     FilterOption* Filterstats;        //Only used when Filter=True
     vector<vector<WeightPara>> FreeWeight;
+    vector<int> ParaDividePos;
 
 public:
     SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_); //Can freeze part of the parameter space
@@ -185,8 +193,9 @@ public:
     SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_);
 
     SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_);
-    SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_, bool Filter_, FilterOption* Filterstats_=NULL); //Should be exactly the same with the previous one except of Filter
+    SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_list, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_, bool Filter_, FilterOption* Filterstats_ = NULL, string symmetry = "None", vector<double> symaxis = vector<double>{0.0,0.0}); //Should be exactly the same with the previous one except of Filter
     void ChangeBind(Vector3i bind_);                                  //Change bind number
+    void ChangeFilter();
     VectorXi cut(VectorXi* big, VectorXi* smalll);
 
     Space* get_space();
@@ -201,6 +210,8 @@ public:
     bool get_Filter();
     FilterOption* get_Filterstats();
     vector<vector<WeightPara>>* get_FreeWeight();
+    vector<int>* get_ParaDividePos();
+    vector<vector<int>>* get_Paratogeometry();
 };
 
 //Abstract parent class for objective function.
@@ -382,7 +393,7 @@ public:
     void output_to_file();
     void output_to_file(string save_position, int iteration, int ModelLabel);              //especially used for EvoOptimization
     void output_to_file(string save_position, int iteration);             //For simplify output
-    void output_to_file(string save_position, double wavelength, int iteration);
+    //void output_to_file(string save_position, double wavelength, int iteration);
     void InitializeP(VectorXcd& Initializer);
     VectorXcd* get_P();
     Vector3d get_nE0();
@@ -605,20 +616,19 @@ public:
 
 class Objectivescattering2D : public ObjectiveDDAModel {
 private:
-    double x;
-    double y;
-    double z;      // Here x, y, z are absolute coordinates. (No need to multiply d).
     double d;
     int N;
     VectorXcd* P;
     VectorXi* R;
     DDAModel* model;
     EvoDDAModel* evomodel;
-    Vector3cd E_sum;
-    Vector3cd E_ext;
-
-    Vector3d n_K_s;
-    Matrix3d FconstM;
+    double K;
+    double E0;
+    int Paralength;
+    list<Vector3d> n_K_s_l;
+    list<Vector3cd> PSum_l;
+    list<Matrix3d> FconstM_l;
+    double ATUC;
 
 public:
     Objectivescattering2D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
@@ -626,7 +636,32 @@ public:
     double GroupResponse();
     double GetVal();
     void Reset();
-    double FTUCnsquare();
+    double FTUCnsquareoversinal();
+};
+
+class Objectivereflect2D : public ObjectiveDDAModel {
+private:
+    double d;
+    int N;
+    VectorXcd* P;
+    VectorXi* R;
+    DDAModel* model;
+    EvoDDAModel* evomodel;
+    double K;
+    double E0;
+    int Paralength;
+    list<Vector3d> n_K_s_l;
+    list<Vector3cd> PSum_l;
+    list<Matrix3d> FconstM_l;
+    double ATUC;
+
+public:
+    Objectivereflect2D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
+    double FTUCnsquareoversinal();
 };
 
 class Objectivescattering0D : public ObjectiveDDAModel {
@@ -676,6 +711,86 @@ private:
     VectorXi* R;
 public:
     ObjectiveAbs(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
+};
+
+class ObjectiveAbsPartial : public ObjectiveDDAModel {
+private:
+    double d;
+    int N;
+    int Nx;
+    int Ny;
+    int Nz;
+    double K;
+    double K3;
+    double E0;
+    VectorXcd* P;
+    VectorXcd* al;
+    DDAModel* model;
+    EvoDDAModel* evomodel;
+    VectorXcd E;
+    double Cabs;
+    VectorXi* R;
+    set<int> integralpos;             //Only geometries with pixels in this set will be considered.
+public:
+    ObjectiveAbsPartial(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
+};
+
+class ObjectiveAbsPartialzslice : public ObjectiveDDAModel {
+private:
+    double d;
+    int N;
+    int Nx;
+    int Ny;
+    int Nz;
+    double K;
+    double K3;
+    double E0;
+    VectorXcd* P;
+    VectorXcd* al;
+    DDAModel* model;
+    EvoDDAModel* evomodel;
+    VectorXcd E;
+    double Cabs;
+    VectorXi* R;
+    set<int> integralpos;             //Only geometries with pixels in this set will be considered.
+    set<int> zslices{ 27, 28, 29 };
+public:
+    ObjectiveAbsPartialzslice(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
+};
+
+class ObjectiveIntegrateEPartial : public ObjectiveDDAModel {
+private:
+    double d;
+    int N;
+    int Nx;
+    int Ny;
+    int Nz;
+    double K;
+    double K3;
+    double E0;
+    VectorXcd* P;
+    VectorXcd* al;
+    DDAModel* model;
+    EvoDDAModel* evomodel;
+    VectorXcd E;
+    //double Cabs;
+    double Total;
+    VectorXi* R;
+    set<int> integralpos;             //Only geometries with pixels in this set will be considered.
+public:
+    ObjectiveIntegrateEPartial(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
     void SingleResponse(int idx, bool deduction);
     double GroupResponse();
     double GetVal();
