@@ -2,10 +2,16 @@
 #define PI 3.14159265
 
 
-
 int main() {
 
-    string save_position = ".\\IntegrateE-rect88-sym\\";       //output file
+    string open_position = ".\\Absbyfar-fromit99-sym\\";
+    string model_label = "399";
+    VectorXi InputGeo;
+    VectorXd InputDiel;
+    tie(InputGeo, InputDiel) = InputInitial(open_position, model_label);
+
+
+    string save_position = ".\\Absbyfar-fromit399-sym-filter2dot5\\";       //output file
     Vector3d l;
     Vector3d center;
     l << 19.0, 19.0, 29.0;    //Size of the initialization block. 81*81*17 pixels in total.
@@ -20,13 +26,13 @@ int main() {
                                                                         //This can be used to control the finest feature size of the designed structure.
     double d = 10;                                                      //Size of pixel. Here 25nm.   
     double E0 = 1.0;                                                    //Input field amplitude. 1V/m.
-    double epsilon = 100;                                                //Fixed learning rate of the optimization.
+    double epsilon = 1;                                                //Fixed learning rate of the optimization.
     //double focus = (l(2) + 2) * d;   //nm                               //Focal spot is 50nm higher than the upper boundary of the intialization block.
     //cout << focus << endl;
     int MAX_ITERATION_DDA = 100000;
     //Number of maximum DDA iterations.
     double MAX_ERROR = 0.00001;                                         //Maximum error of DDA.
-    int MAX_ITERATION_EVO = 200;                                        //Number of topology optimization.
+    int MAX_ITERATION_EVO = 400;                                        //Number of topology optimization.
 
     bool HavePathRecord = false;
     bool HavePenalty = false;
@@ -43,7 +49,7 @@ int main() {
     phi << 0;                                                           //Phi values. For details of how theta and phi are defined, read tutorial.
     int lam_num = 1;
     VectorXd lam(lam_num);
-    lam << 1000;
+    lam << 800;
     VectorXcd material, material1;
     list<string> mat_l{ "H2O", "TiN", "Ti" };
     material = Get_X_material(mat_l, lam(0), "nm");              //Air as substrate. material with permittivity of 2.5 as design material.
@@ -53,11 +59,11 @@ int main() {
     TotalTime.open(save_position + "TotalTime.txt");
     high_resolution_clock::time_point t_start = high_resolution_clock::now();
     VectorXi total_space = build_a_bulk(Nx, Ny, Nz);                    //Total space is a block.
-    list<Structure> ln;
+    vector<Structure> ln;
     Space S(&total_space, Nx, Ny, Nz, N, &ln);
     Vector3i direction;
 
-    vector<double> symaxis{ 9.5,9.5 };
+
     Vector3d l1, l2, l3, center1, center2, center3;
     l1 << 19.0, 19.0, 11.0;
     center1 << l1(0) / 2, l1(1) / 2, 23.5;
@@ -71,14 +77,8 @@ int main() {
     //center_rect << 7.5, 7.5, 23.5;
     l_rect << 7.0, 7.0, 11.0;
     center_rect << l1(0) / 2, l1(1) / 2, 23.5;
-
-    //Vector3d l_fix, center_fix;
-    //l_fix << 16.0, 16.0, 1.0;
-    //center_fix << l2(0) / 2, l2(1) / 2, 16.5;
-    Structure s1_rect_start(S.get_total_space(), l_rect, center_rect);
-    //Structure s2_fix(S.get_total_space(), l_fix, center_fix);
-
-    Structure s1(S.get_total_space(), l1, center1, &s1_rect_start);                       //Initialize the block which is 80*80*16 in terms of intervals or 81*81*17 in terms of pixels.
+    Structure s1_rect_start(S.get_total_space(), l_rect, center_rect, true);
+    Structure s1(S.get_total_space(), l1, center1, &s1_rect_start, true);                       //Initialize the block which is 80*80*16 in terms of intervals or 81*81*17 in terms of pixels.
     Structure s2(S.get_total_space(), l2, center2);
     Structure s3(S.get_total_space(), l3, center3);
 
@@ -90,35 +90,20 @@ int main() {
 
     S = S + s1;                                                         //Add the geometry into the space.
     S = S + s1_rect_start;
-    //S = S + s2_fix;
-    //S = S + s1andrectsym;
     S = S + s2;
     S = S + s3;
 
     Vector3i bind(1, 1, 12);                                             //binding in x,y,z. 2 means every 2 pixels will have the same material index. 3 means every 3.
 
-
-    VectorXi* s1geometry = s1.get_geometry();
-    VectorXi* s1rectgeometry = s1_rect_start.get_geometry();
-    //VectorXi* s1andrectsymgeometry = s1andrectsym.get_geometry();
-    //VectorXi* s2_fixgeometry = s2_fix.get_geometry();
-    VectorXi* s2geometry = s2.get_geometry();
-    VectorXi* s3geometry = s3.get_geometry();
-    vector<string> FParaInit{ "ZEROS", "ONES" };
-    list<VectorXi*> FPGeometryl{ s1geometry, s1rectgeometry };
-    list<VectorXi*> BPGeometryl{ s2geometry, s3geometry };
-    list<double> BParal{ 1.0, 2.0 };
     bool Filter = true;
-    double r_f = 2.0;
-    vector<filterinfo> filterlist{ filterinfo{0,1.0}, filterinfo{80,2.0} };
+    vector<filterinfo> filterlist{ filterinfo{0,2.5} };
     FilterOption filteropt(0.0, 50.0, 0.5, "piecewise", filterlist);
     string symmetry = "4fold";
-    
-    SpacePara spacepara(&S, bind, FParaInit, FPGeometryl, BPGeometryl, BParal, Filter, &filteropt, symmetry, symaxis);
-    //SpacePara is where the parameter<->geometry link is established.
-    //list<string> ObjectFunctionNames{ "AbsPartial" };                       //Name of the object function.
-    list<string> ObjectFunctionNames{ "IntegratedE" };
-    list<double> ObjectParameter{ 0, 1 };  //Focal spot postition.
+    vector<double> symaxis{ 9.5,9.5 };
+    SpacePara spacepara(&S, bind, &InputGeo, &InputDiel, Filter, &filteropt, symmetry, symaxis);
+    //SpacePara spacepara(&S, bind, vector<string>{"ONES", "ONES"}, vector<double>{1.0, 2.0}, Filter, & filteropt, symmetry, symaxis);
+    list<string> ObjectFunctionNames{ "Absbyfar" };
+    list<double> ObjectParameter{ 0, 0 };  //Focal spot postition.
     list<list<double>*> ObjectParameters{ &ObjectParameter };
     list<DDAModel> ModelList;
     list<DDAModel*> ModelpointerList;
@@ -136,9 +121,7 @@ int main() {
     double nback = sqrt(real(material(0)));
     cout << "nback" << nback << endl;
     AProductCore Core1(&CStr, lam(0), material, nback, m, n, Lm, Ln, "FCD");                //Matrix vector product is carried out in AProductCore class. So in this step, wavelength and actual permittivity comes in.
-    //AProductCore Core2(&CStr, lam(1), material1, nback, m, n, Lm, Ln, "FCD");
     CorePointList.push_back(&Core1);
-    //CorePointList.push_back(&Core2);
     ofstream Common;
     Common.open(save_position + "Commondata.txt");
     Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;

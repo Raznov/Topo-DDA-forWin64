@@ -59,6 +59,7 @@ VectorXd initial_diel_func(string initial_diel, int N);
 double initial_diel_func(string initial_diel);
 list<double> makelist(double start, double end, double interval);
 list<double> makelist(double start, double end, int number);
+pair<VectorXi, VectorXd> InputInitial(string open_position, string model_label);
 
 double exp_update(const double x, const double x_max, const double y_min, const double y_max);
 double piecewise_update(const double x, const double x_max, const double y_min, const double y_max);
@@ -94,18 +95,19 @@ class FilterOption {
         bool filterchange(int iteration);
 };
 
+
+
 class Structure{
     private:
-        //VectorXd diel;                  //0~1
         VectorXi geometry;
-        //VectorXi geometry_dep;          //Same size with geometry. If para=2, stores the corresponding para position of each point. Has no meaning in para=0&1
-        //int para;                       //Parameter condition: 0-not parameter, 1-parameter, 2-duplicated from a 2D parameter, controlled by parameter.
+        bool para_cond;
     public:
         //--------------------------------------Dont support dependent para build-------------------------------------------------------
-        Structure(VectorXi *total_space, VectorXi *geometry_);            //vanilla initialization
+        Structure(VectorXi *total_space, VectorXi *geometry_, bool para_cond_=false);            //vanilla initialization
 
         //Sphere
-        Structure(VectorXi *total_space, double r, Vector3d center);  //r: actual radius/d. center: actual center/d. In charge of Sphere 
+        Structure(VectorXi* total_space, double r, Vector3d center, bool para_cond_ = false);  //r: actual radius/d. center: actual center/d. In charge of Sphere 
+        Structure(VectorXi* total_space, double r, double h, Vector3d center, bool para_cond_ = false);
         
         //Circle
         //Structure(VectorXi *total_space, string initial_diel, double r, Vector3i center, Vector3i direction, int para_); //build a circle, direction is its normalized direction in Cart. coord.
@@ -115,8 +117,8 @@ class Structure{
         
         //--------------------------------------Support dependent para build-------------------------------------------------------------
         //Bulk
-        Structure(VectorXi *total_space, Vector3d l, Vector3d center);    //Ractangular(both 2D and 3D). Para can only = 0&1 
-        Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structure* Str);
+        Structure(VectorXi *total_space, Vector3d l, Vector3d center, bool para_cond_ = false);    //Ractangular(both 2D and 3D). Para can only = 0&1 
+        Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structure* Str, bool para_cond_ = false);
         //Duplicate
         //Structure(VectorXi *total_space, Structure *s, Vector3i direction, int times, int para_);                     //Initializa a Structure by duplicating a existing structure along a certain direction for several times. Direction is normalized and can only be alone x, y or z.
         //The original structure is not included. original structure + new structure = times * original structure. If set para=2 and original para=1, then depend on origin str as geometry_dep. If para=2 and original para=2, will copy origin geometry_dep.
@@ -125,26 +127,29 @@ class Structure{
 
 
         //-------------------------------------Other member functions--------------------------------------------------------------------
-        VectorXi *get_geometry();
-        //VectorXi* get_geometry_dep();
-        //VectorXd *get_diel();
-        void cut(VectorXi *big, VectorXi *smalll);
+        VectorXi* get_geometry();
+        void cut(VectorXi* big, VectorXi* smalll);
         int get_geometry_size();
-        //int get_para();
+        //bool sym_or_not();
+        //vector<string> get_sym_condition();
+        //vector<double> get_sym_axis();
+        bool para_or_not();
 };
+
+
 
 class Space{
     private:
         VectorXi *total_space;
         int Nx, Ny, Nz;
         int N;                        //total size of all the geometry inside the list(dipole size which is actual size/3)
-        list<Structure> *ln;
+        vector<Structure> *ln;
     public:
-        Space(VectorXi *total_space_, int Nx_, int Ny_, int Nz_, int N_, list<Structure> *ln_);
+        Space(VectorXi *total_space_, int Nx_, int Ny_, int Nz_, int N_, vector<Structure>*ln_);
         VectorXi *get_total_space();
         int get_ln_size();
         tuple<int, int, int, int> get_Ns();
-        list<Structure> *get_ln();
+        vector<Structure> *get_ln();
         void show_something_about_Structures() const;
         friend Space operator+(const Space &s1, Structure &s2);
         
@@ -175,16 +180,16 @@ private:
     vector<int> ParaDividePos;
 
 public:
-    SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_); //Can freeze part of the parameter space
-    SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_, VectorXi* FreeparatoPara_);
-    SpacePara(Space* space_, Vector3i bind_, string initial_diel); //l, center similar to bulk build in Structure class. Every 'bind' nearby dipoles correspond 
+    //SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_); //Can freeze part of the parameter space
+    //SpacePara(Space* space_, Vector3i bind_, VectorXi* geometryPara_, VectorXd* Para_, VectorXi* FreeparatoPara_);
+    //SpacePara(Space* space_, Vector3i bind_, string initial_diel); //l, center similar to bulk build in Structure class. Every 'bind' nearby dipoles correspond 
                                                                     //to 1 parameter in this bulk. bind=(2,2,2): 2*2*2; bind=(1,1,3):1*1*3
-    SpacePara(Space* space_, Vector3i bind_, string initial_diel1, string initial_diel2); //One constant layer at bottom. One design region on top. divide_pos is the divide in geometry array of the two parts.
+    //SpacePara(Space* space_, Vector3i bind_, string initial_diel1, string initial_diel2); //One constant layer at bottom. One design region on top. divide_pos is the divide in geometry array of the two parts.
     
-    SpacePara(Space* space_, Vector3i bind_, string initial_diel, VectorXi* geometryPara_);
-    SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type);   //ONly for 2d cylinder or spheres. r is raidus/d.
+    //SpacePara(Space* space_, Vector3i bind_, string initial_diel, VectorXi* geometryPara_);
+    //SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type);   //ONly for 2d cylinder or spheres. r is raidus/d.
 
-    SpacePara(Space* space_, Vector3i bind_, string initial_diel_background, list<string>* initial_diel_list, list<double>* r_list, list<Vector2d>* center_list);
+    //SpacePara(Space* space_, Vector3i bind_, string initial_diel_background, list<string>* initial_diel_list, list<double>* r_list, list<Vector2d>* center_list);
     //Build 2d cylinders with diel in the list, rest of the diel is the backgroudn diel.
 
     SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2);  //random rect in a region with extruded 2D geometry
@@ -194,6 +199,9 @@ public:
 
     SpacePara(Space* space_, Vector3i bind_, string initial_diel, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_);
     SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_list, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_, bool Filter_, FilterOption* Filterstats_ = NULL, string symmetry = "None", vector<double> symaxis = vector<double>{0.0,0.0}); //Should be exactly the same with the previous one except of Filter
+    SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_list, vector<double> BPara_, bool Filter_ = false, FilterOption* Filterstats_ = NULL, string symmetry = "None", vector<double> symaxis = vector<double>{ 0.0,0.0 });
+    SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd* Inputdiel, bool Filter_ = false, FilterOption* Filterstats_ = NULL, string symmetry = "None", vector<double> symaxis = vector<double>{ 0.0,0.0 });
+    
     void ChangeBind(Vector3i bind_);                                  //Change bind number
     void ChangeFilter();
     VectorXi cut(VectorXi* big, VectorXi* smalll);
@@ -769,6 +777,32 @@ public:
     double GetVal();
     void Reset();
 };
+
+class ObjectiveAbsbyfar : public ObjectiveDDAModel {
+private:
+    double d;
+    int N;
+    VectorXcd* P;
+    VectorXi* R;
+    DDAModel* model;
+    EvoDDAModel* evomodel;
+    double K;
+    double E0;
+    int Paralength;
+    list<Vector3d> n_K_s_l;
+    list<Vector3cd> PSum_l;
+    list<Matrix3d> FconstM_l;
+    double ATUC;
+
+public:
+    ObjectiveAbsbyfar(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
+    double FTUCnsquareoversinal();
+};
+
 
 class ObjectiveIntegrateEPartial : public ObjectiveDDAModel {
 private:

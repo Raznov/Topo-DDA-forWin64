@@ -1205,6 +1205,9 @@ ObjectiveDDAModel* EvoDDAModel::ObjectiveFactory(string ObjectName, list<double>
     if (MajorObjectFunctionName == "IntegratedEPartial") {
         return new ObjectiveIntegrateEPartial(ObjectParameters, ObjDDAModel, this, HavePenalty);
     }
+    if (MajorObjectFunctionName == "Absbyfar") {
+        return new ObjectiveAbsbyfar(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    }
 
     /*
     else if (MajorObjectFunctionName == "SurfaceEExp"){

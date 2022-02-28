@@ -633,7 +633,7 @@ Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* 
         n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
         n_K_tmp(2) = sqrt(1 - pow(n_K_tmp(0), 2) - pow(n_K_tmp(1), 2));
         n_K_s_l.push_back(n_K_tmp);
-
+        cout << n_K_tmp << endl;
         Matrix3d FconstM;
         double nkx = n_K_tmp(0);
         double nky = n_K_tmp(1);
@@ -783,6 +783,7 @@ Objectivereflect2D::Objectivereflect2D(list<double> parameters, DDAModel* model_
         n_K_tmp(0) = 2 * M_PI * FOMParameters(2 * i) / (Lm * K) + n_K(0);
         n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
         n_K_tmp(2) = sqrt(1 - pow(n_K_tmp(0), 2) - pow(n_K_tmp(1), 2));
+        cout << n_K_tmp << endl;
         n_K_s_l.push_back(n_K_tmp);
 
         Matrix3d FconstM;
@@ -892,6 +893,154 @@ double Objectivereflect2D::FTUCnsquareoversinal() {
 }
 
 
+
+ObjectiveAbsbyfar::ObjectiveAbsbyfar(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+    Paralength = (parameters).size();
+    VectorXd FOMParameters = VectorXd::Zero(Paralength);
+    list<double>::iterator it = (parameters).begin();
+    for (int i = 0; i <= int(Paralength - 1); i++) {
+        FOMParameters(i) = (*it);
+        it++;
+    }
+    if (Paralength % 2 != 0) {
+        cout << "Objectivescattering2D ERROR: parameter must be times of 2." << endl;
+        throw 1;
+    }
+
+    Have_Penalty = HavePenalty_;
+    Have_Devx = false;
+    model = model_;
+    evomodel = evomodel_;
+
+    AProductCore* Core = (*model).get_Core();
+    d = (*Core).get_d();
+    N = (*Core).get_N();                   //Number of dipoles
+    P = (*model).get_P();
+    R = (*Core).get_R();
+    Vector3d n_E0 = (*model).get_nE0();
+    Vector3d n_K = (*model).get_nK();
+    E0 = (*model).get_E0();
+    double lam = (*Core).get_lam();
+    cout << "lam" << lam << endl;
+    K = (*Core).get_K();
+
+    double Lm = (*Core).get_Lm();
+    double Ln = (*Core).get_Ln();
+    ATUC = Lm * Ln;
+
+
+    for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
+        Vector3d n_K_tmp;
+        n_K_tmp(0) = 2 * M_PI * FOMParameters(2 * i) / (Lm * K) + n_K(0);
+        n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
+        n_K_tmp(2) = sqrt(1 - pow(n_K_tmp(0), 2) - pow(n_K_tmp(1), 2));
+        n_K_s_l.push_back(n_K_tmp);
+        cout << n_K_tmp << endl;
+        Matrix3d FconstM;
+        double nkx = n_K_tmp(0);
+        double nky = n_K_tmp(1);
+        double nkz = n_K_tmp(2);
+        double K3 = pow(K, 3);
+        FconstM(0, 0) = K3 * (1 - nkx * nkx);
+        FconstM(0, 1) = -K3 * nkx * nky;
+        FconstM(0, 2) = -K3 * nkx * nkz;
+        FconstM(1, 1) = K3 * (1 - nky * nky);
+        FconstM(1, 2) = -K3 * nky * nkz;
+        FconstM(2, 2) = K3 * (1 - nkz * nkz);
+        FconstM(1, 0) = FconstM(0, 1);
+        FconstM(2, 0) = FconstM(0, 2);
+        FconstM(2, 1) = FconstM(1, 2);
+        FconstM_l.push_back(FconstM);
+
+        Vector3cd PSum_tmp;
+        PSum_tmp = Vector3cd::Zero();
+        PSum_l.push_back(PSum_tmp);
+
+    }
+
+
+
+
+
+}
+
+void ObjectiveAbsbyfar::SingleResponse(int idx, bool deduction) {
+    //list<Matrix3d>::iterator it1 = (FconstM_l).begin();
+    list<Vector3d>::iterator it2 = (n_K_s_l).begin();
+    list<Vector3cd>::iterator it3 = (PSum_l).begin();
+    for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
+        //Matrix3d FconstM = (*it1);
+        Vector3d n_K_s = (*it2);
+        double nkx = n_K_s(0);
+        double nky = n_K_s(1);
+        double nkz = n_K_s(2);
+        double phaseterm = -d * K * (nkx * ((*R)(3 * idx)) + nky * ((*R)(3 * idx + 1)) + nkz * ((*R)(3 * idx + 2)));  //From equation 17. Time term will be eliminated
+        complex<double> phase = cos(phaseterm) + sin(phaseterm) * 1i;
+        if (deduction == false) {
+            (*it3)(0) += (*P)(3 * idx) * phase;
+            (*it3)(1) += (*P)(3 * idx + 1) * phase;
+            (*it3)(2) += (*P)(3 * idx + 2) * phase;
+
+        }
+        else {
+            (*it3)(0) -= (*P)(3 * idx) * phase;
+            (*it3)(1) -= (*P)(3 * idx + 1) * phase;
+            (*it3)(2) -= (*P)(3 * idx + 2) * phase;
+        }
+        it2++;
+        it3++;
+    }
+}
+
+double ObjectiveAbsbyfar::GroupResponse() {
+    if (Have_Penalty) {
+        return 1.0 - (this->FTUCnsquareoversinal() * (pow(2 * M_PI, 2)) / (pow(K, 4) * pow(E0, 2) * pow(ATUC, 2)) - (*evomodel).L1Norm());
+    }
+    else {
+        return 1.0 - this->FTUCnsquareoversinal() * (pow(2 * M_PI, 2)) / (pow(K, 4) * pow(E0, 2) * pow(ATUC, 2));                           //K does not depend on scattering angle, so it is fine to divide it here.
+    }
+
+}
+
+double ObjectiveAbsbyfar::GetVal() {
+    Reset();
+    for (int idx = 0; idx < N; idx++) {
+        SingleResponse(idx, false);
+    }
+    return GroupResponse();
+}
+
+void ObjectiveAbsbyfar::Reset() {
+    for (list<Vector3cd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
+        (*it) = Vector3cd::Zero();
+    }
+}
+
+double ObjectiveAbsbyfar::FTUCnsquareoversinal() {
+
+    list<Matrix3d>::iterator it1 = (FconstM_l).begin();
+    list<Vector3cd>::iterator it2 = (PSum_l).begin();
+    list<Vector3d>::iterator it3 = n_K_s_l.begin();
+    double result = 0.0;
+    for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
+        double ksz = (*it3)(2);
+        Vector3cd FTUC;
+        FTUC(0) = (*it1)(0, 0) * (*it2)(0) + (*it1)(0, 1) * (*it2)(1) + (*it1)(0, 2) * (*it2)(2);
+        FTUC(1) = (*it1)(1, 0) * (*it2)(0) + (*it1)(1, 1) * (*it2)(1) + (*it1)(1, 2) * (*it2)(2);
+        FTUC(2) = (*it1)(2, 0) * (*it2)(0) + (*it1)(2, 1) * (*it2)(1) + (*it1)(2, 2) * (*it2)(2);
+
+
+        it1++;
+        it2++;
+        it3++;
+        result += (norm(FTUC(0)) + norm(FTUC(1)) + norm(FTUC(2))) / (ksz * ksz);                                 //In C++, norm is the square of magnitude.
+
+
+    }
+
+    return result / double(round(Paralength / 2));
+
+}
 
 
 
