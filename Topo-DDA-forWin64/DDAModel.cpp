@@ -3,7 +3,7 @@
 
 
 
-DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_) {
+DDAModel::DDAModel(AProductCore* AProductCore_, Vectord n_K_, double E0_, Vectord n_E0_) {
     
     Core = AProductCore_;
     time=0;
@@ -26,25 +26,25 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     double nback = (*Core).get_nback();
     double K = (*Core).get_K();
     double d = (*Core).get_d();
-    VectorXi* R = (*Core).get_R();
-    VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
-    VectorXcd* material = (*Core).get_material();
+    Vectori* R = (*Core).get_R();
+    Vectord* diel_old = (*((*Core).get_CStr())).get_diel_old();
+    Vectorcd* material = (*Core).get_material();
 
     RResultSwitch = false;
     RResult = *R;
     
-    P = VectorXcd::Zero(N*3);
+    P = Vectorcd(N*3);
     P_max = P;
-    E = VectorXcd::Zero(N*3);
-    Einternal = VectorXcd::Zero(N*3);
-    EResult = VectorXcd::Zero(N*3);
+    E = Vectorcd(N*3);
+    Einternal = Vectorcd(N*3);
+    EResult = Vectorcd(N*3);
     for (int i=0;i<N;i++) {
         E(3 * i) = E0 * n_E0(0) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
         E(3 * i + 1) = E0 * n_E0(1) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
         E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
     }
-    al = VectorXcd::Zero(N*3);
-    diel = VectorXcd::Zero(N * 3);
+    al = Vectorcd(N*3);
+    diel = Vectorcd(N * 3);
     for (int i = 0; i < N * 3; i++) {
         int labelfloor = int(floor((*diel_old)(i)));
         int labelnext = labelfloor + 1;
@@ -62,7 +62,7 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     verbose = true;
 }
 
-DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_) {
+DDAModel::DDAModel(AProductCore* AProductCore_, Vectord n_K_, double E0_, Vectord n_E0_, Vectori* RResult_) {
     
     Core = AProductCore_;
     time = 0;
@@ -73,8 +73,10 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     n_E0 = n_E0_;
 
     cout << "E0=" << E0 << endl;
-    cout << "n_K" << n_K << endl;
-    cout << "n_E0" << n_E0 << endl;
+    cout << "n_K";
+    n_K.print();
+    cout << "n_E0";
+    n_E0.print();
     int N = (*Core).get_N();
     int Nx = (*Core).get_Nx();
     int Ny = (*Core).get_Ny();
@@ -82,9 +84,9 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     double lam = (*Core).get_lam();
     double K = (*Core).get_K();
     double d = (*Core).get_d();
-    VectorXi* R = (*Core).get_R();
-    VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
-    VectorXcd* material = (*Core).get_material();
+    Vectori* R = (*Core).get_R();
+    Vectord* diel_old = (*((*Core).get_CStr())).get_diel_old();
+    Vectorcd* material = (*Core).get_material();
     RResultSwitch = true;
     RResult = *RResult_;
     if(RResult.size()%3 != 0){
@@ -95,18 +97,18 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     
     
 
-    P = VectorXcd::Zero(N*3);
+    P = Vectorcd(N*3);
     P_max = P;
-    E = VectorXcd::Zero(N*3);
-    Einternal = VectorXcd::Zero(N*3);
-    EResult = VectorXcd::Zero(RResult.size());
+    E = Vectorcd(N*3);
+    Einternal = Vectorcd(N*3);
+    EResult = Vectorcd(RResult.size());
     for (int i = 0; i < N; i++) {
         E(3 * i) = E0 * n_E0(0) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
         E(3 * i + 1) = E0 * n_E0(1) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
         E(3 * i + 2) = E0 * n_E0(2) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
     }
-    al = VectorXcd::Zero(N * 3);
-    diel = VectorXcd::Zero(N * 3);
+    al = Vectorcd(N * 3);
+    diel = Vectorcd(N * 3);
     for (int i = 0; i < N * 3; i++) {
         int labelfloor = int(floor((*diel_old)(i)));
         int labelnext = labelfloor + 1;
@@ -134,16 +136,16 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     //fftw_init_threads();                                                       //////////Initialize the multi-thread
     //fftw_plan_with_nthreads(NUM_THREADS);
     //cout<<"Threads"<<NUM_THREADS<<endl;;
-    VectorXcd p=VectorXcd::Zero(N*3); 
-    VectorXcd t = VectorXcd::Zero(N*3);
-    VectorXcd w = VectorXcd::Zero(N*3);
-    VectorXcd r = VectorXcd::Zero(N*3);
-    VectorXcd r0 = VectorXcd::Zero(N*3);
-    VectorXcd rl = VectorXcd::Zero(N*3);
-    VectorXcd y = VectorXcd::Zero(N*3);
-    VectorXcd u = VectorXcd::Zero(N*3);
-    VectorXcd z = VectorXcd::Zero(N*3);
-    VectorXcd x = VectorXcd::Zero(N*3);
+    Vectorcd p=Vectorcd(N*3); 
+    Vectorcd t = Vectorcd(N*3);
+    Vectorcd w = Vectorcd(N*3);
+    Vectorcd r = Vectorcd(N*3);
+    Vectorcd r0 = Vectorcd(N*3);
+    Vectorcd rl = Vectorcd(N*3);
+    Vectorcd y = Vectorcd(N*3);
+    Vectorcd u = Vectorcd(N*3);
+    Vectorcd z = Vectorcd(N*3);
+    Vectorcd x = Vectorcd(N*3);
     std::complex<double> alpha;
     std::complex<double> beta;
     std::complex<double> eta;
@@ -151,32 +153,32 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
     
     
     //Always starts with P=0 to avoid strange behaviour
-    //P = VectorXcd::Zero(N * 3);
+    //P = Vectorcd(N * 3);
 
 
-
-    VectorXcd Ax0 = Aproductwithalb(P);
     
-    r = E-Ax0;
+    Vectorcd Ax0 = Aproductwithalb(P);
+    
+    r = vecsub(E, Ax0);
     r0 = r;
     p = r;
-    VectorXcd Ap0 = Aproductwithalb(p);
+    Vectorcd Ap0 = Aproductwithalb(p);
 
-
+    
     alpha = r0.dot(r)/r0.dot(Ap0);
-    t = r-alpha*Ap0;
-    VectorXcd At0 = Aproductwithalb(t);
+    t = vecsub(r, Ap0 * alpha);
+    Vectorcd At0 = Aproductwithalb(t);
 
-
+    
     zeta = At0.dot(t)/At0.dot(At0);
-    u = zeta*Ap0;
-    z = zeta*r-alpha*u;
-    P = P+alpha*p+z;                                    //this will directly change P in this.
+    u = Ap0 * zeta;;
+    z = vecsub(r * zeta, u * alpha);
+    P = vecadd(P, vecadd(p * alpha, z));                                    //this will directly change P in this.
     rl = r;
-    r = t-zeta*At0;
-
-    VectorXcd Ap = VectorXcd::Zero(N*3);
-    VectorXcd At = VectorXcd::Zero(N*3);
+    r = vecsub(t, At0 * zeta);
+    
+    Vectorcd Ap = Vectorcd(N*3);
+    Vectorcd At = Vectorcd(N*3);
     for (int it=0;it<=MAX_ITERATION-1;it++) {
         if (verbose && (it+1)%1000==0) {
             //cout << "r.norm(): " << r.norm() << endl;
@@ -210,18 +212,18 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
         }
 
         beta = (alpha/zeta)*r0.dot(r)/r0.dot(rl);
-        p = r+beta*(p-u);
+        p = vecadd(r, vecsub(p, u) * beta);
         Ap = Aproductwithalb(p);
         alpha = r0.dot(r)/r0.dot(Ap);
-        t = r-alpha*Ap;
+        t = vecsub(r, Ap * alpha);
         At = Aproductwithalb(t);
 
         zeta = At.dot(t)/At.dot(At);
-        u = zeta*Ap;
-        z = zeta*r-alpha*u;
-        P = P+alpha*p+z;
+        u = Ap * zeta;
+        z = vecsub(r * zeta, u * alpha);
+        P = vecadd(P,vecadd(p* alpha ,z));
         rl = r;
-        r = t-zeta*At;
+        r = vecsub(t,At*zeta);
 
         if (r.norm()/E.norm()<=MAX_ERROR) {
             Error = r.norm()/E.norm();
@@ -264,16 +266,16 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
     //fftw_init_threads();                                                       //////////Initialize the multi-thread
     //fftw_plan_with_nthreads(NUM_THREADS);
     //cout<<"Threads"<<NUM_THREADS<<endl;;
-    VectorXcd p = VectorXcd::Zero(N * 3);
-    VectorXcd t = VectorXcd::Zero(N * 3);
-    VectorXcd w = VectorXcd::Zero(N * 3);
-    VectorXcd r = VectorXcd::Zero(N * 3);
-    VectorXcd r0 = VectorXcd::Zero(N * 3);
-    VectorXcd rl = VectorXcd::Zero(N * 3);
-    VectorXcd y = VectorXcd::Zero(N * 3);
-    VectorXcd u = VectorXcd::Zero(N * 3);
-    VectorXcd z = VectorXcd::Zero(N * 3);
-    VectorXcd x = VectorXcd::Zero(N * 3);
+    Vectorcd p = Vectorcd(N * 3);
+    Vectorcd t = Vectorcd(N * 3);
+    Vectorcd w = Vectorcd(N * 3);
+    Vectorcd r = Vectorcd(N * 3);
+    Vectorcd r0 = Vectorcd(N * 3);
+    Vectorcd rl = Vectorcd(N * 3);
+    Vectorcd y = Vectorcd(N * 3);
+    Vectorcd u = Vectorcd(N * 3);
+    Vectorcd z = Vectorcd(N * 3);
+    Vectorcd x = Vectorcd(N * 3);
     std::complex<double> alpha;
     std::complex<double> beta;
     std::complex<double> eta;
@@ -281,23 +283,23 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
 
 
     //Always starts with P=0 to avoid strange behaviour
-    //P = VectorXcd::Zero(N * 3);
+    //P = Vectorcd(N * 3);
 
     ofstream foutnew(".\\p330-lam542-beta8-TiO2-InE-circle-fordebug\\BUGINFO.txt");
 
     
 
-    VectorXcd Ax0 = Aproductwithalb(P);
+    Vectorcd Ax0 = Aproductwithalb(P);
 
 
 
-    r = E - Ax0;
+    r = vecsub(E, Ax0);
 
 
 
     r0 = r;
     p = r;
-    VectorXcd Ap0 = Aproductwithalb(p);
+    Vectorcd Ap0 = Aproductwithalb(p);
 
 
 
@@ -305,8 +307,8 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
 
 
 
-    t = r - alpha * Ap0;
-    VectorXcd At0 = Aproductwithalb(t);
+    t = vecsub(r, Ap0 * alpha);
+    Vectorcd At0 = Aproductwithalb(t);
 
 
 
@@ -314,25 +316,25 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
 
 
 
-    u = zeta * Ap0;
-    z = zeta * r - alpha * u;
-    P = P + alpha * p + z;                                    //this will directly change P in this.
+    u = Ap0 * zeta;;
+    z = vecsub(r * zeta, u * alpha);
+    P = vecadd(P, vecadd(p * alpha, z));                                    //this will directly change P in this.
     rl = r;
-    r = t - zeta * At0;
+    r = vecsub(t, At0 * zeta);
 
     
 
 
 
-    VectorXcd Ap = VectorXcd::Zero(N * 3);
-    VectorXcd At = VectorXcd::Zero(N * 3);
+    Vectorcd Ap = Vectorcd(N * 3);
+    Vectorcd At = Vectorcd(N * 3);
     for (int it = 0; it <= MAX_ITERATION - 1; it++) {
         if (verbose && (it + 1) % 1000 == 0) {
             cout << "r.norm(): " << r.norm() << endl;
             cout << "E.norm(): " << E.norm() << endl;
             cout << "                Iter " << it + 1 << ", error=" << r.norm() / E.norm() << " MAX_ERROR=" << MAX_ERROR << endl;
         }
-        beta = (alpha / zeta) * r0.dot(r) / r0.dot(rl);
+        
 
         /*
         if ((EVOITERATION == 88) && (it == 4849)) {
@@ -389,18 +391,19 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
             foutnew << r0.dot(r) / r0.dot(rl) << endl;
         }
         */
-        p = r + beta * (p - u);
+        beta = (alpha / zeta) * r0.dot(r) / r0.dot(rl);
+        p = vecadd(r, vecsub(p, u) * beta);
         Ap = Aproductwithalb(p);
         alpha = r0.dot(r) / r0.dot(Ap);
-        t = r - alpha * Ap;
+        t = vecsub(r, Ap * alpha);
         At = Aproductwithalb(t);
 
         zeta = At.dot(t) / At.dot(At);
-        u = zeta * Ap;
-        z = zeta * r - alpha * u;
-        P = P + alpha * p + z;
+        u = Ap * zeta;
+        z = vecsub(r * zeta, u * alpha);
+        P = vecadd(P, vecadd(p * alpha, z));
         rl = r;
-        r = t - zeta * At;
+        r = vecsub(t, At * zeta);
         
 
         if (EVOITERATION == 88) {
@@ -442,7 +445,7 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
     return;
 }
 
-void DDAModel::change_E(VectorXcd E_){
+void DDAModel::change_E(Vectorcd E_){
     E=E_;
 }
 
@@ -451,7 +454,7 @@ void DDAModel::reset_E(){
     double lam = (*Core).get_lam();
     double K = (*Core).get_K();
     double d = (*Core).get_d();
-    VectorXi* R = (*Core).get_R();
+    Vectori* R = (*Core).get_R();
     for (int i=0;i<N;i++) {
         E(3 * i) = E0 * n_E0(0) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
         E(3 * i + 1) = E0 * n_E0(1) * (cos(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) + sin(K * d * (n_K(0) * (*R)(3 * i) + n_K(1) * (*R)(3 * i + 1) + n_K(2) * (*R)(3 * i + 2))) * 1i);
@@ -461,8 +464,8 @@ void DDAModel::reset_E(){
 
 void DDAModel::UpdateAlpha() {
 
-    VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
-    VectorXcd* material = (*Core).get_material();
+    Vectord* diel_old = (*((*Core).get_CStr())).get_diel_old();
+    Vectorcd* material = (*Core).get_material();
     double lam = (*Core).get_lam();
     double K = (*Core).get_K();
     double d = (*Core).get_d();
@@ -480,8 +483,8 @@ void DDAModel::UpdateAlpha() {
 
 void DDAModel::UpdateAlphaSingle(int idx) {
 
-    VectorXd* diel_old = (*((*Core).get_CStr())).get_diel_old();
-    VectorXcd* material = (*Core).get_material();
+    Vectord* diel_old = (*((*Core).get_CStr())).get_diel_old();
+    Vectorcd* material = (*Core).get_material();
     double lam = (*Core).get_lam();
     double K = (*Core).get_K();
     double d = (*Core).get_d();
@@ -525,13 +528,13 @@ void DDAModel::solve_E(){
         double d = (*Core).get_d();
         double lam = (*Core).get_lam();
         double K = (*Core).get_K();
-        VectorXi* R = (*Core).get_R();
+        Vectori* R = (*Core).get_R();
         for (int j = 0;j<int(round(RResult.size()/3));j++){
             double x = d*RResult(3*j);
             double y = d*RResult(3*j+1);
             double z = d*RResult(3*j+2);
-            Vector3cd sum=Vector3cd::Zero();
-            Vector3cd E_ext=Vector3cd::Zero();
+            Vectorcd sum=Vectorcd(3);
+            Vectorcd E_ext=Vectorcd(3);
             E_ext(0) = E0*n_E0(0)*(cos(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
             E_ext(1) = E0*n_E0(1)*(cos(K*(n_K(0)*y+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
             E_ext(2) = E0*n_E0(2)*(cos(K*(n_K(0)*z+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
@@ -539,7 +542,7 @@ void DDAModel::solve_E(){
                 double rx = x - d * (*R)(3 * i);                  //R has no d in it, so needs to time d
                 double ry = y - d * (*R)(3 * i + 1);
                 double rz = z - d * (*R)(3 * i + 2);
-                Matrix3cd A=(*Core).A_dic_generator(rx,ry,rz);
+                Matrixcd A=(*Core).A_dic_generator(rx,ry,rz);
                 sum(0)+=(A(0,0)*P(3*i)+A(0,1)*P(3*i+1)+A(0,2)*P(3*i+2));
                 sum(1)+=(A(1,0)*P(3*i)+A(1,1)*P(3*i+1)+A(1,2)*P(3*i+2));
                 sum(2)+=(A(2,0)*P(3*i)+A(2,1)*P(3*i+1)+A(2,2)*P(3*i+2));
@@ -566,15 +569,15 @@ void DDAModel::update_E_in_structure(){
     }
 }
 
-VectorXcd DDAModel::Aproductwithalb(VectorXcd& b) {
+Vectorcd DDAModel::Aproductwithalb(Vectorcd& b) {
     if (b.size() != al.size()) {
         cout << "In Aproductwithalb, bsize not equal to alsize" << endl;
     }
-    VectorXcd result = VectorXcd::Zero(b.size());
+    Vectorcd result = Vectorcd(b.size());
     for (int i = 0; i <= al.size() - 1; i++) {
         result(i) = b(i) * al(i);
     }
-    return (*Core).Aproduct(b) + result;
+    return vecadd((*Core).Aproduct(b), result);
 }
 
 
@@ -591,10 +594,10 @@ void DDAModel::output_to_file(){
         }
         
     }
-    fout<<n_K<<endl;
-    fout<<n_E0<<endl;
+    vectofile(fout, n_K);
+    vectofile(fout, n_E0);
     fout<<EResult.size()<<endl;
-    fout<<RResult<<endl;
+    vectofile(fout, RResult);
     for(int i=0;i<=EResult.size()-1;i++){
         if(EResult(i).imag()<0){
             fout<<EResult(i).real()<<EResult(i).imag()<<"j"<<endl;
@@ -720,19 +723,19 @@ void DDAModel::output_to_file(string save_position, double wavelength, int itera
 */
 
 
-void DDAModel::InitializeP(VectorXcd& Initializer) {
+void DDAModel::InitializeP(Vectorcd& Initializer) {
     P = Initializer;
 }
 
-VectorXcd* DDAModel::get_P() {
+Vectorcd* DDAModel::get_P() {
     return &P;
 }
 
-Vector3d DDAModel::get_nE0() {
+Vectord DDAModel::get_nE0() {
     return n_E0;
 }
 
-Vector3d DDAModel::get_nK() {
+Vectord DDAModel::get_nK() {
     return n_K;
 }
 
@@ -740,7 +743,7 @@ double DDAModel::get_E0() {
     return E0;
 }
 
-VectorXcd* DDAModel::get_Einternal() {
+Vectorcd* DDAModel::get_Einternal() {
     return &Einternal;
 }
 
@@ -748,15 +751,15 @@ AProductCore* DDAModel::get_Core() {
     return Core;
 }
 
-VectorXcd* DDAModel::get_al() {
+Vectorcd* DDAModel::get_al() {
     return &al;
 }
 
-VectorXcd* DDAModel::get_al_max() {
+Vectorcd* DDAModel::get_al_max() {
     return &al_max;
 }
 
-VectorXcd* DDAModel::get_P_max() {
+Vectorcd* DDAModel::get_P_max() {
     return &P_max;
 }
 
@@ -782,7 +785,7 @@ int DDAModel::get_Nz() {
     return (*Core).get_Nz();
 }
 
-VectorXi* DDAModel::get_R() {
+Vectori* DDAModel::get_R() {
     return (*Core).get_R();
 }
 
@@ -799,15 +802,15 @@ double DDAModel::get_K() {
     return (*Core).get_K();
 }
 
-VectorXd* DDAModel::get_diel_old() {
+Vectord* DDAModel::get_diel_old() {
     return (*Core).get_diel_old();
 }
 
-VectorXcd* DDAModel::get_material() {
+Vectorcd* DDAModel::get_material() {
     return (*Core).get_material();
 }
 
-VectorXd* DDAModel::get_diel_old_max() {
+Vectord* DDAModel::get_diel_old_max() {
     return (*Core).get_diel_old_max();
 }
 

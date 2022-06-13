@@ -1,11 +1,11 @@
 #include "definition.h"
 
 
-Structure::Structure(VectorXi *total_space, VectorXi *geometry_, bool para_cond_){
+Structure::Structure(Vectori *total_space, Vectori *geometry_, bool para_cond_){
     geometry = *geometry_;
     para_cond = para_cond_;
 }
-Structure::Structure(VectorXi* total_space, double r, Vector3d center, bool para_cond_) {
+Structure::Structure(Vectori* total_space, double r, Vectord center, bool para_cond_) {
     para_cond = para_cond_;
     int N = round((*total_space).size() / 3);
     list<int> positions;
@@ -18,7 +18,7 @@ Structure::Structure(VectorXi* total_space, double r, Vector3d center, bool para
         }
     }
     int N_want = positions.size();
-    VectorXi geometry_tmp = VectorXi::Zero(3 * N_want);
+    Vectori geometry_tmp = Vectori(3 * N_want);
     for (int i = 0; i <= N_want - 1; i++) {
         int j = positions.front();
         positions.pop_front();
@@ -28,7 +28,7 @@ Structure::Structure(VectorXi* total_space, double r, Vector3d center, bool para
     }
     cut(total_space, &geometry_tmp);
 }
-Structure::Structure(VectorXi* total_space, double r, double h, Vector3d center, bool para_cond_) {
+Structure::Structure(Vectori* total_space, double r, double h, Vectord center, bool para_cond_) {
     para_cond = para_cond_;
     int N = round((*total_space).size() / 3);
     list<int> positions;
@@ -41,7 +41,7 @@ Structure::Structure(VectorXi* total_space, double r, double h, Vector3d center,
         }
     }
     int N_want = positions.size();
-    VectorXi geometry_tmp = VectorXi::Zero(3 * N_want);
+    Vectori geometry_tmp = Vectori(3 * N_want);
     for (int i = 0; i <= N_want - 1; i++) {
         int j = positions.front();
         positions.pop_front();
@@ -53,7 +53,7 @@ Structure::Structure(VectorXi* total_space, double r, double h, Vector3d center,
 }
 
 
-Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center, bool para_cond_){
+Structure::Structure(Vectori *total_space, Vectord l, Vectord center, bool para_cond_){
     para_cond = para_cond_;
     int N=round((*total_space).size()/3);
     list<int> positions; 
@@ -66,7 +66,7 @@ Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center, bool pa
         }   
     }
     int N_want=positions.size();
-    VectorXi geometry_tmp=VectorXi::Zero(3*N_want);
+    Vectori geometry_tmp=Vectori(3*N_want);
     for(int i=0;i<=N_want-1;i++){
         int j=positions.front();
         positions.pop_front();
@@ -77,13 +77,13 @@ Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center, bool pa
     cut(total_space, &geometry_tmp);
 
 }
-Structure::Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structure* Str, bool para_cond_) {
+Structure::Structure(Vectori* total_space, Vectord l, Vectord center, Structure* Str, bool para_cond_) {
     
     para_cond = para_cond_;
     int N = round((*total_space).size() / 3);
     vector<int> positions;
     set<vector<int>> Strpoints;
-    VectorXi* Strgeo = (*Str).get_geometry();
+    Vectori* Strgeo = (*Str).get_geometry();
     for (int i = 0; i < (*Str).get_geometry_size(); i++) {
         Strpoints.insert(vector<int>{(*Strgeo)(3 * i), (*Strgeo)(3 * i + 1), (*Strgeo)(3 * i + 2)});
     }
@@ -102,7 +102,7 @@ Structure::Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structu
         }
     }
     int N_want = positions.size();
-    VectorXi geometry_tmp = VectorXi::Zero(3 * N_want);
+    Vectori geometry_tmp = Vectori(3 * N_want);
     for (int i = 0; i <= N_want - 1; i++) {
         int j = positions[i];
         geometry_tmp(3 * i) = (*total_space)(3 * j);
@@ -112,13 +112,14 @@ Structure::Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structu
     cut(total_space, &geometry_tmp);
 
 }
-VectorXi* Structure::get_geometry() {
+Vectori* Structure::get_geometry() {
     return &geometry;
 }
-void Structure::cut(VectorXi* big, VectorXi* smalll) {
+void Structure::cut(Vectori* big, Vectori* smalll) {
 
     int number_origin = round((*smalll).size() / 3);
-    MatrixXi big_scope = find_scope_3_dim(big);
+    Matrixi big_scope;
+    big_scope = find_scope_3_dim(big);
     //cout<<"big_scope "<<big_scope<<endl;
     list<int> positions_in;
     int number_out = 0;
@@ -134,7 +135,7 @@ void Structure::cut(VectorXi* big, VectorXi* smalll) {
         }
     }
     int number_in = positions_in.size();
-    geometry = VectorXi::Zero(3 * number_in);
+    geometry = Vectori(3 * number_in);
     for (int i = 0; i <= number_in - 1; i++) {
         int j = positions_in.front();
         positions_in.pop_front();

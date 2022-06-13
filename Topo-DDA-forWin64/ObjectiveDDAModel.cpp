@@ -3,7 +3,7 @@
 
 
 ObjectivePointEDDAModel::ObjectivePointEDDAModel(list<double> parameters, DDAModel *model_, EvoDDAModel* evomodel_, bool HavePenalty_){
-    VectorXd PointEParameters = VectorXd::Zero((parameters).size());
+    Vectord PointEParameters = Vectord((parameters).size());
     list<double>::iterator it=(parameters).begin();
     for(int i=0;i<=int((parameters).size()-1);i++){
         PointEParameters(i) = (*it);
@@ -21,14 +21,14 @@ ObjectivePointEDDAModel::ObjectivePointEDDAModel(list<double> parameters, DDAMod
     N = (*Core).get_N();
     P = (*model).get_P();
     R = (*Core).get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_E0 = (*model).get_nE0();
+    Vectord n_K = (*model).get_nK();
     double E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
     double K = (*Core).get_K();
-    E_sum = Vector3cd::Zero();                                                                             //是不是E_sum忘了加E_ext了？ It is actually in Rest.
-    E_ext = Vector3cd::Zero();
+    E_sum = Vectorcd(3);                                                                             //是不是E_sum忘了加E_ext了？ It is actually in Rest.
+    E_ext = Vectorcd(3);
     E_ext(0) = E0*n_E0(0)*(cos(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
     E_ext(1) = E0*n_E0(1)*(cos(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);
     E_ext(2) = E0*n_E0(2)*(cos(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))+sin(K*(n_K(0)*x+n_K(1)*y+n_K(2)*z))*1i);   
@@ -36,14 +36,14 @@ ObjectivePointEDDAModel::ObjectivePointEDDAModel(list<double> parameters, DDAMod
 }
 
 void ObjectivePointEDDAModel::SingleResponse(int idx, bool deduction){
-    //VectorXcd P = model->get_P();
-    //VectorXi R = model->get_R();
+    //Vectorcd P = model->get_P();
+    //Vectori R = model->get_R();
     double rx=x-d*(*R)(3*idx);                  //R has no d in it, so needs to time d
     double ry=y-d*(*R)(3*idx+1);
     double rz=z-d*(*R)(3*idx+2);
     //cout << rx << "," << ry << "," << rz << idx << endl;
     AProductCore* Core = (*model).get_Core();
-    Matrix3cd A=(*Core).A_dic_generator(rx,ry,rz);
+    Matrixcd A=(*Core).A_dic_generator(rx,ry,rz);
     if (deduction == false){
         E_sum(0)-=(A(0,0)*(*P)(3*idx)+A(0,1)*(*P)(3*idx+1)+A(0,2)*(*P)(3*idx+2));
         E_sum(1)-=(A(1,0)*(*P)(3*idx)+A(1,1)*(*P)(3*idx+1)+A(1,2)*(*P)(3*idx+2));
@@ -84,61 +84,61 @@ void ObjectivePointEDDAModel::Reset(){
 
 
 
-ObjectivePointListEDDAModel::ObjectivePointListEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
-    VectorXd PointEParameters = VectorXd::Zero((parameters).size());
-    list<double>::iterator it = (parameters).begin();
-    if ((parameters.size() % 3) != 0) {
-        cout << "ERROR: (parameters.size() % 3) != 0" << endl;
-    }
-    PNum = int(round(parameters.size() / 3));
-    x = VectorXd::Zero(PNum);
-    y = VectorXd::Zero(PNum);
-    z = VectorXd::Zero(PNum);
-    E_sum.resize(PNum, 3);
-    E_ext.resize(PNum, 3);
-    for (int i = 0; i <= PNum - 1; i++) {
-        x(i) = (*it);
-        it++;
-        y(i) = (*it);
-        it++;
-        z(i) = (*it);
-        it++;
-    }
-    Have_Penalty = HavePenalty_;
-    
-    Have_Devx = false;
-    model = model_;
-    evomodel = evomodel_;
-    AProductCore* Core = (*model).get_Core();
-    d = (*Core).get_d();
-    N = (*Core).get_N();
-    P = (*model).get_P();
-    R = (*Core).get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
-    double E0 = (*model).get_E0();
-    double lam = (*Core).get_lam();
-    cout << "lam" << lam << endl;
-    double K = (*Core).get_K();
-
-    for (int i = 0; i <= PNum - 1; i++) {
-        E_ext(i, 0) = E0 * n_E0(0) * (cos(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) + sin(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) * 1i);
-        E_ext(i, 1) = E0 * n_E0(1) * (cos(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) + sin(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) * 1i);
-        E_ext(i, 2) = E0 * n_E0(2) * (cos(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) + sin(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) * 1i);
-    }
-    
-    // cout << R(3*5444+2) << "this" << endl;
-}
+//ObjectivePointListEDDAModel::ObjectivePointListEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+//    Vectord PointEParameters = Vectord((parameters).size());
+//    list<double>::iterator it = (parameters).begin();
+//    if ((parameters.size() % 3) != 0) {
+//        cout << "ERROR: (parameters.size() % 3) != 0" << endl;
+//    }
+//    PNum = int(round(parameters.size() / 3));
+//    x = Vectord(PNum);
+//    y = Vectord(PNum);
+//    z = Vectord(PNum);
+//    E_sum.resize(PNum, 3);
+//    E_ext.resize(PNum, 3);
+//    for (int i = 0; i <= PNum - 1; i++) {
+//        x(i) = (*it);
+//        it++;
+//        y(i) = (*it);
+//        it++;
+//        z(i) = (*it);
+//        it++;
+//    }
+//    Have_Penalty = HavePenalty_;
+//    
+//    Have_Devx = false;
+//    model = model_;
+//    evomodel = evomodel_;
+//    AProductCore* Core = (*model).get_Core();
+//    d = (*Core).get_d();
+//    N = (*Core).get_N();
+//    P = (*model).get_P();
+//    R = (*Core).get_R();
+//    Vectord n_E0 = (*model).get_nE0();
+//    Vectord n_K = (*model).get_nK();
+//    double E0 = (*model).get_E0();
+//    double lam = (*Core).get_lam();
+//    cout << "lam" << lam << endl;
+//    double K = (*Core).get_K();
+//
+//    for (int i = 0; i <= PNum - 1; i++) {
+//        E_ext(i, 0) = E0 * n_E0(0) * (cos(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) + sin(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) * 1i);
+//        E_ext(i, 1) = E0 * n_E0(1) * (cos(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) + sin(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) * 1i);
+//        E_ext(i, 2) = E0 * n_E0(2) * (cos(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) + sin(K * (n_K(0) * x(i) + n_K(1) * y(i) + n_K(2) * z(i))) * 1i);
+//    }
+//    
+//    // cout << R(3*5444+2) << "this" << endl;
+//}
 
 void ObjectivePointListEDDAModel::SingleResponse(int idx, bool deduction) {
-    //VectorXcd P = model->get_P();
-    //VectorXi R = model->get_R();
+    //Vectorcd P = model->get_P();
+    //Vectori R = model->get_R();
     AProductCore* Core = (*model).get_Core();
     for (int i = 0; i <= PNum - 1; i++) {
         double rx = x(i) - d * (*R)(3 * idx);                  //R has no d in it, so needs to time d
         double ry = y(i) - d * (*R)(3 * idx + 1);
         double rz = z(i) - d * (*R)(3 * idx + 2);
-        Matrix3cd A = (*Core).A_dic_generator(rx, ry, rz);
+        Matrixcd A = (*Core).A_dic_generator(rx, ry, rz);
         if (deduction == false) {
             E_sum(i, 0) -= (A(0, 0) * (*P)(3 * idx) + A(0, 1) * (*P)(3 * idx + 1) + A(0, 2) * (*P)(3 * idx + 2));
             E_sum(i, 1) -= (A(1, 0) * (*P)(3 * idx) + A(1, 1) * (*P)(3 * idx + 1) + A(1, 2) * (*P)(3 * idx + 2));
@@ -162,7 +162,7 @@ double ObjectivePointListEDDAModel::GroupResponse() {
     double result = 0;
     if (Have_Penalty) {
         for (int i = 0; i <= PNum - 1; i++) {
-            Vector3cd tmp;
+            Vectorcd tmp(3);
             tmp(0) = E_sum(i, 0);
             tmp(1) = E_sum(i, 1);
             tmp(2) = E_sum(i, 2);
@@ -174,7 +174,7 @@ double ObjectivePointListEDDAModel::GroupResponse() {
     }
     else {
         for (int i = 0; i <= PNum - 1; i++) {
-            Vector3cd tmp;
+            Vectorcd tmp(3);
             tmp(0) = E_sum(i, 0);
             tmp(1) = E_sum(i, 1);
             tmp(2) = E_sum(i, 2);
@@ -208,7 +208,7 @@ void ObjectivePointListEDDAModel::Reset() {
 
 
 ObjectivePointIDDAModel::ObjectivePointIDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
-    VectorXd PointEParameters = VectorXd::Zero((parameters).size());
+    Vectord PointEParameters = Vectord((parameters).size());
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int((parameters).size() - 1); i++) {
         PointEParameters(i) = (*it);
@@ -226,14 +226,14 @@ ObjectivePointIDDAModel::ObjectivePointIDDAModel(list<double> parameters, DDAMod
     N = (*Core).get_N();
     P = (*model).get_P();
     R = (*Core).get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_E0 = (*model).get_nE0();
+    Vectord n_K = (*model).get_nK();
     double E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
     double K = (*Core).get_K();
-    E_sum = Vector3cd::Zero();
-    E_ext = Vector3cd::Zero();
+    E_sum = Vectorcd(3);
+    E_ext = Vectorcd(3);
     E_ext(0) = E0 * n_E0(0) * (cos(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
     E_ext(1) = E0 * n_E0(1) * (cos(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
     E_ext(2) = E0 * n_E0(2) * (cos(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
@@ -241,14 +241,14 @@ ObjectivePointIDDAModel::ObjectivePointIDDAModel(list<double> parameters, DDAMod
 }
 
 void ObjectivePointIDDAModel::SingleResponse(int idx, bool deduction) {
-    //VectorXcd P = model->get_P();
-    //VectorXi R = model->get_R();
+    //Vectorcd P = model->get_P();
+    //Vectori R = model->get_R();
     double rx = x - d * (*R)(3 * idx);                  //R has no d in it, so needs to time d
     double ry = y - d * (*R)(3 * idx + 1);
     double rz = z - d * (*R)(3 * idx + 2);
     //cout << rx << "," << ry << "," << rz << idx << endl;
     AProductCore* Core = (*model).get_Core();
-    Matrix3cd A = (*Core).A_dic_generator(rx, ry, rz);
+    Matrixcd A = (*Core).A_dic_generator(rx, ry, rz);
     if (deduction == false) {
         E_sum(0) -= (A(0, 0) * (*P)(3 * idx) + A(0, 1) * (*P)(3 * idx + 1) + A(0, 2) * (*P)(3 * idx + 2));
         E_sum(1) -= (A(1, 0) * (*P)(3 * idx) + A(1, 1) * (*P)(3 * idx + 1) + A(1, 2) * (*P)(3 * idx + 2));
@@ -301,7 +301,7 @@ ObjectiveIntegratedEDDAModel::ObjectiveIntegratedEDDAModel(list<double> paramete
     d = (*Core).get_d();
     al = (*model).get_al();
     P = (*model).get_P();
-    E = VectorXcd::Zero(N * 3);
+    E = Vectorcd(N * 3);
     R = (*Core).get_R();
     E_int = 0;
 }
@@ -355,13 +355,13 @@ double ObjectiveIntegratedEDDAModel::GetVal() {
 
 void ObjectiveIntegratedEDDAModel::Reset() {
     E_int = 0;
-    E = VectorXcd::Zero(N * 3);
+    E = Vectorcd(N * 3);
 }
 
 
 
 ObjectiveMidAvgEDDAModel::ObjectiveMidAvgEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
-    VectorXd PointEParameters = VectorXd::Zero((parameters).size());
+    Vectord PointEParameters = Vectord((parameters).size());
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int((parameters).size() - 1); i++) {
         PointEParameters(i) = (*it);
@@ -381,7 +381,7 @@ ObjectiveMidAvgEDDAModel::ObjectiveMidAvgEDDAModel(list<double> parameters, DDAM
     d = (*Core).get_d();
     al = (*model).get_al();
     P = (*model).get_P();
-    E = VectorXcd::Zero(N * 3);
+    E = Vectorcd(N * 3);
     R = (*Core).get_R();
 
 }
@@ -438,13 +438,13 @@ double ObjectiveMidAvgEDDAModel::GetVal() {
 
 void ObjectiveMidAvgEDDAModel::Reset() {
     E_avg = 0;
-    E = VectorXcd::Zero(N * 3);
+    E = Vectorcd(N * 3);
 }
 
 
 Objectivescattering0D::Objectivescattering0D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
     Paralength = (parameters).size();
-    VectorXd FOMParameters = VectorXd::Zero(Paralength);
+    Vectord FOMParameters = Vectord(Paralength);
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int(Paralength - 1); i++) {
         FOMParameters(i) = (*it);
@@ -465,8 +465,8 @@ Objectivescattering0D::Objectivescattering0D(list<double> parameters, DDAModel* 
     N = (*Core).get_N();                   //Number of dipoles
     P = (*model).get_P();
     R = (*Core).get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_E0 = (*model).get_nE0();
+    Vectord n_K = (*model).get_nK();
     E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
@@ -474,13 +474,13 @@ Objectivescattering0D::Objectivescattering0D(list<double> parameters, DDAModel* 
     
 
     for (int i = 0; i <= int(round(Paralength / 3) - 1); i++) {
-        Vector3d n_K_tmp;
+        Vectord n_K_tmp(3);
         n_K_tmp(0) = FOMParameters(3 * i);
         n_K_tmp(1) = FOMParameters(3 * i + 1);
         n_K_tmp(2) = FOMParameters(3 * i + 2);
         n_K_s_l.push_back(n_K_tmp);
 
-        Matrix3d FconstM;
+        Matrixd FconstM(3, 3);
         double nkx = n_K_tmp(0);
         double nky = n_K_tmp(1);
         double nkz = n_K_tmp(2);
@@ -496,8 +496,7 @@ Objectivescattering0D::Objectivescattering0D(list<double> parameters, DDAModel* 
         FconstM(2, 1) = FconstM(1, 2);
         FconstM_l.push_back(FconstM);
 
-        Vector3cd PSum_tmp;
-        PSum_tmp = Vector3cd::Zero();
+        Vectorcd PSum_tmp(3);
         PSum_l.push_back(PSum_tmp);
         
     }
@@ -509,12 +508,12 @@ Objectivescattering0D::Objectivescattering0D(list<double> parameters, DDAModel* 
 }
 
 void Objectivescattering0D::SingleResponse(int idx, bool deduction) {
-    //list<Matrix3d>::iterator it1 = (FconstM_l).begin();
-    list<Vector3d>::iterator it2 = (n_K_s_l).begin();
-    list<Vector3cd>::iterator it3 = (PSum_l).begin();
+    //list<Matrixd>::iterator it1 = (FconstM_l).begin();
+    list<Vectord>::iterator it2 = (n_K_s_l).begin();
+    list<Vectorcd>::iterator it3 = (PSum_l).begin();
     for (int i = 0; i <= int(round(Paralength / 3) - 1); i++) {
-        //Matrix3d FconstM = (*it1);
-        Vector3d n_K_s = (*it2);
+        //Matrixd FconstM = (*it1);
+        Vectord n_K_s = (*it2);
         double nkx = n_K_s(0);
         double nky = n_K_s(1);
         double nkz = n_K_s(2);
@@ -555,18 +554,18 @@ double Objectivescattering0D::GetVal() {
 }
 
 void Objectivescattering0D::Reset() {
-    for (list<Vector3cd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
-        (*it) = Vector3cd::Zero();
+    for (list<Vectorcd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
+        (*it) = Vectorcd(3);
     }
 }
 
 double Objectivescattering0D::FTUCnsquare() {
 
-    list<Matrix3d>::iterator it1 = (FconstM_l).begin();
-    list<Vector3cd>::iterator it2 = (PSum_l).begin();
+    list<Matrixd>::iterator it1 = (FconstM_l).begin();
+    list<Vectorcd>::iterator it2 = (PSum_l).begin();
     double result = 0.0;
     for (int i = 0; i <= int(round(Paralength / 3) - 1); i++) {
-        Vector3cd FTUC;
+        Vectorcd FTUC(3, 3);
         FTUC(0) = (*it1)(0, 0) * (*it2)(0) + (*it1)(0, 1) * (*it2)(1) + (*it1)(0, 2) * (*it2)(2);
         FTUC(1) = (*it1)(1, 0) * (*it2)(0) + (*it1)(1, 1) * (*it2)(1) + (*it1)(1, 2) * (*it2)(2);
         FTUC(2) = (*it1)(2, 0) * (*it2)(0) + (*it1)(2, 1) * (*it2)(1) + (*it1)(2, 2) * (*it2)(2);
@@ -594,7 +593,7 @@ double Objectivescattering0D::FTUCnsquare() {
 
 Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
     Paralength = (parameters).size();
-    VectorXd FOMParameters = VectorXd::Zero(Paralength);
+    Vectord FOMParameters = Vectord(Paralength);
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int(Paralength - 1); i++) {
         FOMParameters(i) = (*it);
@@ -615,8 +614,8 @@ Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* 
     N = (*Core).get_N();                   //Number of dipoles
     P = (*model).get_P();
     R = (*Core).get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_E0 = (*model).get_nE0();
+    Vectord n_K = (*model).get_nK();
     E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
@@ -628,13 +627,13 @@ Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* 
 
 
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
-        Vector3d n_K_tmp;
+        Vectord n_K_tmp(3);
         n_K_tmp(0) = 2 * M_PI * FOMParameters(2 * i) / (Lm * K) + n_K(0);
         n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
         n_K_tmp(2) = sqrt(1 - pow(n_K_tmp(0), 2) - pow(n_K_tmp(1), 2));
         n_K_s_l.push_back(n_K_tmp);
-        cout << n_K_tmp << endl;
-        Matrix3d FconstM;
+        n_K_tmp.print();
+        Matrixd FconstM(3, 3);
         double nkx = n_K_tmp(0);
         double nky = n_K_tmp(1);
         double nkz = n_K_tmp(2);
@@ -650,8 +649,7 @@ Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* 
         FconstM(2, 1) = FconstM(1, 2);
         FconstM_l.push_back(FconstM);
 
-        Vector3cd PSum_tmp;
-        PSum_tmp = Vector3cd::Zero();
+        Vectorcd PSum_tmp(3);
         PSum_l.push_back(PSum_tmp);
 
     }
@@ -663,12 +661,12 @@ Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* 
 }
 
 void Objectivescattering2D::SingleResponse(int idx, bool deduction) {
-    //list<Matrix3d>::iterator it1 = (FconstM_l).begin();
-    list<Vector3d>::iterator it2 = (n_K_s_l).begin();
-    list<Vector3cd>::iterator it3 = (PSum_l).begin();
+    //list<Matrixd>::iterator it1 = (FconstM_l).begin();
+    list<Vectord>::iterator it2 = (n_K_s_l).begin();
+    list<Vectorcd>::iterator it3 = (PSum_l).begin();
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
-        //Matrix3d FconstM = (*it1);
-        Vector3d n_K_s = (*it2);
+        //Matrixd FconstM = (*it1);
+        Vectord n_K_s = (*it2);
         double nkx = n_K_s(0);
         double nky = n_K_s(1);
         double nkz = n_K_s(2);
@@ -709,20 +707,20 @@ double Objectivescattering2D::GetVal() {
 }
 
 void Objectivescattering2D::Reset() {
-    for (list<Vector3cd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
-        (*it) = Vector3cd::Zero();
+    for (list<Vectorcd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
+        (*it) = Vectorcd(3);
     }
 }
 
 double Objectivescattering2D::FTUCnsquareoversinal() {
 
-    list<Matrix3d>::iterator it1 = (FconstM_l).begin();
-    list<Vector3cd>::iterator it2 = (PSum_l).begin();
-    list<Vector3d>::iterator it3 = n_K_s_l.begin();
+    list<Matrixd>::iterator it1 = (FconstM_l).begin();
+    list<Vectorcd>::iterator it2 = (PSum_l).begin();
+    list<Vectord>::iterator it3 = n_K_s_l.begin();
     double result = 0.0;
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
         double ksz = (*it3)(2);
-        Vector3cd FTUC;
+        Vectorcd FTUC(3, 3);
         FTUC(0) = (*it1)(0, 0) * (*it2)(0) + (*it1)(0, 1) * (*it2)(1) + (*it1)(0, 2) * (*it2)(2);
         FTUC(1) = (*it1)(1, 0) * (*it2)(0) + (*it1)(1, 1) * (*it2)(1) + (*it1)(1, 2) * (*it2)(2);
         FTUC(2) = (*it1)(2, 0) * (*it2)(0) + (*it1)(2, 1) * (*it2)(1) + (*it1)(2, 2) * (*it2)(2);
@@ -745,7 +743,7 @@ double Objectivescattering2D::FTUCnsquareoversinal() {
 
 Objectivereflect2D::Objectivereflect2D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
     Paralength = (parameters).size();
-    VectorXd FOMParameters = VectorXd::Zero(Paralength);
+    Vectord FOMParameters = Vectord(Paralength);
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int(Paralength - 1); i++) {
         FOMParameters(i) = (*it);
@@ -766,8 +764,8 @@ Objectivereflect2D::Objectivereflect2D(list<double> parameters, DDAModel* model_
     N = (*Core).get_N();                   //Number of dipoles
     P = (*model).get_P();
     R = (*Core).get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_E0 = (*model).get_nE0();
+    Vectord n_K = (*model).get_nK();
     E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
@@ -779,14 +777,14 @@ Objectivereflect2D::Objectivereflect2D(list<double> parameters, DDAModel* model_
 
 
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
-        Vector3d n_K_tmp;
+        Vectord n_K_tmp(3);
         n_K_tmp(0) = 2 * M_PI * FOMParameters(2 * i) / (Lm * K) + n_K(0);
         n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
         n_K_tmp(2) = sqrt(1 - pow(n_K_tmp(0), 2) - pow(n_K_tmp(1), 2));
-        cout << n_K_tmp << endl;
+        n_K_tmp.print();
         n_K_s_l.push_back(n_K_tmp);
 
-        Matrix3d FconstM;
+        Matrixd FconstM(3, 3);
         double nkx = n_K_tmp(0);
         double nky = n_K_tmp(1);
         double nkz = n_K_tmp(2);
@@ -802,8 +800,7 @@ Objectivereflect2D::Objectivereflect2D(list<double> parameters, DDAModel* model_
         FconstM(2, 1) = FconstM(1, 2);
         FconstM_l.push_back(FconstM);
 
-        Vector3cd PSum_tmp;
-        PSum_tmp = Vector3cd::Zero();
+        Vectorcd PSum_tmp(3);
         PSum_l.push_back(PSum_tmp);
 
     }
@@ -815,12 +812,12 @@ Objectivereflect2D::Objectivereflect2D(list<double> parameters, DDAModel* model_
 }
 
 void Objectivereflect2D::SingleResponse(int idx, bool deduction) {
-    //list<Matrix3d>::iterator it1 = (FconstM_l).begin();
-    list<Vector3d>::iterator it2 = (n_K_s_l).begin();
-    list<Vector3cd>::iterator it3 = (PSum_l).begin();
+    //list<Matrixd>::iterator it1 = (FconstM_l).begin();
+    list<Vectord>::iterator it2 = (n_K_s_l).begin();
+    list<Vectorcd>::iterator it3 = (PSum_l).begin();
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
-        //Matrix3d FconstM = (*it1);
-        Vector3d n_K_s = (*it2);
+        //Matrixd FconstM = (*it1);
+        Vectord n_K_s = (*it2);
         double nkx = n_K_s(0);
         double nky = n_K_s(1);
         double nkz = n_K_s(2);
@@ -861,20 +858,20 @@ double Objectivereflect2D::GetVal() {
 }
 
 void Objectivereflect2D::Reset() {
-    for (list<Vector3cd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
-        (*it) = Vector3cd::Zero();
+    for (list<Vectorcd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
+        (*it) = Vectorcd(3);
     }
 }
 
 double Objectivereflect2D::FTUCnsquareoversinal() {
 
-    list<Matrix3d>::iterator it1 = (FconstM_l).begin();
-    list<Vector3cd>::iterator it2 = (PSum_l).begin();
-    list<Vector3d>::iterator it3 = n_K_s_l.begin();
+    list<Matrixd>::iterator it1 = (FconstM_l).begin();
+    list<Vectorcd>::iterator it2 = (PSum_l).begin();
+    list<Vectord>::iterator it3 = n_K_s_l.begin();
     double result = 0.0;
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
         double ksz = (*it3)(2);
-        Vector3cd FTUC;
+        Vectorcd FTUC(3, 3);
         FTUC(0) = (*it1)(0, 0) * (*it2)(0) + (*it1)(0, 1) * (*it2)(1) + (*it1)(0, 2) * (*it2)(2);
         FTUC(1) = (*it1)(1, 0) * (*it2)(0) + (*it1)(1, 1) * (*it2)(1) + (*it1)(1, 2) * (*it2)(2);
         FTUC(2) = (*it1)(2, 0) * (*it2)(0) + (*it1)(2, 1) * (*it2)(1) + (*it1)(2, 2) * (*it2)(2);
@@ -896,7 +893,7 @@ double Objectivereflect2D::FTUCnsquareoversinal() {
 
 ObjectiveAbsbyfar::ObjectiveAbsbyfar(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
     Paralength = (parameters).size();
-    VectorXd FOMParameters = VectorXd::Zero(Paralength);
+    Vectord FOMParameters = Vectord(Paralength);
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int(Paralength - 1); i++) {
         FOMParameters(i) = (*it);
@@ -917,8 +914,8 @@ ObjectiveAbsbyfar::ObjectiveAbsbyfar(list<double> parameters, DDAModel* model_, 
     N = (*Core).get_N();                   //Number of dipoles
     P = (*model).get_P();
     R = (*Core).get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_E0 = (*model).get_nE0();
+    Vectord n_K = (*model).get_nK();
     E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
@@ -930,13 +927,13 @@ ObjectiveAbsbyfar::ObjectiveAbsbyfar(list<double> parameters, DDAModel* model_, 
 
 
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
-        Vector3d n_K_tmp;
+        Vectord n_K_tmp(3);
         n_K_tmp(0) = 2 * M_PI * FOMParameters(2 * i) / (Lm * K) + n_K(0);
         n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
         n_K_tmp(2) = sqrt(1 - pow(n_K_tmp(0), 2) - pow(n_K_tmp(1), 2));
         n_K_s_l.push_back(n_K_tmp);
-        cout << n_K_tmp << endl;
-        Matrix3d FconstM;
+        n_K_tmp.print();
+        Matrixd FconstM(3, 3);
         double nkx = n_K_tmp(0);
         double nky = n_K_tmp(1);
         double nkz = n_K_tmp(2);
@@ -952,8 +949,7 @@ ObjectiveAbsbyfar::ObjectiveAbsbyfar(list<double> parameters, DDAModel* model_, 
         FconstM(2, 1) = FconstM(1, 2);
         FconstM_l.push_back(FconstM);
 
-        Vector3cd PSum_tmp;
-        PSum_tmp = Vector3cd::Zero();
+        Vectorcd PSum_tmp(3);
         PSum_l.push_back(PSum_tmp);
 
     }
@@ -965,12 +961,12 @@ ObjectiveAbsbyfar::ObjectiveAbsbyfar(list<double> parameters, DDAModel* model_, 
 }
 
 void ObjectiveAbsbyfar::SingleResponse(int idx, bool deduction) {
-    //list<Matrix3d>::iterator it1 = (FconstM_l).begin();
-    list<Vector3d>::iterator it2 = (n_K_s_l).begin();
-    list<Vector3cd>::iterator it3 = (PSum_l).begin();
+    //list<Matrixd>::iterator it1 = (FconstM_l).begin();
+    list<Vectord>::iterator it2 = (n_K_s_l).begin();
+    list<Vectorcd>::iterator it3 = (PSum_l).begin();
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
-        //Matrix3d FconstM = (*it1);
-        Vector3d n_K_s = (*it2);
+        //Matrixd FconstM = (*it1);
+        Vectord n_K_s = (*it2);
         double nkx = n_K_s(0);
         double nky = n_K_s(1);
         double nkz = n_K_s(2);
@@ -1011,20 +1007,20 @@ double ObjectiveAbsbyfar::GetVal() {
 }
 
 void ObjectiveAbsbyfar::Reset() {
-    for (list<Vector3cd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
-        (*it) = Vector3cd::Zero();
+    for (list<Vectorcd>::iterator it = PSum_l.begin(); it != PSum_l.end(); it++) {
+        (*it) = Vectorcd(3);
     }
 }
 
 double ObjectiveAbsbyfar::FTUCnsquareoversinal() {
 
-    list<Matrix3d>::iterator it1 = (FconstM_l).begin();
-    list<Vector3cd>::iterator it2 = (PSum_l).begin();
-    list<Vector3d>::iterator it3 = n_K_s_l.begin();
+    list<Matrixd>::iterator it1 = (FconstM_l).begin();
+    list<Vectorcd>::iterator it2 = (PSum_l).begin();
+    list<Vectord>::iterator it3 = n_K_s_l.begin();
     double result = 0.0;
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
         double ksz = (*it3)(2);
-        Vector3cd FTUC;
+        Vectorcd FTUC(3, 3);
         FTUC(0) = (*it1)(0, 0) * (*it2)(0) + (*it1)(0, 1) * (*it2)(1) + (*it1)(0, 2) * (*it2)(2);
         FTUC(1) = (*it1)(1, 0) * (*it2)(0) + (*it1)(1, 1) * (*it2)(1) + (*it1)(1, 2) * (*it2)(2);
         FTUC(2) = (*it1)(2, 0) * (*it2)(0) + (*it1)(2, 1) * (*it2)(1) + (*it1)(2, 2) * (*it2)(2);
@@ -1060,7 +1056,7 @@ ObjectiveAbs::ObjectiveAbs(list<double> parameters, DDAModel* model_, EvoDDAMode
     d = (*Core).get_d();
     al = (*model).get_al();
     P = (*model).get_P();
-    E = VectorXcd::Zero(N * 3);
+    E = Vectorcd(N * 3);
     R = (*Core).get_R();
     Cabs = 0.0;
     E0 = (*model).get_E0();
@@ -1072,14 +1068,17 @@ ObjectiveAbs::ObjectiveAbs(list<double> parameters, DDAModel* model_, EvoDDAMode
 
 void ObjectiveAbs::SingleResponse(int idx, bool deduction) {
     complex<double> al_tmp = (*al)(3 * idx);
-    Vector3cd P_tmp((*P)(3 * idx), (*P)(3 * idx + 1), (*P)(3 * idx + 2));
+    Vectorcd P_tmp(3);
+    P_tmp(0) = (*P)(3 * idx);
+    P_tmp(1) = (*P)(3 * idx + 1);
+    P_tmp(2) = (*P)(3 * idx + 2);
 
     if (deduction == false) {
-        complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);                    
+        complex<double> tmp = (P_tmp * al_tmp).dot(P_tmp);
         Cabs += (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());
     }
     else {
-        complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);                    //Eigen dot product is conjugate linear in the first variable, and linear in the second one.
+        complex<double> tmp = (P_tmp * al_tmp).dot(P_tmp);                    //Eigen dot product is conjugate linear in the first variable, and linear in the second one.
         Cabs -= (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());  //The Eigen Vector norm turns out to be the square-root term, instead of the one with square like C++ complex number norm.
     }
     return;
@@ -1123,7 +1122,7 @@ ObjectiveAbsPartial::ObjectiveAbsPartial(list<double> parameters, DDAModel* mode
     d = (*Core).get_d();
     al = (*model).get_al();
     P = (*model).get_P();
-    E = VectorXcd::Zero(N * 3);
+    E = Vectorcd(N * 3);
     R = (*Core).get_R();
     Cabs = 0.0;
     E0 = (*model).get_E0();
@@ -1173,14 +1172,16 @@ ObjectiveAbsPartial::ObjectiveAbsPartial(list<double> parameters, DDAModel* mode
 void ObjectiveAbsPartial::SingleResponse(int idx, bool deduction) {
     if (integralpos.count(idx)) {
         complex<double> al_tmp = (*al)(3 * idx);
-        Vector3cd P_tmp((*P)(3 * idx), (*P)(3 * idx + 1), (*P)(3 * idx + 2));
-
+        Vectorcd P_tmp(3);
+        P_tmp(0) = (*P)(3 * idx);
+        P_tmp(1) = (*P)(3 * idx + 1);
+        P_tmp(2) = (*P)(3 * idx + 2);
         if (deduction == false) {
-            complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);
+            complex<double> tmp = (P_tmp * al_tmp).dot(P_tmp);
             Cabs += (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());
         }
         else {
-            complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);                    //Eigen dot product is conjugate linear in the first variable, and linear in the second one.
+            complex<double> tmp = (P_tmp * al_tmp).dot(P_tmp);                    //Eigen dot product is conjugate linear in the first variable, and linear in the second one.
             Cabs -= (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());  //The Eigen Vector norm turns out to be the square-root term, instead of the one with square like C++ complex number norm.
         }
         return;
@@ -1213,7 +1214,7 @@ void ObjectiveAbsPartial::Reset() {
 }
 /*
 Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
-    VectorXd PointEParameters = VectorXd::Zero((parameters).size());
+    Vectord PointEParameters = Vectord((parameters).size());
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int((parameters).size() - 1); i++) {
         PointEParameters(i) = (*it);
@@ -1231,14 +1232,14 @@ Objectivescattering2D::Objectivescattering2D(list<double> parameters, DDAModel* 
     N = (*Core).get_N();
     P = (*model).get_P();
     R = (*Core).get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_E0 = (*model).get_nE0();
+    Vectord n_K = (*model).get_nK();
     double E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
     double K = 2 * M_PI / lam;
-    E_sum = Vector3cd::Zero();
-    E_ext = Vector3cd::Zero();
+    E_sum = Vectorcd();
+    E_ext = Vectorcd();
     E_ext(0) = E0 * n_E0(0) * (cos(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
     E_ext(1) = E0 * n_E0(1) * (cos(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
     E_ext(2) = E0 * n_E0(2) * (cos(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
@@ -1286,7 +1287,7 @@ ObjectiveAbsPartialzslice::ObjectiveAbsPartialzslice(list<double> parameters, DD
     d = (*Core).get_d();
     al = (*model).get_al();
     P = (*model).get_P();
-    E = VectorXcd::Zero(N * 3);
+    E = Vectorcd(N * 3);
     R = (*Core).get_R();
     Cabs = 0.0;
     E0 = (*model).get_E0();
@@ -1337,15 +1338,18 @@ ObjectiveAbsPartialzslice::ObjectiveAbsPartialzslice(list<double> parameters, DD
 void ObjectiveAbsPartialzslice::SingleResponse(int idx, bool deduction) {
     if (integralpos.count(idx)) {
         complex<double> al_tmp = (*al)(3 * idx);
-        Vector3cd P_tmp((*P)(3 * idx), (*P)(3 * idx + 1), (*P)(3 * idx + 2));
+        Vectorcd P_tmp(3);
+        P_tmp(0) = (*P)(3 * idx);
+        P_tmp(1) = (*P)(3 * idx + 1);
+        P_tmp(2) = (*P)(3 * idx + 2);
 
         if (zslices.count((*R)(3 * idx + 2))) {
             if (deduction == false) {
-                complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);
+                complex<double> tmp = (P_tmp * al_tmp).dot(P_tmp);
                 Cabs += (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());
             }
             else {
-                complex<double> tmp = (al_tmp * P_tmp).dot(P_tmp);                    //Eigen dot product is conjugate linear in the first variable, and linear in the second one.
+                complex<double> tmp = (P_tmp * al_tmp).dot(P_tmp);                    //Eigen dot product is conjugate linear in the first variable, and linear in the second one.
                 Cabs -= (tmp.imag() - (2.0 / 3.0) * K3 * (P_tmp.dot(P_tmp)).real());  //The Eigen Vector norm turns out to be the square-root term, instead of the one with square like C++ complex number norm.
             }
         }
@@ -1396,7 +1400,7 @@ ObjectiveIntegrateEPartial::ObjectiveIntegrateEPartial(list<double> parameters, 
     d = (*Core).get_d();
     al = (*model).get_al();
     P = (*model).get_P();
-    E = VectorXcd::Zero(N * 3);
+    E = Vectorcd(N * 3);
     R = (*Core).get_R();
     Total = 0.0;
     E0 = (*model).get_E0();
@@ -1444,8 +1448,11 @@ ObjectiveIntegrateEPartial::ObjectiveIntegrateEPartial(list<double> parameters, 
 void ObjectiveIntegrateEPartial::SingleResponse(int idx, bool deduction) {
     if (integralpos.count(idx)) {
         complex<double> al_tmp = (*al)(3 * idx);
-        Vector3cd P_tmp((*P)(3 * idx), (*P)(3 * idx + 1), (*P)(3 * idx + 2));
-        Vector3cd E_tmp = al_tmp * P_tmp;
+        Vectorcd P_tmp(3);
+        P_tmp(0) = (*P)(3 * idx);
+        P_tmp(1) = (*P)(3 * idx + 1);
+        P_tmp(2) = (*P)(3 * idx + 2);
+        Vectorcd E_tmp = P_tmp * al_tmp;
 
         if (deduction == false) {
             double E_tmp_square = 0.0;

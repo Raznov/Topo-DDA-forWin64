@@ -1,5 +1,5 @@
 #include "definition.h"
-VectorXi *Space::get_total_space(){
+Vectori *Space::get_total_space(){
     return total_space;
 }
 int Space::get_ln_size(){
@@ -11,7 +11,7 @@ vector<Structure>* Space::get_ln(){
 tuple<int, int, int, int> Space::get_Ns(){
     return make_tuple(Nx, Ny, Nz, N);
 }
-Space::Space(VectorXi *total_space_, int Nx_, int Ny_, int Nz_, int N_, vector<Structure> *ln_){
+Space::Space(Vectori *total_space_, int Nx_, int Ny_, int Nz_, int N_, vector<Structure> *ln_){
     total_space=total_space_;
     Nx=Nx_;
     Ny=Ny_;
@@ -24,7 +24,7 @@ void Space::show_something_about_Structures() const{
     fout<<Nx<<endl<<Ny<<endl<<Nz<<endl<<N<<endl;
 
     for(int i=0;i<=int((*ln).size())-1;i++){
-        fout<<*((*ln)[i].get_geometry())<<endl;
+        vectofile(fout, *((*ln)[i].get_geometry()));
     }
 
     /*

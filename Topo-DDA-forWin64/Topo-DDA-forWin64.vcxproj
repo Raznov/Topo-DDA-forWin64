@@ -151,6 +151,7 @@
     <ClCompile Include="EvoDDAModel.cpp" />
     <ClCompile Include="DDAModel.cpp" />
     <ClCompile Include="FilterOption.cpp" />
+    <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="ObjectiveDDAModel.cpp" />
     <ClCompile Include="SiCi.cpp" />
     <ClCompile Include="Space.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="tools.cpp" />
     <ClCompile Include="SpacePara.cpp" />
     <ClCompile Include="FOM.cpp" />
+    <ClCompile Include="Vector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu">

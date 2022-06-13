@@ -2,7 +2,7 @@
 
 FOMscattering2D::FOMscattering2D(list<double> parameters, DDAModel* model_) {
     Paralength = (parameters).size();
-    FOMParameters = VectorXd::Zero(Paralength);
+    FOMParameters = Vectord(Paralength);
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int(Paralength - 1); i++) {
         FOMParameters(i) = (*it);
@@ -22,7 +22,7 @@ FOMscattering2D::FOMscattering2D(list<double> parameters, DDAModel* model_) {
     P = (*model).get_P();
     R = (*Core).get_R();
     n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_K = (*model).get_nK();
     E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
@@ -33,7 +33,7 @@ FOMscattering2D::FOMscattering2D(list<double> parameters, DDAModel* model_) {
     ATUC = Lm * Ln;
     
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
-        Vector3d n_K_tmp;
+        Vectord n_K_tmp(3);
 
         n_K_tmp(0) = 2 * M_PI * FOMParameters(2 * i) / (Lm * K) + n_K(0);
         n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
@@ -45,12 +45,12 @@ FOMscattering2D::FOMscattering2D(list<double> parameters, DDAModel* model_) {
 list<double> FOMscattering2D::GetVal() {
     list<double> result;
     int listlength = (n_K_s_l).size();
-    list<Vector3d>::iterator it = n_K_s_l.begin();
+    list<Vectord>::iterator it = n_K_s_l.begin();
     
     for (int i = 0; i <= listlength - 1; i++) {
         if (FOMParameters(2 * i) == 0 && FOMParameters(2 * i + 1) == 0) {
             cout << "There is a normal output" << endl;
-            Vector3cd tmp = this->FTUC((*it));
+            Vectorcd tmp = this->FTUC((*it));
             double ksz = (*it)(2);                                 //x in the paper is actually z in our case.
             //cout << tmp << endl;
             tmp = tmp * (2.0 * M_PI * 1.0i) / (K * K * ATUC * abs(ksz));
@@ -63,7 +63,7 @@ list<double> FOMscattering2D::GetVal() {
             cout << tmpresult << endl;
         }  
         else {
-            Vector3cd tmp = this->FTUC((*it));
+            Vectorcd tmp = this->FTUC((*it));
             double ksz = (*it)(2);                                 //x in the paper is actually z in our case.
             tmp = tmp * (2.0 * M_PI * 1.0i) / (K * K * ATUC * abs(ksz));
             double tmpresult = (norm(tmp(0)) + norm(tmp(1)) + norm(tmp(2))) / pow(E0, 2);  //00 order transmission
@@ -76,8 +76,8 @@ list<double> FOMscattering2D::GetVal() {
     return result;
 }
 
-Vector3cd FOMscattering2D::FTUC(Vector3d n_K_s) {
-    Matrix3d FconstM;
+Vectorcd FOMscattering2D::FTUC(Vectord n_K_s) {
+    Matrixd FconstM(3, 3);
     double nkx = n_K_s(0);
     double nky = n_K_s(1);
     double nkz = n_K_s(2);
@@ -92,8 +92,7 @@ Vector3cd FOMscattering2D::FTUC(Vector3d n_K_s) {
     FconstM(2, 0) = FconstM(0, 2);
     FconstM(2, 1) = FconstM(1, 2);
 
-    Vector3cd PSum;
-    PSum = Vector3cd::Zero();
+    Vectorcd PSum(3);
     for (int i = 0; i <= N-1; i++) {
         double phaseterm = -d * K * (nkx * (*R)(3 * i) + nky * (*R)(3 * i + 1) + nkz * (*R)(3 * i + 2));  //From equation 17. Time term will be eliminated
         complex<double> phase = cos(phaseterm) + sin(phaseterm) * 1i;
@@ -102,7 +101,7 @@ Vector3cd FOMscattering2D::FTUC(Vector3d n_K_s) {
         PSum(2) += (*P)(3 * i + 2) * phase;
     }
 
-    Vector3cd FTUC;
+    Vectorcd FTUC(3, 3);
     FTUC(0) = FconstM(0, 0) * PSum(0) + FconstM(0, 1) * PSum(1) + FconstM(0, 2) * PSum(2);
     FTUC(1) = FconstM(1, 0) * PSum(0) + FconstM(1, 1) * PSum(1) + FconstM(1, 2) * PSum(2);
     FTUC(2) = FconstM(2, 0) * PSum(0) + FconstM(2, 1) * PSum(1) + FconstM(2, 2) * PSum(2);
@@ -114,7 +113,7 @@ Vector3cd FOMscattering2D::FTUC(Vector3d n_K_s) {
 
 FOMreflect2D::FOMreflect2D(list<double> parameters, DDAModel* model_) {
     Paralength = (parameters).size();
-    FOMParameters = VectorXd::Zero(Paralength);
+    FOMParameters = Vectord(Paralength);
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int(Paralength - 1); i++) {
         FOMParameters(i) = (*it);
@@ -134,7 +133,7 @@ FOMreflect2D::FOMreflect2D(list<double> parameters, DDAModel* model_) {
     P = (*model).get_P();
     R = (*Core).get_R();
     n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_K = (*model).get_nK();
     E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
@@ -145,7 +144,7 @@ FOMreflect2D::FOMreflect2D(list<double> parameters, DDAModel* model_) {
     ATUC = Lm * Ln;
 
     for (int i = 0; i <= int(round(Paralength / 2) - 1); i++) {
-        Vector3d n_K_tmp;
+        Vectord n_K_tmp(3);
 
         n_K_tmp(0) = 2 * M_PI * FOMParameters(2 * i) / (Lm * K) + n_K(0);
         n_K_tmp(1) = 2 * M_PI * FOMParameters(2 * i + 1) / (Ln * K) + n_K(1);
@@ -157,16 +156,16 @@ FOMreflect2D::FOMreflect2D(list<double> parameters, DDAModel* model_) {
 list<double> FOMreflect2D::GetVal() {
     list<double> result;
     int listlength = (n_K_s_l).size();
-    list<Vector3d>::iterator it = n_K_s_l.begin();
+    list<Vectord>::iterator it = n_K_s_l.begin();
 
     for (int i = 0; i <= listlength - 1; i++) {
         if (FOMParameters(2 * i) == 0 && FOMParameters(2 * i + 1) == 0) {
             cout << "There is a normal output" << endl;
-            Vector3cd tmp = this->FTUC((*it));
+            Vectorcd tmp = this->FTUC((*it));
             double ksz = (*it)(2);                                 //x in the paper is actually z in our case.
             //cout << tmp << endl;
             tmp = tmp * (2.0 * M_PI * 1.0i) / (K * K * ATUC * abs(ksz));
-            tmp = tmp + E0 * n_E0;
+            tmp = vecadd(tmp, n_E0 * E0);
             //cout << tmp << endl;
             //cout << tmp << endl;
             double tmpresult = (norm(tmp(0)) + norm(tmp(1)) + norm(tmp(2))) / pow(E0, 2);  //00 order transmission
@@ -175,7 +174,7 @@ list<double> FOMreflect2D::GetVal() {
             cout << tmpresult << endl;
         }
         else {
-            Vector3cd tmp = this->FTUC((*it));
+            Vectorcd tmp = this->FTUC((*it));
             double ksz = (*it)(2);                                 //x in the paper is actually z in our case.
             tmp = tmp * (2.0 * M_PI * 1.0i) / (K * K * ATUC * abs(ksz));
             double tmpresult = (norm(tmp(0)) + norm(tmp(1)) + norm(tmp(2))) / pow(E0, 2);  //00 order transmission
@@ -188,8 +187,8 @@ list<double> FOMreflect2D::GetVal() {
     return result;
 }
 
-Vector3cd FOMreflect2D::FTUC(Vector3d n_K_s) {
-    Matrix3d FconstM;
+Vectorcd FOMreflect2D::FTUC(Vectord n_K_s) {
+    Matrixd FconstM(3, 3);
     double nkx = n_K_s(0);
     double nky = n_K_s(1);
     double nkz = n_K_s(2);
@@ -204,8 +203,7 @@ Vector3cd FOMreflect2D::FTUC(Vector3d n_K_s) {
     FconstM(2, 0) = FconstM(0, 2);
     FconstM(2, 1) = FconstM(1, 2);
 
-    Vector3cd PSum;
-    PSum = Vector3cd::Zero();
+    Vectorcd PSum(3);
     for (int i = 0; i <= N - 1; i++) {
         double phaseterm = -d * K * (nkx * (*R)(3 * i) + nky * (*R)(3 * i + 1) + nkz * (*R)(3 * i + 2));  //From equation 17. Time term will be eliminated
         complex<double> phase = cos(phaseterm) + sin(phaseterm) * 1i;
@@ -214,7 +212,7 @@ Vector3cd FOMreflect2D::FTUC(Vector3d n_K_s) {
         PSum(2) += (*P)(3 * i + 2) * phase;
     }
 
-    Vector3cd FTUC;
+    Vectorcd FTUC(3, 3);
     FTUC(0) = FconstM(0, 0) * PSum(0) + FconstM(0, 1) * PSum(1) + FconstM(0, 2) * PSum(2);
     FTUC(1) = FconstM(1, 0) * PSum(0) + FconstM(1, 1) * PSum(1) + FconstM(1, 2) * PSum(2);
     FTUC(2) = FconstM(2, 0) * PSum(0) + FconstM(2, 1) * PSum(1) + FconstM(2, 2) * PSum(2);
@@ -227,7 +225,7 @@ Vector3cd FOMreflect2D::FTUC(Vector3d n_K_s) {
 
 FOMscattering0D::FOMscattering0D(list<double> parameters, DDAModel* model_) {
     Paralength = (parameters).size();
-    VectorXd FOMParameters = VectorXd::Zero(Paralength);
+    Vectord FOMParameters = Vectord(Paralength);
     list<double>::iterator it = (parameters).begin();
     for (int i = 0; i <= int(Paralength - 1); i++) {
         FOMParameters(i) = (*it);
@@ -239,7 +237,7 @@ FOMscattering0D::FOMscattering0D(list<double> parameters, DDAModel* model_) {
 
 
     for (int i = 0; i <= int(round(Paralength / 3) - 1); i++) {
-        Vector3d n_K_tmp;
+        Vectord n_K_tmp(3);
         n_K_tmp(0) = FOMParameters(3 * i);
         n_K_tmp(1) = FOMParameters(3 * i + 1);
         n_K_tmp(2) = FOMParameters(3 * i + 2);
@@ -252,8 +250,8 @@ FOMscattering0D::FOMscattering0D(list<double> parameters, DDAModel* model_) {
     N = (*Core).get_N();                   //Number of dipoles
     P = (*model).get_P();
     R = (*Core).get_R();
-    Vector3d n_E0 = (*model).get_nE0();
-    Vector3d n_K = (*model).get_nK();
+    Vectord n_E0 = (*model).get_nE0();
+    Vectord n_K = (*model).get_nK();
     E0 = (*model).get_E0();
     double lam = (*Core).get_lam();
     cout << "lam" << lam << endl;
@@ -264,7 +262,7 @@ FOMscattering0D::FOMscattering0D(list<double> parameters, DDAModel* model_) {
 list<double> FOMscattering0D::GetVal() {
     list<double> result;
     int listlength = (n_K_s_l).size();
-    list<Vector3d>::iterator it = n_K_s_l.begin();
+    list<Vectord>::iterator it = n_K_s_l.begin();
     for (int i = 0; i <= listlength - 1; i++) {
         double tmp = this->FTUCnsquare((*it));
         double tmpresult = tmp / (pow(K, 2) * pow(E0, 2));
@@ -279,8 +277,8 @@ list<double> FOMscattering0D::GetVal() {
     return result;
 }
 
-double FOMscattering0D::FTUCnsquare(Vector3d n_K_s) {
-    Matrix3d FconstM;
+double FOMscattering0D::FTUCnsquare(Vectord n_K_s) {
+    Matrixd FconstM(3, 3);
     double nkx = n_K_s(0);
     double nky = n_K_s(1);
     double nkz = n_K_s(2);
@@ -295,8 +293,7 @@ double FOMscattering0D::FTUCnsquare(Vector3d n_K_s) {
     FconstM(2, 0) = FconstM(0, 2);
     FconstM(2, 1) = FconstM(1, 2);
 
-    Vector3cd PSum;
-    PSum = Vector3cd::Zero();
+    Vectorcd PSum(3);
     for (int i = 0; i <= N-1; i++) {
         double phaseterm = -d * K * (nkx * ((*R)(3 * i) - 32.5) + nky * ((*R)(3 * i + 1) - 32.5) + nkz * ((*R)(3 * i + 2) - 32.5));  //From equation 17. Time term will be eliminated
         complex<double> phase = cos(phaseterm) + sin(phaseterm) * 1i;
@@ -307,14 +304,15 @@ double FOMscattering0D::FTUCnsquare(Vector3d n_K_s) {
         
     }
 
-    Vector3cd FTUC;
+    Vectorcd FTUC(3, 3);
     FTUC(0) = FconstM(0, 0) * PSum(0) + FconstM(0, 1) * PSum(1) + FconstM(0, 2) * PSum(2);
     FTUC(1) = FconstM(1, 0) * PSum(0) + FconstM(1, 1) * PSum(1) + FconstM(1, 2) * PSum(2);
     FTUC(2) = FconstM(2, 0) * PSum(0) + FconstM(2, 1) * PSum(1) + FconstM(2, 2) * PSum(2);
 
     double result = norm(FTUC(0)) + norm(FTUC(1)) + norm(FTUC(2));                                 //In C++, norm is the square of magnitude.
     
-    cout << "compare:" << FconstM << endl;
-    cout << PSum << endl;
+    cout << "compare:";
+    FconstM.print();
+    PSum.print();
     return result;
 }

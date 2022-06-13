@@ -1,6 +1,6 @@
 #include "definition.h"
 
-pair<VectorXi, VectorXd> InputInitial(string open_position, string model_label) {
+pair<Vectori, Vectord> InputInitial(string open_position, string model_label) {
     string name1 = open_position + "Commondata.txt";
     string name2 = open_position + "CoreStructure\\CoreStructure" + model_label + ".txt";
     ofstream TotalTime;
@@ -14,13 +14,13 @@ pair<VectorXi, VectorXd> InputInitial(string open_position, string model_label) 
     fin1 >> Nztmp;
     fin1 >> Ntmp;
     cout << "Input geometry size: " << Ntmp << endl;
-    VectorXi geometrytmp = VectorXi::Zero(3 * Ntmp);
+    Vectori geometrytmp = Vectori(3 * Ntmp);
     for (int i = 0; i <= Ntmp - 1; i++) {
         fin1 >> geometrytmp(3 * i);
         fin1 >> geometrytmp(3 * i + 1);
         fin1 >> geometrytmp(3 * i + 2);
     }
-    VectorXd dielinput = VectorXd::Zero(3 * Ntmp);
+    Vectord dielinput = Vectord(3 * Ntmp);
     for (int i = 0; i <= Ntmp - 1; i++) {
         fin2 >> dielinput(3 * i);
         fin2 >> dielinput(3 * i + 1);
@@ -28,13 +28,17 @@ pair<VectorXi, VectorXd> InputInitial(string open_position, string model_label) 
     }
     fin1.close();
     fin2.close();
-    return pair<VectorXi, VectorXd>(geometrytmp, dielinput);
+    return pair<Vectori, Vectord>(geometrytmp, dielinput);
 }
 
 //One Evo data generation
-list<double> generatefocus(int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym, double d) {
+list<double> generatefocus(int min_num, int max_num, Vectord lower_bound, Vectord upper_bound, bool sym, double d) {
     //Center
-    Vector3d center = (lower_bound + upper_bound) / 2;
+    Vectord center(upper_bound.size());
+    for (int i = 0; i < center.size(); i++) {
+        center(i) = (lower_bound(i) + upper_bound(i)) / 2;
+    }
+
     //Number of focus
     int num = round(((double)rand() / RAND_MAX) * (max_num - min_num)) + min_num;
     list<double> result;
@@ -47,11 +51,11 @@ list<double> generatefocus(int min_num, int max_num, Vector3d lower_bound, Vecto
                 point1[j] = ((double)rand() / RAND_MAX) * (upper_bound(j) - lower_bound(j)) + lower_bound(j);
                 point2[j] = 2 * center(j) - point1[j];
                 //Point2 wont get out of boundary.
-                if (point2[j] > upper_bound[j]) {
-                    point2[j] = upper_bound[j];
+                if (point2[j] > upper_bound(j)) {
+                    point2[j] = upper_bound(j);
                 }
-                if (point2[j] < lower_bound[j]) {
-                    point2[j] = lower_bound[j];
+                if (point2[j] < lower_bound(j)) {
+                    point2[j] = lower_bound(j);
                 }
             }
             //Push the points into the list.
@@ -88,7 +92,7 @@ list<double> generatefocus(int min_num, int max_num, Vector3d lower_bound, Vecto
 }
 
 void Evo_Focus(SpacePara* spacepara_tmp, CoreStructure* CStr, DDAModel* TestModel, string save_position, int start_num, int max_evo,
-    int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym  //Parameters for focus generation
+    int min_num, int max_num, Vectord lower_bound, Vectord upper_bound, bool sym  //Parameters for focus generation
 ) {
 
     (*CStr).UpdateStr(spacepara_tmp);
@@ -122,21 +126,21 @@ void Evo_Focus(SpacePara* spacepara_tmp, CoreStructure* CStr, DDAModel* TestMode
 }
 
 /*
-void Evo_single(string save_position, Vector3i bind, Vector3d l, int MAX_ITERATION_EVO, Vector3d move_focus) {
+void Evo_single(string save_position, Vectori bind, Vectord l, int MAX_ITERATION_EVO, Vectord move_focus) {
     ofstream TotalTime;
     TotalTime.open(save_position + "TotalTime.txt");
     high_resolution_clock::time_point t_start = high_resolution_clock::now();
-    Vector3d center;
+    Vectord center;
     center << l(0) / 2, l(1) / 2, l(2) / 2;
     int Nx, Ny, Nz;
     Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);
     cout << center << endl;
     int N = 0;
-    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    Vectori total_space = build_a_bulk(Nx, Ny, Nz);
     list<Structure> ln;
     Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
-    Vector3i direction;
+    Vectori direction;
     Structure s1(S.get_total_space(), l, center);
     S = S + s1;
     SpacePara spacepara(&S, bind, "ONES");
@@ -160,25 +164,25 @@ void Evo_single(string save_position, Vector3i bind, Vector3d l, int MAX_ITERATI
     bool HaveAdjointHeritage = false;
     double PenaltyFactor = 0.0001;
     list<list<double>*> ObjectParameters{ &ObjectParameter };
-    Vector3d n_K;
-    Vector3d n_E0;
+    Vectord n_K;
+    Vectord n_E0;
     list<DDAModel> ModelList;
     list<DDAModel*> ModelpointerList;
     ofstream AngleInfo(save_position + "AngleInfo.txt");
     ofstream nEInfo(save_position + "nEInfo.txt");
     int theta_num = 1;
-    VectorXd theta(theta_num);
+    Vectord theta(theta_num);
     theta << 0;
     int phi_num = 1;
-    VectorXd phi(phi_num);
+    Vectord phi(phi_num);
     phi << 0;
     int lam_num = 1;
-    VectorXd lam(lam_num);
+    Vectord lam(lam_num);
     lam << 500;
     CoreStructure CStr(&spacepara, d);
     list<AProductCore> CoreList;
     list<AProductCore*> CorePointList;
-    Vector2cd material;
+    Vectorcd material;
     material = Get_2_material("Air", "2.5", lam(0), "nm");
     double nback = 1.0;
     AProductCore Core1(&CStr, lam(0), material, nback, "LDR");
@@ -333,9 +337,9 @@ void eval_FOM_2Dperiod(string name, DDAModel* TestModel, list<double> theta, lis
 
 }
 //Find the Max and Min of the input geometry in each direction
-MatrixXi find_scope_3_dim(VectorXi* x) {
+Matrixi find_scope_3_dim(Vectori* x) {
     int N = round(int((*x).size()) / 3);
-    MatrixXi result(3, 2);
+    Matrixi result(3, 2);
     result(0, 0) = (*x)(0);
     result(0, 1) = (*x)(0);
     result(1, 0) = (*x)(1);
@@ -366,20 +370,20 @@ MatrixXi find_scope_3_dim(VectorXi* x) {
     return result;
 }
 
-VectorXd initial_diel_func(string initial_diel, int N) {
-    VectorXd diel;
+Vectord initial_diel_func(string initial_diel, int N) {
+    Vectord diel;
     if (initial_diel.compare("ZEROS") == 0) {
-        diel = VectorXd::Zero(N);
+        diel = Vectord(N);
     }
     else if (initial_diel.compare("0.5") == 0) {
-        diel = VectorXd::Ones(N);
-        diel = 0.5 * diel;
+        diel = Vectord(N, 1.0);
+        diel = diel * 0.5;
     }
     else if (initial_diel.compare("ONES") == 0) {
-        diel = VectorXd::Ones(N);
+        diel = Vectord(N, 1.0);
     }
     else if (initial_diel.compare("RANDOM") == 0) {
-        diel = VectorXd::Zero(N);
+        diel = Vectord(N);
         srand(time(0));
         for (int i = 0; i <= N - 1; i++) {
             double r = ((double)rand() / (RAND_MAX));
@@ -388,14 +392,14 @@ VectorXd initial_diel_func(string initial_diel, int N) {
 
     }
     else {
-        diel = VectorXd::Zero(N);
+        diel = Vectord(N);
         cout << "The initial type given does not match any of the built in method" << endl;
     }
     return diel;
 }
 
 double initial_diel_func(string initial_diel) {
-    VectorXd diel;
+    Vectord diel;
     if (initial_diel.compare("ZEROS") == 0) {
         return 0.0;
     }
@@ -415,8 +419,8 @@ double initial_diel_func(string initial_diel) {
     }
 }
 
-VectorXi build_a_bulk(int Nx, int Ny, int Nz){
-    VectorXi result=VectorXi::Zero(3*Nx*Ny*Nz);
+Vectori build_a_bulk(int Nx, int Ny, int Nz){
+    Vectori result=Vectori(3*Nx*Ny*Nz);
     for(int x=0;x<=Nx-1;x++){
         for(int y=0;y<=Ny-1;y++){
             for(int z=0;z<=Nz-1;z++){
@@ -515,16 +519,16 @@ complex<double> Get_material(string mat, double wl, string unit){
     return result;
 }
 
-Vector2cd Get_2_material(string sub, string mat, double wl, string unit){
-    Vector2cd result;
+Vectorcd Get_2_material(string sub, string mat, double wl, string unit){
+    Vectorcd result(2);
     result(0)=Get_material(sub,wl,unit);
     result(1)=Get_material(mat,wl,unit);
     return result;
 }
 
-VectorXcd Get_X_material(list<string> mat_l, double wl, string unit) {
+Vectorcd Get_X_material(list<string> mat_l, double wl, string unit) {
     list<string>::iterator it = mat_l.begin();
-    VectorXcd result = VectorXcd::Zero(mat_l.size());
+    Vectorcd result = Vectorcd(mat_l.size());
     int i = 0;
     while (it != mat_l.end()) {
         result(i) = Get_material(*it, wl, unit);
@@ -534,7 +538,7 @@ VectorXcd Get_X_material(list<string> mat_l, double wl, string unit) {
     return result;
 }
 
-complex<double> Get_Alpha(double lam, double K, double d, complex<double> diel, Vector3d n_E0, Vector3d n_K){
+complex<double> Get_Alpha(double lam, double K, double d, complex<double> diel, Vectord n_E0, Vectord n_K){
     double b1 = -1.891531;
     double b2 = 0.1648469;
     double b3 = -1.7700004;
@@ -593,7 +597,7 @@ ArrayXcd FFT(int nx,int ny,int nz,ArrayXcd in,int _direction){
 }
 */
 
-bool CheckPerp(Vector3d v1, Vector3d v2) {
+bool CheckPerp(Vectord v1, Vectord v2) {
     if (abs(v1.dot(v2)) <= 0.0001) {
         //cout << v1.dot(v2) << endl;
         return true;
@@ -603,22 +607,26 @@ bool CheckPerp(Vector3d v1, Vector3d v2) {
     }
 }
 
-Vector3d nEPerpinXZ(double theta, double phi) {
+Vectord nEPerpinXZ(double theta, double phi) {
     double tmp = cos(theta) / sqrt(pow(sin(theta), 2) * pow(cos(phi), 2) + pow(cos(theta), 2));
     double x[2] = { -tmp,tmp };
     double z[2] = { -sqrt(1 - tmp * tmp),sqrt(1 - tmp * tmp) };
-    Vector3d k, nE;
-    k << sin(theta) * cos(phi), sin(theta)* sin(phi), cos(theta);
+    Vectord k(3), nE(3);
+    k(0) = sin(theta) * cos(phi);
+    k(1) = sin(theta) * sin(phi);
+    k(2) = cos(theta);
     for (int i = 0; i <= 1; i++) {
         for (int j = 0; j <= 1; j++) {
-            nE << x[i], 0.0, z[j];
+            nE(0) = x[i];
+            nE(1) = 0.0;
+            nE(2) = z[j];
             if (CheckPerp(k, nE) == true && x[i] >= 0.0) {
                 return nE;
             }
         }
     }
 
-    cout << "ERROR : perp nE not found in Vector3d nEPerpinXZ(double theta, double phi)" << endl;
+    cout << "ERROR : perp nE not found in Vectord nEPerpinXZ(double theta, double phi)" << endl;
 
     return nE;
 }

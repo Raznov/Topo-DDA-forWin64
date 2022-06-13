@@ -20,15 +20,15 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
     ModelList = ModelList_;
     ModelNum = ModelList.size();
     cout << "ModelNum" << ModelNum << endl;
-    MaxObjarray = VectorXd::Zero(ModelNum);
-    Originarray = VectorXd::Zero(ModelNum);
+    MaxObjarray = Vectord(ModelNum);
+    Originarray = Vectord(ModelNum);
     PreviousObj = 0.0;
     CutoffHold = 0;
 
     SpacePara* spacepara = (*CStr).get_spacepara();
-    VectorXd* Para = (*spacepara).get_Para();
+    Vectord* Para = (*spacepara).get_Para();
     int n_para = (*Para).size();                     //Total number of parameters
-    gradientsquare = VectorXd::Zero(n_para);
+    gradientsquare = Vectord(n_para);
 
 
     list<DDAModel*>::iterator it_ModelList = ModelList.begin();
@@ -41,7 +41,7 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
 
     int N = (*CStr).get_N();
     for (int i = 0; i <= ModelNum - 1; i++) {
-        VectorXcd Ptmp = VectorXcd::Zero(N*3);
+        Vectorcd Ptmp = Vectorcd(N*3);
         PforOrigin.push_back(Ptmp);
         PforAdjoint.push_back(Ptmp);
         PforOriginMax.push_back(Ptmp);
@@ -101,29 +101,29 @@ EvoDDAModel::EvoDDAModel(list<string>* ObjectFunctionNames_, list<list<double>*>
 
 }
 
-tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin){
+tuple<Vectord, Vectorcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin){
     int N = (*CurrentModel).get_N();
     SpacePara* spacepara = (*CurrentModel).get_spacepara();
-    VectorXi* geometryPara = (*spacepara).get_geometryPara();
-    VectorXd* Para = (*spacepara).get_Para();
-    VectorXi* Free = (*spacepara).get_Free();
+    Vectori* geometryPara = (*spacepara).get_geometryPara();
+    Vectord* Para = (*spacepara).get_Para();
+    Vectori* Free = (*spacepara).get_Free();
 
-    VectorXd* diel_old = (*CurrentModel).get_diel_old();
-    VectorXcd* material = (*CurrentModel).get_material();
+    Vectord* diel_old = (*CurrentModel).get_diel_old();
+    Vectorcd* material = (*CurrentModel).get_material();
     double lam = (*CurrentModel).get_lam();
     double K = (*CurrentModel).get_K();
     double d = (*CurrentModel).get_d();
-    Vector3d n_E0 = (*CurrentModel).get_nE0();
-    Vector3d n_K = (*CurrentModel).get_nK();
-    VectorXcd* al = (*CurrentModel).get_al();
-    VectorXcd* P = (*CurrentModel).get_P();
+    Vectord n_E0 = (*CurrentModel).get_nE0();
+    Vectord n_K = (*CurrentModel).get_nK();
+    Vectorcd* al = (*CurrentModel).get_al();
+    Vectorcd* P = (*CurrentModel).get_P();
 
-    VectorXcd Adevxp=VectorXcd::Zero(3*N);
+    Vectorcd Adevxp=Vectorcd(3*N);
 
     int n_para=(*Free).size();
     int n_para_all = (*Para).size();
     
-    VectorXd devx=VectorXd::Zero(n_para);
+    Vectord devx=Vectord(n_para);
     vector<list<int>> Paratogeometry(n_para_all);
     //cout << "n_para:  " << n_para << endl;
     //cout << "geometry_Para size: " << (*geometryPara).size() << endl;
@@ -133,8 +133,8 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAM
 
 
 
-    //Vector3d diel_old_tmp = Vector3d::Zero();
-    //Vector3cd diel_tmp = Vector3cd::Zero();
+    //Vectord diel_old_tmp = Vectord();
+    //Vectorcd diel_tmp = Vectorcd();
 
     for(int i = 0; i <= n_para - 1; i++){
         int FreeParaPos = (*Free)(i);
@@ -202,12 +202,12 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp_tmp(double epsilon, DDAM
     return make_tuple(devx, Adevxp);  
 }
 
-tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin) {
+tuple<Vectord, Vectorcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin) {
     int N = (*CurrentModel).get_N();
     SpacePara* spacepara = (*CurrentModel).get_spacepara();
-    VectorXi* geometryPara = (*spacepara).get_geometryPara();
-    VectorXd* Para = (*spacepara).get_Para();
-    VectorXi* Free = (*spacepara).get_Free();
+    Vectori* geometryPara = (*spacepara).get_geometryPara();
+    Vectord* Para = (*spacepara).get_Para();
+    Vectori* Free = (*spacepara).get_Free();
     //vector<list<int>>* Paratogeometry = (*spacepara).get_Paratogeometry();
     
     /*
@@ -219,22 +219,22 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
     }
     */
     
-    VectorXd* diel_old = (*CurrentModel).get_diel_old();
-    VectorXcd* material = (*CurrentModel).get_material();
+    Vectord* diel_old = (*CurrentModel).get_diel_old();
+    Vectorcd* material = (*CurrentModel).get_material();
     double lam = (*CurrentModel).get_lam();
     double K = (*CurrentModel).get_K();
     double d = (*CurrentModel).get_d();
-    Vector3d n_E0 = (*CurrentModel).get_nE0();
-    Vector3d n_K = (*CurrentModel).get_nK();
-    VectorXcd* al = (*CurrentModel).get_al();
-    VectorXcd* P = (*CurrentModel).get_P();
+    Vectord n_E0 = (*CurrentModel).get_nE0();
+    Vectord n_K = (*CurrentModel).get_nK();
+    Vectorcd* al = (*CurrentModel).get_al();
+    Vectorcd* P = (*CurrentModel).get_P();
 
-    VectorXcd Adevxp = VectorXcd::Zero(3 * N);
+    Vectorcd Adevxp = Vectorcd(3 * N);
 
     int n_para = (*Free).size();
     int n_para_all = (*Para).size();
 
-    VectorXd devx = VectorXd::Zero(n_para);
+    Vectord devx = Vectord(n_para);
     
     //cout << "n_para:  " << n_para << endl;
     //cout << "geometry_Para size: " << (*geometryPara).size() << endl;
@@ -350,10 +350,10 @@ tuple<VectorXd, VectorXcd> EvoDDAModel::devx_and_Adevxp(double epsilon, DDAModel
     return make_tuple(devx, Adevxp);
 }
 
-VectorXcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin){
+Vectorcd EvoDDAModel::devp(double epsilon, DDAModel* CurrentModel, ObjectiveDDAModel* objective, double origin){
     //move origin=objective0->GetVal() outside because it is the same for one partial derivative of the entire structure
-    VectorXcd* P = (*CurrentModel).get_P();
-    VectorXcd result=VectorXcd::Zero((*P).size());
+    Vectorcd* P = (*CurrentModel).get_P();
+    Vectorcd result=Vectorcd((*P).size());
     for(int i=0;i<= (*P).size() -1;i++){
         int position = i/3;
         
@@ -406,8 +406,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
     //---------------new beta for THG test----------------
     double beta1 = 0.9;
     double beta2 = 1 - (1 - beta1) * (1 - beta1);
-    VectorXd V;
-    VectorXd S;
+    Vectord V;
+    Vectord S;
     
 
     high_resolution_clock::time_point TotalTime0 = high_resolution_clock::now();
@@ -420,7 +420,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         cout<<"-----------------------------START ORIGINAL PROBLEM---------------------------"<<endl;
 
         double obj;
-        VectorXd objarray = VectorXd::Zero(ModelNum);
+        Vectord objarray = Vectord(ModelNum);
         list<DDAModel*>::iterator it_ModelList = ModelList.begin();
         list<ObjectiveDDAModel*>::iterator it_ObjList = ObjList.begin();
 
@@ -430,7 +430,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         auto duration = duration_cast<milliseconds>(out_end - out_start).count();
         output_time += duration;
 
-        list<VectorXcd>::iterator it_PforOrigin = PforOrigin.begin();
+        list<Vectorcd>::iterator it_PforOrigin = PforOrigin.begin();
         for (int i = 0; i <= ModelNum - 1; i++) {
             //cout << (*(it_PforOrigin))(0) << endl;
             (*(*it_ModelList)).InitializeP(*(it_PforOrigin));
@@ -465,8 +465,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
         high_resolution_clock::time_point t0 = high_resolution_clock::now();
 
-        VectorXd* diel_old = (*CStr).get_diel_old();
-        VectorXd* diel_old_max = (*CStr).get_diel_old_max();
+        Vectord* diel_old = (*CStr).get_diel_old();
+        Vectord* diel_old_max = (*CStr).get_diel_old_max();
 
         double epsilon = epsilon_fix;
         
@@ -494,14 +494,14 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 (*diel_old) = (*diel_old_max);
                 it_ModelList = ModelList.begin();
                 it_PforOrigin = PforOrigin.begin();
-                list<VectorXcd>::iterator it_PforAdjoint = PforAdjoint.begin();
-                list<VectorXcd>::iterator it_PforOriginMax = PforOriginMax.begin();
-                list<VectorXcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
+                list<Vectorcd>::iterator it_PforAdjoint = PforAdjoint.begin();
+                list<Vectorcd>::iterator it_PforOriginMax = PforOriginMax.begin();
+                list<Vectorcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
                 for (int i = 0; i <= ModelNum - 1; i++) {
-                    VectorXcd* P = (*(*it_ModelList)).get_P();
-                    VectorXcd* P_max = (*(*it_ModelList)).get_P_max();
-                    VectorXcd* al = (*(*it_ModelList)).get_al();
-                    VectorXcd* al_max = (*(*it_ModelList)).get_al_max();
+                    Vectorcd* P = (*(*it_ModelList)).get_P();
+                    Vectorcd* P_max = (*(*it_ModelList)).get_P_max();
+                    Vectorcd* al = (*(*it_ModelList)).get_al();
+                    Vectorcd* al_max = (*(*it_ModelList)).get_al_max();
                     (*P) = (*P_max);
                     (*al) = (*al_max);
                     objarray(i) = MaxObjarray(i);
@@ -536,14 +536,14 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 (*diel_old_max) = (*diel_old);
                 it_ModelList = ModelList.begin();
                 it_PforOrigin = PforOrigin.begin();
-                list<VectorXcd>::iterator it_PforAdjoint = PforAdjoint.begin();
-                list<VectorXcd>::iterator it_PforOriginMax = PforOriginMax.begin();
-                list<VectorXcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
+                list<Vectorcd>::iterator it_PforAdjoint = PforAdjoint.begin();
+                list<Vectorcd>::iterator it_PforOriginMax = PforOriginMax.begin();
+                list<Vectorcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
                 for (int i = 0; i <= ModelNum - 1; i++) {
-                    VectorXcd* P = (*(*it_ModelList)).get_P();
-                    VectorXcd* P_max = (*(*it_ModelList)).get_P_max();
-                    VectorXcd* al = (*(*it_ModelList)).get_al();
-                    VectorXcd* al_max = (*(*it_ModelList)).get_al_max();
+                    Vectorcd* P = (*(*it_ModelList)).get_P();
+                    Vectorcd* P_max = (*(*it_ModelList)).get_P_max();
+                    Vectorcd* al = (*(*it_ModelList)).get_al();
+                    Vectorcd* al_max = (*(*it_ModelList)).get_al_max();
                     (*P_max) = (*P);
                     (*al_max) = (*al);
                     MaxObjarray(i) = objarray(i);
@@ -591,27 +591,27 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         
         
         SpacePara* spacepara = (*CStr).get_spacepara();
-        VectorXi* geometryPara = (*spacepara).get_geometryPara();
-        VectorXd* Para = (*spacepara).get_Para();
-        VectorXi* Free = (*spacepara).get_Free();
+        Vectori* geometryPara = (*spacepara).get_geometryPara();
+        Vectord* Para = (*spacepara).get_Para();
+        Vectori* Free = (*spacepara).get_Free();
         int n_para_all = (*Para).size();
         int n_para = (*Free).size();
         int N = (*CStr).get_N();
 
 
-        VectorXd gradients = VectorXd::Zero(n_para);
+        Vectord gradients = Vectord(n_para);
 
         it_ModelList = ModelList.begin();
         it_ObjList = ObjList.begin();
-        list<VectorXcd>::iterator it_PforAdjoint = PforAdjoint.begin();
+        list<Vectorcd>::iterator it_PforAdjoint = PforAdjoint.begin();
         for (int i = 0; i <= ModelNum - 1; i++) {
             
             //----------------------------------------get partial derivative of current model---------------------------
             high_resolution_clock::time_point t1 = high_resolution_clock::now();
             //cout << "---------------------------START PARTIAL DERIVATIVE of Model" << i << " ----------------------" << endl;
-            VectorXd devx;
-            VectorXcd Adevxp;
-            VectorXcd devp;
+            Vectord devx;
+            Vectorcd Adevxp;
+            Vectorcd devp;
             tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, *it_ModelList, *it_ObjList, Originarray(i));
             devp = this->devp(epsilon_partial, *it_ModelList, *it_ObjList, Originarray(i));
             high_resolution_clock::time_point t2 = high_resolution_clock::now();
@@ -631,16 +631,16 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             }
             it_PforAdjoint++;
 
-            VectorXcd* P = (*(*it_ModelList)).get_P();
-            VectorXcd lambdaT = (*P);
+            Vectorcd* P = (*(*it_ModelList)).get_P();
+            Vectorcd lambdaT = (*P);
             (*(*it_ModelList)).reset_E();                                  //reset E to initial value
             Adjointiterations << (*(*it_ModelList)).get_ITERATION() << endl;
             TotalAdjointIt += (*(*it_ModelList)).get_ITERATION();
 
 
             //times lambdaT and Adevxp together
-            VectorXcd mult_result;
-            mult_result = VectorXcd::Zero(n_para);               //multiplication result has the length of parameter
+            Vectorcd mult_result;
+            mult_result = Vectorcd(n_para);               //multiplication result has the length of parameter
             vector<list<int>> Paratogeometry(n_para_all);
             for (int i = 0; i <= N - 1; i++) {
                 (Paratogeometry[(*geometryPara)(i)]).push_back(i);
@@ -660,12 +660,12 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             }
 
 
-            VectorXd mult_result_real = VectorXd::Zero(n_para);
+            Vectord mult_result_real = Vectord(n_para);
             for (int i = 0; i <= n_para - 1; i++) {
                 complex<double> tmp = mult_result(i);
                 mult_result_real(i) = tmp.real();
             }
-            gradients += devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
+            gradients = vecadd(gradients, vecsub(devx, mult_result_real));              //What's the legitimacy in here to ignore the imag part?
             
             it_ModelList++;
             it_ObjList++;
@@ -705,13 +705,13 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         if(method == "Adam"){
             cout << "Using Adam Optimizer." << endl;
             if(iteration == 0){
-                V = (1-beta1)*gradients/(1-pow(beta1,iteration+1));
-                S = (1-beta2)*(gradients.array().pow(2).matrix())/(1-pow(beta2,iteration+1));
+                V = (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1);
+                S = ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2);
 
             }
             else{
-                V = beta1*V + (1-beta1)*gradients/(1-pow(beta1,iteration+1));
-                S = beta2*S + (1-beta2)*(gradients.array().pow(2).matrix())/(1-pow(beta2,iteration+1));          
+                V = vecadd(V * beta1, (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1));
+                S = vecadd(S * beta2, ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2));
             }
             for(int i=0;i<=n_para-1;i++){
                 gradients(i) = V(i)/(sqrt(S(i))+0.00000001);
@@ -728,12 +728,13 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         if (method == "Adamdecay") {
             cout << "Using Adam Optimizer With decay." << endl;
             if (iteration == 0) {
-                V = (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
-                S = (1 - beta2) * (gradients.array().pow(2).matrix()) / (1 - pow(beta2, iteration + 1));
+                V = (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1);
+                S = ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2);
+
             }
             else {
-                V = beta1 * V + (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
-                S = beta2 * S + (1 - beta2) * (gradients.array().pow(2).matrix()) / (1 - pow(beta2, iteration + 1));
+                V = vecadd(V * beta1, (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1));
+                S = vecadd(S * beta2, ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2));
             }
             for (int i = 0; i <= n_para - 1; i++) {
                 gradients(i) = V(i) / (sqrt(S(i)) + 0.00000001);
@@ -761,14 +762,14 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             }
 
         }
-        cout << "abs(gradients.cwiseAbs().mean() before: "<< abs(gradients.cwiseAbs().mean()) << endl;
+        cout << "abs(gradients.cwiseAbs().mean() before: "<< abs(vecmean(gradients.cwiseAbs())) << endl;
 
-        if (abs(gradients.cwiseAbs().mean()) < 0.1) {
-            gradients /= abs(gradients.cwiseAbs().mean()) / 0.1;
+        if (abs(vecmean(gradients.cwiseAbs())) < 0.1) {
+            gradients = gradients / abs(vecmean(gradients.cwiseAbs())) / 0.1;
         }
         
-        cout << "abs(gradients.cwiseAbs().mean() after: " << abs(gradients.cwiseAbs().mean()) << endl;
-        VectorXd step = epsilon_final * gradients;            //Find the maximum. If -1 find minimum
+        cout << "abs(gradients.cwiseAbs().mean() after: " << abs(vecmean(gradients.cwiseAbs())) << endl;
+        Vectord step = gradients * epsilon_final;            //Find the maximum. If -1 find minimum
         //cout << "epsilon = " << epsilon << endl;
         //cout << "step = "<< step.mean() << endl;
 
@@ -798,7 +799,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
 }
 
-void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, VectorXd* V_, VectorXd* S_) {
+void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_ITERATION_EVO, string method, Vectord* V_, Vectord* S_) {
     ofstream convergence;
     ofstream Originiterations;
     ofstream Adjointiterations;
@@ -814,8 +815,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
     //---------------new beta for THG test----------------
     double beta1 = 0.7;
     double beta2 = 1 - (1 - beta1) * (1 - beta1);
-    VectorXd V = *V_;
-    VectorXd S = *S_;
+    Vectord V = *V_;
+    Vectord S = *S_;
 
 
     high_resolution_clock::time_point TotalTime0 = high_resolution_clock::now();
@@ -828,11 +829,11 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         cout << "-----------------------------START ORIGINAL PROBLEM---------------------------" << endl;
 
         double obj;
-        VectorXd objarray = VectorXd::Zero(ModelNum);
+        Vectord objarray = Vectord(ModelNum);
         list<DDAModel*>::iterator it_ModelList = ModelList.begin();
         list<ObjectiveDDAModel*>::iterator it_ObjList = ObjList.begin();
         (*CStr).output_to_file(save_position, iteration);
-        list<VectorXcd>::iterator it_PforOrigin = PforOrigin.begin();
+        list<Vectorcd>::iterator it_PforOrigin = PforOrigin.begin();
         for (int i = 0; i <= ModelNum - 1; i++) {
             //cout << (*(it_PforOrigin))(0) << endl;
             (*(*it_ModelList)).InitializeP(*(it_PforOrigin));
@@ -860,8 +861,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
         high_resolution_clock::time_point t0 = high_resolution_clock::now();
 
-        VectorXd* diel_old = (*CStr).get_diel_old();
-        VectorXd* diel_old_max = (*CStr).get_diel_old_max();
+        Vectord* diel_old = (*CStr).get_diel_old();
+        Vectord* diel_old_max = (*CStr).get_diel_old_max();
 
         double epsilon = epsilon_fix;
 
@@ -889,14 +890,14 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 (*diel_old) = (*diel_old_max);
                 it_ModelList = ModelList.begin();
                 it_PforOrigin = PforOrigin.begin();
-                list<VectorXcd>::iterator it_PforAdjoint = PforAdjoint.begin();
-                list<VectorXcd>::iterator it_PforOriginMax = PforOriginMax.begin();
-                list<VectorXcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
+                list<Vectorcd>::iterator it_PforAdjoint = PforAdjoint.begin();
+                list<Vectorcd>::iterator it_PforOriginMax = PforOriginMax.begin();
+                list<Vectorcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
                 for (int i = 0; i <= ModelNum - 1; i++) {
-                    VectorXcd* P = (*(*it_ModelList)).get_P();
-                    VectorXcd* P_max = (*(*it_ModelList)).get_P_max();
-                    VectorXcd* al = (*(*it_ModelList)).get_al();
-                    VectorXcd* al_max = (*(*it_ModelList)).get_al_max();
+                    Vectorcd* P = (*(*it_ModelList)).get_P();
+                    Vectorcd* P_max = (*(*it_ModelList)).get_P_max();
+                    Vectorcd* al = (*(*it_ModelList)).get_al();
+                    Vectorcd* al_max = (*(*it_ModelList)).get_al_max();
                     (*P) = (*P_max);
                     (*al) = (*al_max);
                     objarray(i) = MaxObjarray(i);
@@ -931,14 +932,14 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 (*diel_old_max) = (*diel_old);
                 it_ModelList = ModelList.begin();
                 it_PforOrigin = PforOrigin.begin();
-                list<VectorXcd>::iterator it_PforAdjoint = PforAdjoint.begin();
-                list<VectorXcd>::iterator it_PforOriginMax = PforOriginMax.begin();
-                list<VectorXcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
+                list<Vectorcd>::iterator it_PforAdjoint = PforAdjoint.begin();
+                list<Vectorcd>::iterator it_PforOriginMax = PforOriginMax.begin();
+                list<Vectorcd>::iterator it_PforAdjointMax = PforAdjointMax.begin();
                 for (int i = 0; i <= ModelNum - 1; i++) {
-                    VectorXcd* P = (*(*it_ModelList)).get_P();
-                    VectorXcd* P_max = (*(*it_ModelList)).get_P_max();
-                    VectorXcd* al = (*(*it_ModelList)).get_al();
-                    VectorXcd* al_max = (*(*it_ModelList)).get_al_max();
+                    Vectorcd* P = (*(*it_ModelList)).get_P();
+                    Vectorcd* P_max = (*(*it_ModelList)).get_P_max();
+                    Vectorcd* al = (*(*it_ModelList)).get_al();
+                    Vectorcd* al_max = (*(*it_ModelList)).get_al_max();
                     (*P_max) = (*P);
                     (*al_max) = (*al);
                     MaxObjarray(i) = objarray(i);
@@ -986,27 +987,27 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
 
         SpacePara* spacepara = (*CStr).get_spacepara();
-        VectorXi* geometryPara = (*spacepara).get_geometryPara();
-        VectorXd* Para = (*spacepara).get_Para();
-        VectorXi* Free = (*spacepara).get_Free();
+        Vectori* geometryPara = (*spacepara).get_geometryPara();
+        Vectord* Para = (*spacepara).get_Para();
+        Vectori* Free = (*spacepara).get_Free();
         int n_para_all = (*Para).size();
         int n_para = (*Free).size();
         int N = (*CStr).get_N();
 
 
-        VectorXd gradients = VectorXd::Zero(n_para);
+        Vectord gradients = Vectord(n_para);
 
         it_ModelList = ModelList.begin();
         it_ObjList = ObjList.begin();
-        list<VectorXcd>::iterator it_PforAdjoint = PforAdjoint.begin();
+        list<Vectorcd>::iterator it_PforAdjoint = PforAdjoint.begin();
         for (int i = 0; i <= ModelNum - 1; i++) {
 
             //----------------------------------------get partial derivative of current model---------------------------
             high_resolution_clock::time_point t1 = high_resolution_clock::now();
             //cout << "---------------------------START PARTIAL DERIVATIVE of Model" << i << " ----------------------" << endl;
-            VectorXd devx;
-            VectorXcd Adevxp;
-            VectorXcd devp;
+            Vectord devx;
+            Vectorcd Adevxp;
+            Vectorcd devp;
             tie(devx, Adevxp) = this->devx_and_Adevxp(epsilon_partial, *it_ModelList, *it_ObjList, Originarray(i));
             devp = this->devp(epsilon_partial, *it_ModelList, *it_ObjList, Originarray(i));
             high_resolution_clock::time_point t2 = high_resolution_clock::now();
@@ -1024,16 +1025,16 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             }
             it_PforAdjoint++;
 
-            VectorXcd* P = (*(*it_ModelList)).get_P();
-            VectorXcd lambdaT = (*P);
+            Vectorcd* P = (*(*it_ModelList)).get_P();
+            Vectorcd lambdaT = (*P);
             (*(*it_ModelList)).reset_E();                                  //reset E to initial value
             Adjointiterations << (*(*it_ModelList)).get_ITERATION() << endl;
             TotalAdjointIt += (*(*it_ModelList)).get_ITERATION();
 
 
             //times lambdaT and Adevxp together
-            VectorXcd mult_result;
-            mult_result = VectorXcd::Zero(n_para);               //multiplication result has the length of parameter
+            Vectorcd mult_result;
+            mult_result = Vectorcd(n_para);               //multiplication result has the length of parameter
             vector<list<int>> Paratogeometry(n_para_all);
             for (int i = 0; i <= N - 1; i++) {
                 (Paratogeometry[(*geometryPara)(i)]).push_back(i);
@@ -1052,13 +1053,13 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             }
 
 
-            VectorXd mult_result_real = VectorXd::Zero(n_para);
+            Vectord mult_result_real = Vectord(n_para);
             for (int i = 0; i <= n_para - 1; i++) {
                 complex<double> tmp = mult_result(i);
                 mult_result_real(i) = tmp.real();
             }
-            gradients += devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
-
+            gradients = vecadd(gradients, vecsub(devx, mult_result_real));              //What's the legitimacy in here to ignore the imag part?
+            
             it_ModelList++;
             it_ObjList++;
         }
@@ -1073,8 +1074,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             name2 = save_position + to_string(iteration) + "S.txt";
 
             ofstream fout1(name1), fout2(name2);
-            fout1 << V << endl;
-            fout2 << S << endl;
+            /*fout1 << V << endl;
+            fout2 << S << endl;*/
 
             fout1.close();
             fout2.close();
@@ -1084,8 +1085,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         if (method == "Adam") {
             cout << "Using Adam Optimizer." << endl;
 
-            V = beta1 * V + (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
-            S = beta2 * S + (1 - beta2) * (gradients.array().pow(2).matrix()) / (1 - pow(beta2, iteration + 1));
+            V = vecadd(V * beta1, (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1));
+            S = vecadd(S * beta2, ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2));
 
             for (int i = 0; i <= n_para - 1; i++) {
                 gradients(i) = V(i) / (sqrt(S(i)) + 0.00000001);
@@ -1103,12 +1104,12 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             cout << "Using Adam Optimizer With decay." << endl;
 
             if (iteration == 0) {
-                V = (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
-                S = (1 - beta2) * (gradients.array().pow(2).matrix()) / (1 - pow(beta2, iteration + 1));
+                V = (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1);
+                S = ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2);
             }
             else {
-                V = beta1 * V + (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
-                S = beta2 * S + (1 - beta2) * (gradients.array().pow(2).matrix()) / (1 - pow(beta2, iteration + 1));
+                V = vecadd(V * beta1, (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1));
+                S = vecadd(S * beta2, ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2));
             }
 
             for (int i = 0; i <= n_para - 1; i++) {
@@ -1137,14 +1138,14 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
             }
 
         }
-        cout << "abs(gradients.cwiseAbs().mean() before: " << abs(gradients.cwiseAbs().mean()) << endl;
+        cout << "abs(gradients.cwiseAbs().mean() before: " << abs(vecmean(gradients.cwiseAbs())) << endl;
 
-        if (abs(gradients.cwiseAbs().mean()) < 0.1) {
-            gradients /= abs(gradients.cwiseAbs().mean()) / 0.1;
+        if (abs(vecmean(gradients.cwiseAbs())) < 0.1) {
+            gradients = gradients / abs(vecmean(gradients.cwiseAbs())) / 0.1;
         }
 
-        cout << "abs(gradients.cwiseAbs().mean() after: " << abs(gradients.cwiseAbs().mean()) << endl;
-        VectorXd step = epsilon_final * gradients;            //Find the maximum. If -1 find minimum
+        cout << "abs(gradients.cwiseAbs().mean() after: " << abs(vecmean(gradients.cwiseAbs())) << endl;
+        Vectord step = gradients * epsilon_final;            //Find the maximum. If -1 find minimum
         //cout << "epsilon = " << epsilon << endl;
         //cout << "step = "<< step.mean() << endl;
 
@@ -1175,9 +1176,9 @@ ObjectiveDDAModel* EvoDDAModel::ObjectiveFactory(string ObjectName, list<double>
     if (MajorObjectFunctionName == "PointE"){
         return new ObjectivePointEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
     }
-    if (MajorObjectFunctionName == "PointEList") {
+    /*if (MajorObjectFunctionName == "PointEList") {
         return new ObjectivePointListEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
+    }*/
     if (MajorObjectFunctionName == "PointI") {
         return new ObjectivePointIDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
     }
@@ -1239,7 +1240,7 @@ ObjectiveDDAModel* EvoDDAModel::ObjectiveFactory(string ObjectName, list<double>
 double EvoDDAModel::L1Norm(){
     double Penalty = 0;
     int N = (*CStr).get_N();
-    VectorXd* diel_old = (*CStr).get_diel_old();
+    Vectord* diel_old = (*CStr).get_diel_old();
     for (int i=0;i<N;i++){
         Penalty += 0.5-abs((*diel_old)(3*i)-0.5);
     }
@@ -1265,18 +1266,18 @@ double PtoFderivative(const double input, const double beta, const double ita) {
     }
 }
 
-VectorXd EvoDDAModel::gradients_filtered(VectorXd gradients, int current_it, int Max_it) {
+Vectord EvoDDAModel::gradients_filtered(Vectord gradients, int current_it, int Max_it) {
     SpacePara* sp = (*CStr).get_spacepara();
     FilterOption* fo = (*sp).get_Filterstats();
-    const VectorXd* Para_filtered = (*sp).get_Para_filtered();
-    const VectorXi* Free = (*sp).get_Free();
+    Vectord* Para_filtered = (*sp).get_Para_filtered();
+    Vectori* Free = (*sp).get_Free();
     (*fo).update_beta(current_it, Max_it);                     //current_it is actually the it in current evo-1 as the str is updated in iteration-1.
     const double gbeta = (*fo).get_beta();
     const double gita = (*fo).get_ita();
     
 
     int NFpara = gradients.size();
-    VectorXd result = VectorXd::Zero(NFpara);
+    Vectord result = Vectord(NFpara);
     const vector<vector<WeightPara>>* FreeWeight = (*sp).get_FreeWeight();
     if (NFpara != (*FreeWeight).size()) {
         cout << "ERROR: EvoDDAModel::gradients_filtered--NFpara != (*FreeWeight).size()" << endl;

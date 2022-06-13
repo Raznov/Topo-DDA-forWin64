@@ -12,10 +12,10 @@ CoreStructure::CoreStructure(SpacePara* spacepara_, double d_) {
 
     //-----------------------------------------------------------------Input strs-------------------------------------------------------------
     R = (*spacepara).get_geometry();
-    VectorXi* geometryPara = (*spacepara).get_geometryPara();
-    VectorXd* Para = (*spacepara).get_Para();
+    Vectori* geometryPara = (*spacepara).get_geometryPara();
+    Vectord* Para = (*spacepara).get_Para();
     //---------------------------------------------------initial diel------------------------------------
-    diel_old = VectorXd::Zero(3 * N);
+    diel_old = Vectord(3 * N);
     diel_old_max = diel_old;
     for (int i = 0; i <= N - 1; i++) {
         double dieltmp = (*Para)((*geometryPara)(i));
@@ -25,23 +25,23 @@ CoreStructure::CoreStructure(SpacePara* spacepara_, double d_) {
     }
 }
 
-void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
-    cout << "step in UpdateStr" << step.mean() << endl;
-    VectorXi* geometryPara = (*spacepara).get_geometryPara();
-    VectorXd* Para = (*spacepara).get_Para();
-    VectorXi* Free = (*spacepara).get_Free();
+void CoreStructure::UpdateStr(Vectord step, int current_it, int Max_it) {
+    cout << "step in UpdateStr" << vecmean(step) << endl;
+    Vectori* geometryPara = (*spacepara).get_geometryPara();
+    Vectord* Para = (*spacepara).get_Para();
+    Vectori* Free = (*spacepara).get_Free();
 
     int Parasize = (*Free).size();
     if (Parasize != step.size()) {
-        cout << "ERROR: In CoreStructure::UpdateStr(VectorXd step), step.size!=FreePara.size";
+        cout << "ERROR: In CoreStructure::UpdateStr(Vectord step), step.size!=FreePara.size";
         throw 1;
     }
     
 
     if ((*spacepara).get_Filter()) {
         //When there is filter
-        VectorXd* Para_origin = (*spacepara).get_Para_origin();
-        VectorXd* Para_filtered = (*spacepara).get_Para_filtered();
+        Vectord* Para_origin = (*spacepara).get_Para_origin();
+        Vectord* Para_filtered = (*spacepara).get_Para_filtered();
         FilterOption* Filterstats = (*spacepara).get_Filterstats();
         (*Filterstats).update_beta(current_it, Max_it);                  //Update beta value according to current iteration
         
@@ -97,11 +97,11 @@ void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
 
 void CoreStructure::UpdateStr(SpacePara* spacepara_){
   
-    VectorXi* geometryPara = (*spacepara).get_geometryPara();
-    VectorXd* Para = (*spacepara).get_Para();
-    VectorXi* Free = (*spacepara).get_Free();
-    VectorXd* Parareplace = (*spacepara_).get_Para();
-    VectorXi* Freereplace = (*spacepara_).get_Free();
+    Vectori* geometryPara = (*spacepara).get_geometryPara();
+    Vectord* Para = (*spacepara).get_Para();
+    Vectori* Free = (*spacepara).get_Free();
+    Vectord* Parareplace = (*spacepara_).get_Para();
+    Vectori* Freereplace = (*spacepara_).get_Free();
 
     
     for (int i = 0; i <= (*Para).size() - 1; i++) {
@@ -142,8 +142,8 @@ void CoreStructure::output_to_file() {
 
     ofstream fout("CoreStructure.txt");
     fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
-    fout << R << endl;
-    fout << diel_old << endl;
+    vectofile(fout, R);
+    vectofile(fout, diel_old);
     fout << d << endl;
     fout.close();
 }
@@ -157,8 +157,8 @@ void CoreStructure::output_to_file(string save_position, int iteration, string m
         //name = save_position + "CoreStructure_verify\\CoreStructure" + to_string(iteration) + ".txt";
         ofstream fout(name);
         fout << Nx << endl << Ny << endl << Nz << endl << N << endl;
-        fout << R << endl;
-        fout << diel_old << endl;
+        vectofile(fout, R);
+        vectofile(fout, diel_old);
         fout << d << endl;
         fout.close();
     }
@@ -168,7 +168,7 @@ void CoreStructure::output_to_file(string save_position, int iteration, string m
         name = save_position + "CoreStructure" + to_string(iteration) + ".txt";
         //name = save_position + "CoreStructure_verify\\CoreStructure" + to_string(iteration) + ".txt";
         ofstream fout(name);
-        fout << diel_old << endl;
+        vectofile(fout, diel_old);
         fout.close();
     }
     
@@ -204,7 +204,7 @@ int CoreStructure::get_Ny() {
 int CoreStructure::get_Nz() {
     return Nz;
 }
-VectorXi* CoreStructure::get_R() {
+Vectori* CoreStructure::get_R() {
     return &R;
 }
 double CoreStructure::get_d() {
@@ -213,10 +213,10 @@ double CoreStructure::get_d() {
 SpacePara* CoreStructure::get_spacepara() {
     return spacepara;
 }
-VectorXd* CoreStructure::get_diel_old() {
+Vectord* CoreStructure::get_diel_old() {
     return &diel_old;
 }
-VectorXd* CoreStructure::get_diel_old_max() {
+Vectord* CoreStructure::get_diel_old_max() {
     return &diel_old_max;
 }
 
@@ -228,7 +228,7 @@ tuple<list<int>, list<int>, list<int>, list<int>> CoreStructure::get_para_info()
 list<list<int>>* CoreStructure::get_PositionDep() {
     return &PositionDep;
 }
-VectorXi* CoreStructure::get_PositionPara() {
+Vectori* CoreStructure::get_PositionPara() {
     return &PositionPara;
 }
 list<int>* CoreStructure::get_para_nums() {

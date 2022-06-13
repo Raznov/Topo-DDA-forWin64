@@ -54,6 +54,12 @@
     <ClCompile Include="FilterOption.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Vector.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Matrix.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definition.h">

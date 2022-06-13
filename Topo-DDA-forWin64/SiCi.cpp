@@ -9,8 +9,8 @@ SiCi::SiCi() {
 	CiInput >> numberCi;
 	SiInput >> disSi;
 	CiInput >> disCi;
-	Si = VectorXd::Zero(numberSi);
-	Ci = VectorXd::Zero(numberCi);
+	Si = Vectord(numberSi);
+	Ci = Vectord(numberCi);
 	for (int i = 0; i <= numberSi - 1; i++) {
 		SiInput >> Si(i);
 		CiInput >> Ci(i);
