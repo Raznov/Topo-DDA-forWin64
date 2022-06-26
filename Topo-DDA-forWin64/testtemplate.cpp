@@ -1,14 +1,18 @@
 
 //##########################################################DDA CALCULATION TEMPLATES###################################################
 //DDAModel verification; updated after adding FCD and binding; updated on 2021-6-20
-int main() {
+#include "definition.h"
+#define PI 3.14159265
 
+
+int main() {
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
     int Nx, Ny, Nz;
     Nx = 56; Ny = 56; Nz = 56;
 
     int N = 0;
     VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
-    list<Structure> ln;
+    vector<Structure> ln;
     Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
     double d;
@@ -17,12 +21,11 @@ int main() {
 
     d = 2;
     r = 55 / d;
-    center << Nx / 2, Ny / 2, Nz / 2;
+    center(0) = Nx / 2;
+    center(1) = Ny / 2;
+    center(2) = Nz / 2;
 
     Structure s1(S.get_total_space(), r, center);
-
-
-
     S = S + s1;
 
     double ratioESItoG = 1 / (2.998 * pow(10, 4));
@@ -33,11 +36,16 @@ int main() {
 
     double lam = 525;
     Vector3d n_K;
-    n_K << 0.0, 0.0, 1.0;
+    n_K(0) = 0.0;
+    n_K(1) = 0.0;
+    n_K(2) = 1.0;
     double E0 = 1.0;
     Vector3d n_E0;
-    n_E0 << 1.0, 0.0, 0.0;
-    Vector2cd material = Get_2_material("Air", "SiO2", lam, "nm");
+    n_E0(0) = 1.0;
+    n_E0(1) = 0.0;
+    n_E0(2) = 0.0;
+    list<string> mat_l{ "Air", "SiO2" };
+    VectorXcd material = Get_X_material(mat_l, lam, "nm");
 
     double epsilon = 100;
 
@@ -62,19 +70,24 @@ int main() {
     //list<double> ObjectParameter1{ focus, exponent, ratio };
     list<double> ObjectParameter2{ center(0) * d,center(1) * d,focus };
 
-    bool HavePathRecord = true;
+    bool HavePathRecord = false;
     bool HavePenalty = false;
     double PenaltyFactor = 0.0001;
     list<list<double>*> ObjectParameters{ &ObjectParameter2 };
     string save_position = "";
 
     Vector3i bind(1, 1, 1);
+
     //SpacePara spacepara(&S, bind, "ONES", "ZEROS", r);
 
-    SpacePara spacepara(&S, bind, "ONES");
+    VectorXi* s1geometry = s1.get_geometry();
+    vector<string> FParaInit{};
+    vector<double> BParal{ 1.0 };
+    SpacePara spacepara(&S, bind, FParaInit, BParal);
 
     CoreStructure CStr(&spacepara, d);
-    AProductCore Core(&CStr, lam, material, "LDR");
+    double nback = sqrt(real(material(0)));
+    AProductCore Core(&CStr, lam, material, nback, "LDR");
     DDAModel TestModel(&Core, n_K, E0, n_E0);
 
     TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
@@ -123,8 +136,9 @@ int main() {
 
     //TestModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
 
-
-
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+    cout << "total time: " << duration << "ms" << endl;
 
 
     return 0;
