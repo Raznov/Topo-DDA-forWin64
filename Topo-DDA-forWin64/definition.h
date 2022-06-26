@@ -47,29 +47,46 @@ public:
     Vectorcd(vector<complex<double>> input);
     //Copy constructor
     Vectorcd(const Vectorcd& copy);
+    //Move constructor
+    Vectorcd(Vectorcd&& copy) = default;
     //Assignment operator
     Vectorcd& operator= (const Vectorcd& input);
+    Vectorcd& operator= (Vectorcd&& input);
+
     //For () to be used to get the element in the Vector
-    complex<double>& operator()(const int pos);
+    complex<double>& operator() (const int pos);
+    const complex<double>& operator() (const int pos) const;
 
     //Vector * Scalar
-    Vectorcd operator*(const complex<double>& input);
+    /*Vectorcd operator*(const complex<double>& input);
     Vectorcd operator*(const double& input);
-    Vectorcd operator*(const int& input);
+    Vectorcd operator*(const int& input);*/
     //Vector / Scalar
     Vectorcd operator/(const complex<double>& input);
     Vectorcd operator/(const double& input);
     Vectorcd operator/(const int& input);
+    //Vector += Vector
+    Vectorcd& operator+=(const Vectorcd& rhs);
+    Vectorcd& operator+=(const Vectord& rhs);
+    Vectorcd& operator+=(const Vectori& rhs);
+    //Vector -= Vector
+    Vectorcd& operator-=(const Vectorcd& rhs);
+    Vectorcd& operator-=(const Vectord& rhs);
+    Vectorcd& operator-=(const Vectori& rhs);
+
     //Vector dot* Vector
     complex<double> dot(Vectorcd& input);
     complex<double> dot(Vectord& input);
     complex<double> dot(Vectori& input);
     void print();
-    int size();
+    int size() const;
     double norm();
     complex<double> sum();
     Vectorcd vecpow(int input);
     Vectorcd cwiseAbs();
+
+    //friend Vectorcd operator+(const Vectorcd& x, const Vectorcd& y);
+    //friend Vectorcd operator+(const Vectord& x, const Vectorcd& y);
 };
 
 class Vectord {
@@ -81,29 +98,41 @@ public:
     Vectord(vector<double> input);
     //Copy constructor
     Vectord(const Vectord& copy);
+    //Move constructor
+    Vectord(Vectord&& copy) = default;
     //Assignment operator
     Vectord& operator= (const Vectord& input);
+    Vectord& operator= (Vectord&& input);
     //For () to be used to get the element in the Vector
     double& operator()(const int pos);
+    const double& operator()(const int pos) const;
 
     //Vector * Scalar
-    Vectorcd operator*(const complex<double>& input);
+    /*Vectorcd operator*(const complex<double>& input);
     Vectord operator*(const double& input);
-    Vectord operator*(const int& input);
+    Vectord operator*(const int& input);*/
     //Vector / Scalar
     Vectorcd operator/(const complex<double>& input);
     Vectord operator/(const double& input);
     Vectord operator/(const int& input);
+    //Vector += Vector
+    Vectord& operator+=(const Vectord& rhs);
+    Vectord& operator+=(const Vectori& rhs);
+    //Vector -= Vector
+    Vectord& operator-=(const Vectord& rhs);
+    Vectord& operator-=(const Vectori& rhs);
     //Vector dot* Vector
     complex<double> dot(Vectorcd& input);
     double dot(Vectord& input);
     double dot(Vectori& input);
     void print();
-    int size();
+    const int size() const;
     double norm();
     double sum();
     Vectord vecpow(int input);
     Vectord cwiseAbs();
+
+    //friend Vectorcd operator+(const Vectord& x, const Vectorcd& y);
 };
 
 class Vectori {
@@ -115,42 +144,83 @@ public:
     Vectori(vector<int> input);
     //Copy constructor
     Vectori(const Vectori& copy);
+    //Move constructor
+    Vectori(Vectori&& copy) = default;
     //Assignment operator
     Vectori& operator= (const Vectori& input);
+    Vectori& operator= (Vectori&& input);
     //For () to be used to get the element in the Vector
     int& operator()(const int pos);
+    const int& operator()(const int pos) const;
 
     //Vector * Scalar
-    Vectorcd operator*(const complex<double>& input);
+    /*Vectorcd operator*(const complex<double>& input);
     Vectord operator*(const double& input);
-    Vectori operator*(const int& input);
+    Vectori operator*(const int& input);*/
     //Vector / Scalar
     Vectorcd operator/(const complex<double>& input);
     Vectord operator/(const double& input);
     Vectori operator/(const int& input);
+    //Vector += Vector
+    Vectori& operator+=(const Vectori& rhs);
+    //Vector -= Vector
+    Vectori& operator-=(const Vectori& rhs);
     //Vector dot* Vector
     complex<double> dot(Vectorcd& input);
     double dot(Vectord& input);
     int dot(Vectori& input);
     void print();
-    int size();
+    int size() const;
     double norm();
     int sum();
     Vectori vecpow(int input);
     Vectori cwiseAbs();
 };
 
-Vectorcd vecadd(Vectorcd x, Vectorcd y);
-Vectorcd vecadd(Vectord x, Vectorcd y);
-Vectorcd vecadd(Vectorcd x, Vectord y);
-Vectord vecadd(Vectord x, Vectord y);
-Vectorcd vecsub(Vectorcd x, Vectorcd y);
-Vectorcd vecsub(Vectord x, Vectorcd y);
-Vectorcd vecsub(Vectorcd x, Vectord y);
-Vectord vecsub(Vectord x, Vectord y);
-complex<double> vecmean(Vectorcd x);
-double vecmean(Vectord x);
-double vecmean(Vectori x);
+//Vectorcd vecadd(Vectorcd x, Vectorcd y);
+//Vectorcd vecadd(Vectord x, Vectorcd y);
+//Vectorcd vecadd(Vectorcd x, Vectord y);
+//Vectord vecadd(Vectord x, Vectord y);
+//Vectorcd vecsub(Vectorcd x, Vectorcd y);
+//Vectorcd vecsub(Vectord x, Vectorcd y);
+//Vectorcd vecsub(Vectorcd x, Vectord y);
+//Vectord vecsub(Vectord x, Vectord y);
+
+
+Vectorcd operator+(const Vectorcd &x, const Vectorcd &y);
+Vectorcd operator+(const Vectord& x, const Vectorcd& y);
+Vectorcd operator+(const Vectorcd& x, const Vectord& y);
+Vectord operator+(const Vectord& x, const Vectord& y);
+Vectorcd operator-(const Vectorcd& x, const Vectorcd& y);
+Vectorcd operator-(const Vectord& x, const Vectorcd& y);
+Vectorcd operator-(const Vectorcd& x, const Vectord& y);
+Vectord operator-(const Vectord& x, const Vectord& y);
+
+Vectorcd operator*(const Vectorcd &x, const complex<double>& input);
+Vectorcd operator*(const complex<double>& input, const Vectorcd& x);
+Vectorcd operator*(const Vectorcd& x, const double& input);
+Vectorcd operator*(const double& input, const Vectorcd& x);
+Vectorcd operator*(const Vectorcd& x, const int& input);
+Vectorcd operator*(const int& input, const Vectorcd& x);
+
+Vectorcd operator*(const Vectord& x, const complex<double>& input);
+Vectorcd operator*(const complex<double>& input, const Vectord& x);
+Vectord operator*(const Vectord& x, const double& input);
+Vectord operator*(const double& input, const Vectord& x);
+Vectord operator*(const Vectord& x, const int& input);
+Vectord operator*(const int& input, const Vectord& x);
+
+Vectorcd operator*(const Vectori& x, const complex<double>& input);
+Vectorcd operator*(const complex<double>& input, const Vectori& x);
+Vectord operator*(const Vectori& x, const double& input);
+Vectord operator*(const double& input, const Vectori& x);
+Vectori operator*(const Vectori& x, const int& input);
+Vectori operator*(const int& input, const Vectori& x);
+
+
+complex<double> vecmean(const Vectorcd& x);
+double vecmean(const Vectord& x);
+double vecmean(const Vectori& x);
 void vectofile(ofstream& fout, Vectorcd object);
 void vectofile(ofstream& fout, Vectord object);
 void vectofile(ofstream& fout, Vectori object);
@@ -164,10 +234,15 @@ public:
     Matrixcd(int input_size1, int input_size2);
     //Copy constructor
     Matrixcd(const Matrixcd& copy);
+    Matrixcd(Matrixcd&& copy)=default;
     //Assignment operator
     Matrixcd& operator= (const Matrixcd& input);
+    Matrixcd& operator= (Matrixcd&& input);
+    //+=
+    Matrixcd& operator+=(const Matrixcd& rhs);
     //For () to be used to get the element in the Vector
     complex<double>& operator()(const int pos1, const int pos2);
+    const complex<double>& operator()(const int pos1, const int pos2) const;
     //Matrix * Scalar
     Matrixcd operator*(const complex<double>& input);
     Matrixcd operator*(const double& input);
@@ -177,7 +252,7 @@ public:
     Matrixcd operator/(const double& input);
     Matrixcd operator/(const int& input);
     void print();
-    Vectori getShape();
+    Vectori getShape() const;
 };
 
 class Matrixd {
@@ -188,10 +263,13 @@ public:
     Matrixd(int input_size1, int input_size2);
     //Copy constructor
     Matrixd(const Matrixd& copy);
+    Matrixd(Matrixd&& copy)=default;
     //Assignment operator
     Matrixd& operator= (const Matrixd& input);
+    Matrixd& operator= (Matrixd&& input);
     //For () to be used to get the element in the Vector
     double& operator()(const int pos1, const int pos2);
+    const double& operator()(const int pos1, const int pos2) const;
     //Matrix * Scalar
     Matrixcd operator*(const complex<double>& input);
     Matrixd operator*(const double& input);
@@ -201,7 +279,7 @@ public:
     Matrixd operator/(const double& input);
     Matrixd operator/(const int& input);
     void print();
-    Vectori getShape();
+    Vectori getShape() const;
 };
 
 class Matrixi {
@@ -212,10 +290,13 @@ public:
     Matrixi(int input_size1, int input_size2);
     //Copy constructor
     Matrixi(const Matrixi& copy);
+    Matrixi(Matrixi&& copy) = default;
     //Assignment operator
     Matrixi& operator= (const Matrixi& input);
+    Matrixi& operator= (Matrixi&& input);
     //For () to be used to get the element in the Vector
     int& operator()(const int pos1, const int pos2);
+    const int& operator()(const int pos1, const int pos2) const;
     //Matrix * Scalar
     Matrixcd operator*(const complex<double>& input);
     Matrixd operator*(const double& input);
@@ -225,10 +306,10 @@ public:
     Matrixd operator/(const double& input);
     Matrixi operator/(const int& input);
     void print();
-    Vectori getShape();
+    Vectori getShape() const;
 };
 
-Matrixcd matadd(Matrixcd x, Matrixcd y);
+Matrixcd operator+(const Matrixcd& x, const Matrixcd& y);
 
 
 

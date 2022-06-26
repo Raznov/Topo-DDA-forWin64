@@ -158,24 +158,24 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
 
     
     Vectorcd Ax0 = Aproductwithalb(P);
-    
-    r = vecsub(E, Ax0);
+
+    r = E - Ax0;
     r0 = r;
     p = r;
     Vectorcd Ap0 = Aproductwithalb(p);
 
-    
-    alpha = r0.dot(r)/r0.dot(Ap0);
-    t = vecsub(r, Ap0 * alpha);
+
+    alpha = r0.dot(r) / r0.dot(Ap0);
+    t = r - alpha * Ap0;
     Vectorcd At0 = Aproductwithalb(t);
 
-    
-    zeta = At0.dot(t)/At0.dot(At0);
-    u = Ap0 * zeta;;
-    z = vecsub(r * zeta, u * alpha);
-    P = vecadd(P, vecadd(p * alpha, z));                                    //this will directly change P in this.
+
+    zeta = At0.dot(t) / At0.dot(At0);
+    u = zeta * Ap0;
+    z = zeta * r - alpha * u;
+    P = P + alpha * p + z;                                    //this will directly change P in this.
     rl = r;
-    r = vecsub(t, At0 * zeta);
+    r = t - zeta * At0;
     
     Vectorcd Ap = Vectorcd(N*3);
     Vectorcd At = Vectorcd(N*3);
@@ -211,19 +211,19 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
             return;
         }
 
-        beta = (alpha/zeta)*r0.dot(r)/r0.dot(rl);
-        p = vecadd(r, vecsub(p, u) * beta);
+        beta = (alpha / zeta) * r0.dot(r) / r0.dot(rl);
+        p = r + beta * (p - u);
         Ap = Aproductwithalb(p);
-        alpha = r0.dot(r)/r0.dot(Ap);
-        t = vecsub(r, Ap * alpha);
+        alpha = r0.dot(r) / r0.dot(Ap);
+        t = r - alpha * Ap;
         At = Aproductwithalb(t);
 
-        zeta = At.dot(t)/At.dot(At);
-        u = Ap * zeta;
-        z = vecsub(r * zeta, u * alpha);
-        P = vecadd(P,vecadd(p* alpha ,z));
+        zeta = At.dot(t) / At.dot(At);
+        u = zeta * Ap;
+        z = zeta * r - alpha * u;
+        P = P + alpha * p + z;
         rl = r;
-        r = vecsub(t,At*zeta);
+        r = t - zeta * At;
 
         if (r.norm()/E.norm()<=MAX_ERROR) {
             Error = r.norm()/E.norm();
@@ -293,7 +293,7 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
 
 
 
-    r = vecsub(E, Ax0);
+    r = E - Ax0;
 
 
 
@@ -307,7 +307,7 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
 
 
 
-    t = vecsub(r, Ap0 * alpha);
+    t = r - alpha * Ap0;
     Vectorcd At0 = Aproductwithalb(t);
 
 
@@ -316,11 +316,11 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
 
 
 
-    u = Ap0 * zeta;;
-    z = vecsub(r * zeta, u * alpha);
-    P = vecadd(P, vecadd(p * alpha, z));                                    //this will directly change P in this.
+    u = zeta * Ap0;
+    z = zeta * r - alpha * u;
+    P = P + alpha * p + z;                                    //this will directly change P in this.
     rl = r;
-    r = vecsub(t, At0 * zeta);
+    r = t - zeta * At0;
 
     
 
@@ -392,18 +392,18 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
         }
         */
         beta = (alpha / zeta) * r0.dot(r) / r0.dot(rl);
-        p = vecadd(r, vecsub(p, u) * beta);
+        p = r + beta * (p - u);
         Ap = Aproductwithalb(p);
         alpha = r0.dot(r) / r0.dot(Ap);
-        t = vecsub(r, Ap * alpha);
+        t = r - alpha * Ap;
         At = Aproductwithalb(t);
 
         zeta = At.dot(t) / At.dot(At);
-        u = Ap * zeta;
-        z = vecsub(r * zeta, u * alpha);
-        P = vecadd(P, vecadd(p * alpha, z));
+        u = zeta * Ap;
+        z = zeta * r - alpha * u;
+        P = P + alpha * p + z;
         rl = r;
-        r = vecsub(t, At * zeta);
+        r = t - zeta * At;
         
 
         if (EVOITERATION == 88) {
@@ -577,7 +577,7 @@ Vectorcd DDAModel::Aproductwithalb(Vectorcd& b) {
     for (int i = 0; i <= al.size() - 1; i++) {
         result(i) = b(i) * al(i);
     }
-    return vecadd((*Core).Aproduct(b), result);
+    return (*Core).Aproduct(b) + result;
 }
 
 

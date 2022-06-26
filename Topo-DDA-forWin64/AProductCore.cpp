@@ -302,7 +302,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vectorcd material_
                 Matrixcd Atmp(3, 3);
                 for (int m = -MAXm; m <= MAXm; m++) {
                     for (int n = -MAXn; n <= MAXn; n++) {
-                        Atmp = matadd(Atmp, this->A_dic_generator(x, y, z, m, n));
+                        Atmp += this->A_dic_generator(x, y, z, m, n);
                     }
                 }
 
@@ -329,7 +329,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vectorcd material_
                 Matrixcd Atmp = Matrixcd(3, 3);
                 for (int m = -MAXm; m <= MAXm; m++) {
                     for (int n = -MAXn; n <= MAXn; n++) {
-                        Atmp = matadd(Atmp, this->A_dic_generator(x, y, z, m, n));
+                        Atmp += this->A_dic_generator(x, y, z, m, n);
                     }
                 }
                 int first[6] = { 0, 0, 0, 1, 1, 2 };
@@ -351,7 +351,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vectorcd material_
                 Matrixcd Atmp = Matrixcd(3, 3);
                 for (int m = -MAXm; m <= MAXm; m++) {
                     for (int n = -MAXn; n <= MAXn; n++) {
-                        Atmp = matadd(Atmp, this->A_dic_generator(x, y, z, m, n));
+                        Atmp += this->A_dic_generator(x, y, z, m, n);
                     }
                 }
                 int first[6] = { 0, 0, 0, 1, 1, 2 };
@@ -373,7 +373,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vectorcd material_
                 Matrixcd Atmp = Matrixcd(3, 3);
                 for (int m = -MAXm; m <= MAXm; m++) {
                     for (int n = -MAXn; n <= MAXn; n++) {
-                        Atmp = matadd(Atmp, this->A_dic_generator(x, y, z, m, n));
+                        Atmp += this->A_dic_generator(x, y, z, m, n);
                     }
                 }
                 int first[6] = { 0, 0, 0, 1, 1, 2 };
@@ -395,7 +395,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vectorcd material_
                 Matrixcd Atmp = Matrixcd(3, 3);
                 for (int m = -MAXm; m <= MAXm; m++) {
                     for (int n = -MAXn; n <= MAXn; n++) {
-                        Atmp = matadd(Atmp, this->A_dic_generator(x, y, z, m, n));
+                        Atmp += this->A_dic_generator(x, y, z, m, n);
                     }
                 }
                 int first[6] = { 0, 0, 0, 1, 1, 2 };
@@ -417,7 +417,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vectorcd material_
                 Matrixcd Atmp = Matrixcd(3, 3);
                 for (int m = -MAXm; m <= MAXm; m++) {
                     for (int n = -MAXn; n <= MAXn; n++) {
-                        Atmp = matadd(Atmp, this->A_dic_generator(x, y, z, m, n));
+                        Atmp += this->A_dic_generator(x, y, z, m, n);
                     }
                 }
                 int first[6] = { 0, 0, 0, 1, 1, 2 };
@@ -439,7 +439,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vectorcd material_
                 Matrixcd Atmp = Matrixcd(3, 3);
                 for (int m = -MAXm; m <= MAXm; m++) {
                     for (int n = -MAXn; n <= MAXn; n++) {
-                        Atmp = matadd(Atmp, this->A_dic_generator(x, y, z, m, n));
+                        Atmp += this->A_dic_generator(x, y, z, m, n);
                     }
                 }
                 int first[6] = { 0, 0, 0, 1, 1, 2 };
@@ -461,7 +461,7 @@ AProductCore::AProductCore(CoreStructure* CStr_, double lam_, Vectorcd material_
                 Matrixcd Atmp = Matrixcd(3, 3);
                 for (int m = -MAXm; m <= MAXm; m++) {
                     for (int n = -MAXn; n <= MAXn; n++) {
-                        Atmp = matadd(Atmp, this->A_dic_generator(x, y, z, m, n));
+                        Atmp += this->A_dic_generator(x, y, z, m, n);
                     }
                 }
                 int first[6] = { 0, 0, 0, 1, 1, 2 };

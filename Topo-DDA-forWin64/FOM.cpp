@@ -165,7 +165,7 @@ list<double> FOMreflect2D::GetVal() {
             double ksz = (*it)(2);                                 //x in the paper is actually z in our case.
             //cout << tmp << endl;
             tmp = tmp * (2.0 * M_PI * 1.0i) / (K * K * ATUC * abs(ksz));
-            tmp = vecadd(tmp, n_E0 * E0);
+            tmp += E0 * n_E0;
             //cout << tmp << endl;
             //cout << tmp << endl;
             double tmpresult = (norm(tmp(0)) + norm(tmp(1)) + norm(tmp(2))) / pow(E0, 2);  //00 order transmission

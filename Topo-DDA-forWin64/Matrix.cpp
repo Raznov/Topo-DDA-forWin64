@@ -12,7 +12,10 @@
 }
 
  Matrixcd& Matrixcd::operator= (const Matrixcd& input)
-{
+{   
+	if (this == &input) {
+		return *this;
+	}
 	// do the copy
 	m_vec = input.m_vec;
 
@@ -20,8 +23,23 @@
 	return *this;
 }
 
+ Matrixcd& Matrixcd::operator= (Matrixcd&& input)
+ {
+	 if (this == &input) {
+		 return *this;
+	 }
+	 // do the move
+	 m_vec = move(input.m_vec);
+
+	 // return the existing object so we can chain this operator
+	 return *this;
+ }
 
 complex<double>& Matrixcd::operator()(const int pos1, const int pos2) {
+	return m_vec[pos1][pos2];
+}
+
+const complex<double>& Matrixcd::operator()(const int pos1, const int pos2) const {
 	return m_vec[pos1][pos2];
 }
 
@@ -39,6 +57,20 @@ Matrixcd Matrixcd::operator*(const complex<double>& input) {
 	return result;
 }
 
+Matrixcd& Matrixcd::operator+=(const Matrixcd& rhs) {
+	Vectori shape1 = this->getShape();
+	Vectori shape2 = rhs.getShape();
+	if (shape1(0) != shape2(0) || shape1(1) != shape2(1)) {
+		cout << "ERROR Matrixcd::operator+=(const Matrixcd& rhs) : shape not equal" << endl;
+		throw 1;
+	}
+	for (int i = 0; i < shape1(0); i++) {
+		for (int j = 0; j < shape1(1); j++) {
+			m_vec[i][j] += rhs(i, j);
+		}
+	}
+	return *this;
+}
 
 Matrixcd Matrixcd::operator*(const double& input) {
 	int length1 = m_vec.size();
@@ -119,7 +151,7 @@ void Matrixcd::print() {
 }
 
 
-Vectori Matrixcd::getShape() {
+Vectori Matrixcd::getShape() const {
 	int length1 = m_vec.size();
 	int length2 = m_vec[0].size();
 	Vectori result(2);
@@ -142,6 +174,9 @@ Matrixd::Matrixd(const Matrixd& copy) {
 
 Matrixd& Matrixd::operator= (const Matrixd& input)
 {
+	if (this == &input) {
+		return *this;
+	}
 	// do the copy
 	m_vec = input.m_vec;
 
@@ -149,8 +184,23 @@ Matrixd& Matrixd::operator= (const Matrixd& input)
 	return *this;
 }
 
+Matrixd& Matrixd::operator= (Matrixd&& input)
+{
+	if (this == &input) {
+		return *this;
+	}
+	// do the move
+	m_vec = move(input.m_vec);
+
+	// return the existing object so we can chain this operator
+	return *this;
+}
 
 double& Matrixd::operator()(const int pos1, const int pos2) {
+	return m_vec[pos1][pos2];
+}
+
+const double& Matrixd::operator()(const int pos1, const int pos2) const {
 	return m_vec[pos1][pos2];
 }
 
@@ -248,7 +298,7 @@ void Matrixd::print() {
 }
 
 
-Vectori Matrixd::getShape() {
+Vectori Matrixd::getShape() const {
 	int length1 = m_vec.size();
 	int length2 = m_vec[0].size();
 	Vectori result(2);
@@ -271,6 +321,9 @@ Matrixi::Matrixi(const Matrixi& copy) {
 
 Matrixi& Matrixi::operator= (const Matrixi& input)
 {
+	if (this == &input) {
+		return *this;
+	}
 	// do the copy
 	m_vec = input.m_vec;
 
@@ -278,8 +331,23 @@ Matrixi& Matrixi::operator= (const Matrixi& input)
 	return *this;
 }
 
+Matrixi& Matrixi::operator= (Matrixi&& input)
+{
+	if (this == &input) {
+		return *this;
+	}
+	// do the move
+	m_vec = move(input.m_vec);
+
+	// return the existing object so we can chain this operator
+	return *this;
+}
 
 int& Matrixi::operator()(const int pos1, const int pos2) {
+	return m_vec[pos1][pos2];
+}
+
+const int& Matrixi::operator()(const int pos1, const int pos2) const {
 	return m_vec[pos1][pos2];
 }
 
@@ -377,7 +445,7 @@ void Matrixi::print() {
 }
 
 
-Vectori Matrixi::getShape() {
+Vectori Matrixi::getShape() const {
 	int length1 = m_vec.size();
 	int length2 = m_vec[0].size();
 	Vectori result(2);
@@ -387,7 +455,7 @@ Vectori Matrixi::getShape() {
 }
 
 //---------------------------------------------------------------------Overall---------------------------------------------------------------------
-Matrixcd matadd(Matrixcd x, Matrixcd y) {
+Matrixcd operator+(const Matrixcd& x, const Matrixcd& y) {
 	Vectori shape1 = x.getShape();
 	Vectori shape2 = y.getShape();
 	if (shape1(0) != shape2(0) || shape1(1) != shape2(1)) {

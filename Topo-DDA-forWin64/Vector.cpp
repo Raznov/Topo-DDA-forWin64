@@ -14,7 +14,10 @@
 }
 
  Vectorcd& Vectorcd::operator= (const Vectorcd& input)
-{
+{   
+	if (this == &input) {
+		 return *this;
+	}
 	// do the copy
 	m_vec = input.m_vec;
 
@@ -22,39 +25,26 @@
 	return *this;
 }
 
-complex<double>& Vectorcd::operator()(const int pos) {
+ Vectorcd& Vectorcd::operator= (Vectorcd&& input)
+ {   
+	 if (this == &input) {
+		 return *this;
+	 }
+	 // do the move
+	 m_vec = move(input.m_vec);
+
+	 // return the existing object so we can chain this operator
+	 return *this;
+ }
+
+complex<double>& Vectorcd::operator() (const int pos) {
 	return m_vec[pos];
 }
-//Vector * Scalar
 
-Vectorcd Vectorcd::operator*(const complex<double>& input) {
-	int length = m_vec.size();
-	Vectorcd result(length);
-	for (int i = 0; i < length; i++) {
-		result(i) = m_vec[i] * input;
-	}
-	return result;
+const complex<double>& Vectorcd::operator() (const int pos) const {
+	return m_vec[pos];
 }
 
-
-Vectorcd Vectorcd::operator*(const double& input) {
-	int length = m_vec.size();
-	Vectorcd result(length);
-	for (int i = 0; i < length; i++) {
-		result(i) = m_vec[i] * input;
-	}
-	return result;
-}
-
-
-Vectorcd Vectorcd::operator*(const int& input) {
-	int length = m_vec.size();
-	Vectorcd result(length);
-	for (int i = 0; i < length; i++) {
-		result(i) = m_vec[i] * double(input);
-	}
-	return result;
-}
 
 //Vector / Scalar
 
@@ -85,6 +75,76 @@ Vectorcd Vectorcd::operator/(const int& input) {
 		result(i) = m_vec[i] / double(input);
 	}
 	return result;
+}
+
+
+//Vector += Vector
+Vectorcd& Vectorcd::operator+=(const Vectorcd& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectorcd::operator+= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] += rhs(i);
+	}
+	return *this;
+}
+Vectorcd& Vectorcd::operator+=(const Vectord& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectorcd::operator+= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] += rhs(i);
+	}
+	return *this;
+}
+Vectorcd& Vectorcd::operator+=(const Vectori& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectorcd::operator+= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] += double(rhs(i));
+	}
+	return *this;
+}
+//Vector -= Vector
+Vectorcd& Vectorcd::operator-=(const Vectorcd& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectorcd::operator-= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] -= rhs(i);
+	}
+	return *this;
+}
+Vectorcd& Vectorcd::operator-=(const Vectord& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectorcd::operator-= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] -= rhs(i);
+	}
+	return *this;
+}
+Vectorcd& Vectorcd::operator-=(const Vectori& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectorcd::operator-= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] -= double(rhs(i));
+	}
+	return *this;
 }
 
 //Vector dot* Vector
@@ -148,7 +208,7 @@ void Vectorcd::print() {
 }
 
 
-int Vectorcd::size() {
+int Vectorcd::size() const {
 	int length = m_vec.size();
 
 	return length;
@@ -204,8 +264,23 @@ Vectord::Vectord(const Vectord& copy) {
 
 Vectord& Vectord::operator= (const Vectord& input)
 {
+	if (this == &input) {
+		return *this;
+	}
 	// do the copy
 	m_vec = input.m_vec;
+
+	// return the existing object so we can chain this operator
+	return *this;
+}
+
+Vectord& Vectord::operator= (Vectord&& input)
+{
+	if (this == &input) {
+		return *this;
+	}
+	// do the move
+	m_vec = move(input.m_vec);
 
 	// return the existing object so we can chain this operator
 	return *this;
@@ -214,36 +289,11 @@ Vectord& Vectord::operator= (const Vectord& input)
 double& Vectord::operator()(const int pos) {
 	return m_vec[pos];
 }
-//Vector * Scalar
 
-Vectorcd Vectord::operator*(const complex<double>& input) {
-	int length = m_vec.size();
-	Vectorcd result(length);
-	for (int i = 0; i < length; i++) {
-		result(i) = m_vec[i] * input;
-	}
-	return result;
+const double& Vectord::operator()(const int pos) const {
+	return m_vec[pos];
 }
 
-
-Vectord Vectord::operator*(const double& input) {
-	int length = m_vec.size();
-	Vectord result(length);
-	for (int i = 0; i < length; i++) {
-		result(i) = m_vec[i] * input;
-	}
-	return result;
-}
-
-
-Vectord Vectord::operator*(const int& input) {
-	int length = m_vec.size();
-	Vectord result(length);
-	for (int i = 0; i < length; i++) {
-		result(i) = m_vec[i] * double(input);
-	}
-	return result;
-}
 
 //Vector / Scalar
 
@@ -275,6 +325,55 @@ Vectord Vectord::operator/(const int& input) {
 	}
 	return result;
 }
+
+
+//Vector += Vector
+Vectord& Vectord::operator+=(const Vectord& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectord::operator+= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] += rhs(i);
+	}
+	return *this;
+}
+Vectord& Vectord::operator+=(const Vectori& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectord::operator+= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] += rhs(i);
+	}
+	return *this;
+}
+//Vector -= Vector
+Vectord& Vectord::operator-=(const Vectord& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectord::operator-= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] -= rhs(i);
+	}
+	return *this;
+}
+Vectord& Vectord::operator-=(const Vectori& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectord::operator-= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] -= rhs(i);
+	}
+	return *this;
+}
+
 
 //Vector dot* Vector
 
@@ -332,7 +431,7 @@ void Vectord::print() {
 }
 
 
-int Vectord::size() {
+const int Vectord::size() const {
 	int length = m_vec.size();
 
 	return length;
@@ -389,8 +488,23 @@ Vectori::Vectori(const Vectori& copy) {
 
 Vectori& Vectori::operator= (const Vectori& input)
 {
+	if (this == &input) {
+		return *this;
+	}
 	// do the copy
 	m_vec = input.m_vec;
+
+	// return the existing object so we can chain this operator
+	return *this;
+}
+
+Vectori& Vectori::operator= (Vectori&& input)
+{
+	if (this == &input) {
+		return *this;
+	}
+	// do the move
+	m_vec = move(input.m_vec);
 
 	// return the existing object so we can chain this operator
 	return *this;
@@ -399,36 +513,11 @@ Vectori& Vectori::operator= (const Vectori& input)
 int& Vectori::operator()(const int pos) {
 	return m_vec[pos];
 }
-//Vector * Scalar
 
-Vectorcd Vectori::operator*(const complex<double>& input) {
-	int length = m_vec.size();
-	Vectorcd result(length);
-	for (int i = 0; i < length; i++) {
-		result(i) = double(m_vec[i]) * input;
-	}
-	return result;
+const int& Vectori::operator()(const int pos) const {
+	return m_vec[pos];
 }
 
-
-Vectord Vectori::operator*(const double& input) {
-	int length = m_vec.size();
-	Vectord result(length);
-	for (int i = 0; i < length; i++) {
-		result(i) = double(m_vec[i]) * input;
-	}
-	return result;
-}
-
-
-Vectori Vectori::operator*(const int& input) {
-	int length = m_vec.size();
-	Vectori result(length);
-	for (int i = 0; i < length; i++) {
-		result(i) = m_vec[i] * input;
-	}
-	return result;
-}
 
 //Vector / Scalar
 
@@ -461,6 +550,30 @@ Vectori Vectori::operator/(const int& input) {
 	return result;
 }
 
+//Vector += Vector
+Vectori& Vectori::operator+=(const Vectori& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectori::operator+= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] += rhs(i);
+	}
+	return *this;
+}
+//Vector -= Vector
+Vectori& Vectori::operator-=(const Vectori& rhs) {
+	int length = rhs.size();
+	if (length != m_vec.size()) {
+		cout << "ERROR Vectori::operator-= : input vec size is different." << endl;
+		throw 1;
+	}
+	for (int i = 0; i < length; i++) {
+		m_vec[i] -= rhs(i);
+	}
+	return *this;
+}
 //Vector dot* Vector
 
 complex<double> Vectori::dot(Vectorcd& input) {
@@ -517,7 +630,7 @@ void Vectori::print() {
 }
 
 
-int Vectori::size() {
+int Vectori::size() const {
 	int length = m_vec.size();
 
 	return length;
@@ -557,11 +670,11 @@ Vectori Vectori::cwiseAbs() {
 }
 
 //---------------------------------------------------------------------Overall---------------------------------------------------------------------
-Vectorcd vecadd(Vectorcd x, Vectorcd y) {
+Vectorcd operator+(const Vectorcd &x, const Vectorcd &y) {
 	int length1 = x.size();
 	int length2 = y.size();
 	if (length1 != length2) {
-		cout << "ERROR vecadd : two vec length different" << endl;
+		cout << "ERROR operator+ : two vec length different" << endl;
 	}
 	Vectorcd result(length1);
 	for (int i = 0; i < length1; i++) {
@@ -569,11 +682,11 @@ Vectorcd vecadd(Vectorcd x, Vectorcd y) {
 	}
 	return result;
 }
-Vectorcd vecadd(Vectord x, Vectorcd y) {
+Vectorcd operator+(const Vectord& x, const Vectorcd& y) {
 	int length1 = x.size();
 	int length2 = y.size();
 	if (length1 != length2) {
-		cout << "ERROR vecadd : two vec length different" << endl;
+		cout << "ERROR operator+ : two vec length different" << endl;
 	}
 	Vectorcd result(length1);
 	for (int i = 0; i < length1; i++) {
@@ -581,23 +694,14 @@ Vectorcd vecadd(Vectord x, Vectorcd y) {
 	}
 	return result;
 }
-Vectorcd vecadd(Vectorcd x, Vectord y) {
-	int length1 = x.size();
-	int length2 = y.size();
-	if (length1 != length2) {
-		cout << "ERROR vecadd : two vec length different" << endl;
-	}
-	Vectorcd result(length1);
-	for (int i = 0; i < length1; i++) {
-		result(i) = x(i) + y(i);
-	}
-	return result;
+Vectorcd operator+(const Vectorcd& x, const Vectord& y) {
+	return y + x;
 }
-Vectord vecadd(Vectord x, Vectord y) {
+Vectord operator+(const Vectord& x, const Vectord& y) {
 	int length1 = x.size();
 	int length2 = y.size();
 	if (length1 != length2) {
-		cout << "ERROR vecadd : two vec length different" << endl;
+		cout << "ERROR operator+ : two vec length different" << endl;
 	}
 	Vectord result(length1);
 	for (int i = 0; i < length1; i++) {
@@ -609,11 +713,11 @@ Vectord vecadd(Vectord x, Vectord y) {
 
 
 
-Vectorcd vecsub(Vectorcd x, Vectorcd y) {
+Vectorcd operator-(const Vectorcd& x, const Vectorcd& y) {
 	int length1 = x.size();
 	int length2 = y.size();
 	if (length1 != length2) {
-		cout << "ERROR vecadd : two vec length different" << endl;
+		cout << "ERROR operator- : two vec length different" << endl;
 	}
 	Vectorcd result(length1);
 	for (int i = 0; i < length1; i++) {
@@ -621,11 +725,11 @@ Vectorcd vecsub(Vectorcd x, Vectorcd y) {
 	}
 	return result;
 }
-Vectorcd vecsub(Vectord x, Vectorcd y) {
+Vectorcd operator-(const Vectord& x, const Vectorcd& y) {
 	int length1 = x.size();
 	int length2 = y.size();
 	if (length1 != length2) {
-		cout << "ERROR vecadd : two vec length different" << endl;
+		cout << "ERROR operator- : two vec length different" << endl;
 	}
 	Vectorcd result(length1);
 	for (int i = 0; i < length1; i++) {
@@ -633,11 +737,11 @@ Vectorcd vecsub(Vectord x, Vectorcd y) {
 	}
 	return result;
 }
-Vectorcd vecsub(Vectorcd x, Vectord y) {
+Vectorcd operator-(const Vectorcd& x, const Vectord& y) {
 	int length1 = x.size();
 	int length2 = y.size();
 	if (length1 != length2) {
-		cout << "ERROR vecadd : two vec length different" << endl;
+		cout << "ERROR operator- : two vec length different" << endl;
 	}
 	Vectorcd result(length1);
 	for (int i = 0; i < length1; i++) {
@@ -645,11 +749,11 @@ Vectorcd vecsub(Vectorcd x, Vectord y) {
 	}
 	return result;
 }
-Vectord vecsub(Vectord x, Vectord y) {
+Vectord operator-(const Vectord& x, const Vectord& y) {
 	int length1 = x.size();
 	int length2 = y.size();
 	if (length1 != length2) {
-		cout << "ERROR vecadd : two vec length different" << endl;
+		cout << "ERROR operator- : two vec length different" << endl;
 	}
 	Vectord result(length1);
 	for (int i = 0; i < length1; i++) {
@@ -658,7 +762,7 @@ Vectord vecsub(Vectord x, Vectord y) {
 	return result;
 }
 
-complex<double> vecmean(Vectorcd x) {
+complex<double> vecmean(const Vectorcd& x) {
 	int length = x.size();
 	complex<double> result = 0.0;
 	for (int i = 0; i < length; i++) {
@@ -668,7 +772,7 @@ complex<double> vecmean(Vectorcd x) {
 	return result;
 }
 
-double vecmean(Vectord x) {
+double vecmean(const Vectord& x) {
 	int length = x.size();
 	double result = 0.0;
 	for (int i = 0; i < length; i++) {
@@ -678,7 +782,7 @@ double vecmean(Vectord x) {
 	return result;
 }
 
-double vecmean(Vectori x) {
+double vecmean(const Vectori& x) {
 	int length = x.size();
 	double result = 0.0;
 	for (int i = 0; i < length; i++) {
@@ -707,4 +811,128 @@ void vectofile(ofstream& fout, Vectori object) {
 		fout << object(i) << endl;
 	}
 	return;
+}
+
+//Vector * Scalar
+
+Vectorcd operator*(const Vectorcd& x, const complex<double>& input) {
+	int length = x.size();
+	Vectorcd result(length);
+	for (int i = 0; i < length; i++) {
+		result(i) = x(i) * input;
+	}
+	return result;
+}
+
+Vectorcd operator*(const complex<double>& input, const Vectorcd& x) {
+	return x * input;
+}
+
+
+Vectorcd operator*(const Vectorcd& x, const double& input) {
+	int length = x.size();
+	Vectorcd result(length);
+	for (int i = 0; i < length; i++) {
+		result(i) = x(i) * input;
+	}
+	return result;
+}
+
+Vectorcd operator*(const double& input, const Vectorcd& x) {
+	return x * input;
+}
+
+Vectorcd operator*(const Vectorcd& x, const int& input) {
+	int length = x.size();
+	Vectorcd result(length);
+	for (int i = 0; i < length; i++) {
+		result(i) = x(i) * double(input);
+	}
+	return result;
+}
+
+Vectorcd operator*(const int& input, const Vectorcd& x) {
+	return x * input;
+}
+
+//Vector * Scalar
+
+Vectorcd operator*(const Vectord& x, const complex<double>& input) {
+	int length = x.size();
+	Vectorcd result(length);
+	for (int i = 0; i < length; i++) {
+		result(i) = x(i) * input;
+	}
+	return result;
+}
+
+Vectorcd operator*(const complex<double>& input, const Vectord& x) {
+	return x * input;
+}
+
+Vectord operator*(const Vectord& x, const double& input) {
+	int length = x.size();
+	Vectord result(length);
+	for (int i = 0; i < length; i++) {
+		result(i) = x(i) * input;
+	}
+	return result;
+}
+
+Vectord operator*(const double& input, const Vectord& x) {
+	return x * input;
+}
+
+Vectord operator*(const Vectord& x, const int& input) {
+	int length = x.size();
+	Vectord result(length);
+	for (int i = 0; i < length; i++) {
+		result(i) = x(i) * double(input);
+	}
+	return result;
+}
+
+Vectord operator*(const int& input, const Vectord& x) {
+	return x * input;
+}
+
+//Vector * Scalar
+
+Vectorcd operator*(const Vectori& x, const complex<double>& input) {
+	int length = x.size();
+	Vectorcd result(length);
+	for (int i = 0; i < length; i++) {
+		result(i) = double(x(i)) * input;
+	}
+	return result;
+}
+
+Vectorcd operator*(const complex<double>& input, const Vectori& x) {
+	return x * input;
+}
+
+Vectord operator*(const Vectori& x, const double& input) {
+	int length = x.size();
+	Vectord result(length);
+	for (int i = 0; i < length; i++) {
+		result(i) = double(x(i)) * input;
+	}
+	return result;
+}
+
+Vectord operator*(const double& input, const Vectori& x) {
+	return x * input;
+}
+
+Vectori operator*(const Vectori& x, const int& input) {
+	int length = x.size();
+	Vectori result(length);
+	for (int i = 0; i < length; i++) {
+		result(i) = x(i) * input;
+	}
+	return result;
+}
+
+Vectori operator*(const int& input, const Vectori& x) {
+	return x * input;
 }

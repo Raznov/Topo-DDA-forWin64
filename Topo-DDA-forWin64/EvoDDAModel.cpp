@@ -665,7 +665,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 complex<double> tmp = mult_result(i);
                 mult_result_real(i) = tmp.real();
             }
-            gradients = vecadd(gradients, vecsub(devx, mult_result_real));              //What's the legitimacy in here to ignore the imag part?
+            gradients += devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
             
             it_ModelList++;
             it_ObjList++;
@@ -710,8 +710,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
             }
             else{
-                V = vecadd(V * beta1, (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1));
-                S = vecadd(S * beta2, ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2));
+                V = beta1 * V + (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
+                S = beta2 * S + (1 - beta2) * (gradients.vecpow(2)) / (1 - pow(beta2, iteration + 1));
             }
             for(int i=0;i<=n_para-1;i++){
                 gradients(i) = V(i)/(sqrt(S(i))+0.00000001);
@@ -733,8 +733,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
 
             }
             else {
-                V = vecadd(V * beta1, (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1));
-                S = vecadd(S * beta2, ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2));
+                V = beta1 * V + (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
+                S = beta2 * S + (1 - beta2) * (gradients.vecpow(2)) / (1 - pow(beta2, iteration + 1));
             }
             for (int i = 0; i <= n_para - 1; i++) {
                 gradients(i) = V(i) / (sqrt(S(i)) + 0.00000001);
@@ -1058,7 +1058,7 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 complex<double> tmp = mult_result(i);
                 mult_result_real(i) = tmp.real();
             }
-            gradients = vecadd(gradients, vecsub(devx, mult_result_real));              //What's the legitimacy in here to ignore the imag part?
+            gradients += devx - mult_result_real;              //What's the legitimacy in here to ignore the imag part?
             
             it_ModelList++;
             it_ObjList++;
@@ -1085,8 +1085,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
         if (method == "Adam") {
             cout << "Using Adam Optimizer." << endl;
 
-            V = vecadd(V * beta1, (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1));
-            S = vecadd(S * beta2, ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2));
+            V = beta1 * V + (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
+            S = beta2 * S + (1 - beta2) * (gradients.vecpow(2)) / (1 - pow(beta2, iteration + 1));
 
             for (int i = 0; i <= n_para - 1; i++) {
                 gradients(i) = V(i) / (sqrt(S(i)) + 0.00000001);
@@ -1108,8 +1108,8 @@ void EvoDDAModel::EvoOptimization(int MAX_ITERATION, double MAX_ERROR, int MAX_I
                 S = ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2);
             }
             else {
-                V = vecadd(V * beta1, (gradients / (1 - pow(beta1, iteration + 1))) * (1 - beta1));
-                S = vecadd(S * beta2, ((gradients.vecpow(2)) / (1.0 - pow(beta2, iteration + 1))) * (1 - beta2));
+                V = beta1 * V + (1 - beta1) * gradients / (1 - pow(beta1, iteration + 1));
+                S = beta2 * S + (1 - beta2) * (gradients.vecpow(2)) / (1 - pow(beta2, iteration + 1));
             }
 
             for (int i = 0; i <= n_para - 1; i++) {

@@ -4,6 +4,7 @@
 
 int main() {
 
+    high_resolution_clock::time_point t_start = high_resolution_clock::now();
     int Nx, Ny, Nz;
     Nx = 56; Ny = 56; Nz = 56;
 
@@ -133,8 +134,8 @@ int main() {
 
     //TestModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
 
-
-
+    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
 
 
     return 0;
