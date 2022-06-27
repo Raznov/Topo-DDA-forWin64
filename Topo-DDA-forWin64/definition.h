@@ -27,7 +27,7 @@
 #include <cuda.h>
 #include "cufft.h"
 #include "direct.h"
-
+#include "INIReader.h"
 
 
 
