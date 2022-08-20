@@ -1,4 +1,9 @@
-#include "definition.h"
+#include <iostream>
+#include <map>
+#include <set>
+
+#include "SpacePara.h"
+#include "Tools.h"
 
 void FCurrentinsert(map<vector<int>, int>* FCurrent, vector<int> currentxy, int* currentpos, string insertmode, vector<double>* symaxis) {
     if (insertmode == "None") {
@@ -56,8 +61,11 @@ set<vector<int>> Get3divSet(VectorXi* geometry) {
     int N = Get3divSize(geometry);
     for (int i = 0; i <= N - 1; i++) {
         vector<int> tmp{ (*geometry)(3 * i), (*geometry)(3 * i + 1), (*geometry)(3 * i + 2) };
+       
         if (result.count(tmp)) {
-            cout << "set<vector<int>> Get3divSet(VectorXi* geometry): Element is present in the set" << endl;
+            cout << "set<vector<int>> Get3divSet(VectorXi* geometry): Element is already present in the set" << endl;
+            cout << "Which means grid number " << i << " has shown up at least twice which is not allowed" << endl;
+            cout << "Corresponding grid is " << (*geometry)(3 * i) << " " << (*geometry)(3 * i + 1) << " " << (*geometry)(3 * i + 2) << endl;
             throw 1;
         }
         result.insert(tmp);
@@ -1205,7 +1213,11 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
 
     Paratogeometry = vector<vector<int>>(Npara);
     for (int i = 0; i <= N - 1; i++) {
+        if (i == 6561) {
+            cout << "for i:"<<geometryPara(i) << endl;
+        }
         (Paratogeometry[geometryPara(i)]).push_back(i);
+        
     }
 
     map<vector<int>, double> Inputmap;
@@ -1218,6 +1230,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd
         Inputmap.insert(pair<vector<int>, double>(vector<int>{(*InputGeo)(3 * i), (*InputGeo)(3 * i + 1), (*InputGeo)(3 * i + 2)}, (*Inputdiel)(3 * i)));
     }
     for (int i = 0; i < Npara; i++) {
+        /*cout << i << endl;*/
         int pos = Paratogeometry[i][0];
         vector<int> node{ geometry(3 * pos), geometry(3 * pos + 1), geometry(3 * pos + 2) };
         if (Inputmap.count(node)) {

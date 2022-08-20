@@ -1,4 +1,7 @@
-#include "definition.h"
+#include <iostream>
+#include <fstream>
+
+#include "CoreStructure.h"
 
 CoreStructure::CoreStructure(SpacePara* spacepara_, double d_) {
 

@@ -151,11 +151,14 @@
     <ClCompile Include="EvoDDAModel.cpp" />
     <ClCompile Include="DDAModel.cpp" />
     <ClCompile Include="FilterOption.cpp" />
-    <ClCompile Include="ObjectiveDDAModel.cpp" />
+    <ClCompile Include="filterReader.cpp" />
+    <ClCompile Include="ObjDDAModel.cpp" />
+    <ClCompile Include="ObjReader.cpp" />
     <ClCompile Include="SiCi.cpp" />
     <ClCompile Include="Space.cpp" />
     <ClCompile Include="Structure.cpp" />
-    <ClCompile Include="test.cpp" />
+    <ClCompile Include="symReader.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="tools.cpp" />
     <ClCompile Include="SpacePara.cpp" />
     <ClCompile Include="FOM.cpp" />
@@ -166,8 +169,23 @@
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AProductCore.h" />
+    <ClInclude Include="CoreStructure.h" />
+    <ClInclude Include="DDAModel.h" />
     <ClInclude Include="definition.h" />
+    <ClInclude Include="EvoDDAModel.h" />
+    <ClInclude Include="filterOption.h" />
+    <ClInclude Include="filterReader.h" />
     <ClInclude Include="INIReader.h" />
+    <ClInclude Include="Kernel.h" />
+    <ClInclude Include="ObjDDAModel.h" />
+    <ClInclude Include="ObjReader.h" />
+    <ClInclude Include="SiCi.h" />
+    <ClInclude Include="Space.h" />
+    <ClInclude Include="SpacePara.h" />
+    <ClInclude Include="Structure.h" />
+    <ClInclude Include="symReader.h" />
+    <ClInclude Include="Tools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

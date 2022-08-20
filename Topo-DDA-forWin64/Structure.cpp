@@ -1,9 +1,12 @@
-#include "definition.h"
+#include <iostream>
+#include <set>
 
+#include "Structure.h"
+#include "Tools.h"
 
 Structure::Structure(VectorXi *total_space, VectorXi *geometry_, bool para_cond_){
-    geometry = *geometry_;
     para_cond = para_cond_;
+    cut(total_space, geometry_);
 }
 Structure::Structure(VectorXi* total_space, double r, Vector3d center, bool para_cond_) {
     para_cond = para_cond_;
@@ -51,7 +54,6 @@ Structure::Structure(VectorXi* total_space, double r, double h, Vector3d center,
     }
     cut(total_space, &geometry_tmp);
 }
-
 
 Structure::Structure(VectorXi *total_space, Vector3d l, Vector3d center, bool para_cond_){
     para_cond = para_cond_;
@@ -112,6 +114,8 @@ Structure::Structure(VectorXi* total_space, Vector3d l, Vector3d center, Structu
     cut(total_space, &geometry_tmp);
 
 }
+
+
 VectorXi* Structure::get_geometry() {
     return &geometry;
 }

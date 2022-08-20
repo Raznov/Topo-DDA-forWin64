@@ -1,4 +1,25 @@
-#include "definition.h"
+#define _USE_MATH_DEFINES
+
+#include <iostream>
+#include <fstream>
+#include <map>
+#include <time.h>
+
+#include "Tools.h"
+
+vector<string> splitInputStr(string input, string delimiter) {
+    /*cout << input << endl;*/
+    size_t pos = 0;
+    std::string token;
+    vector<string> result;
+    while ((pos = input.find(delimiter)) != string::npos) {
+        token = input.substr(0, pos);
+        input = input.substr(pos + delimiter.size());
+        result.push_back(token);
+        /*cout << token << endl;*/
+    }
+    return result;
+}
 
 pair<VectorXi, VectorXd> InputInitial(string open_position, string model_label) {
     string name1 = open_position + "Commondata.txt";
@@ -31,307 +52,352 @@ pair<VectorXi, VectorXd> InputInitial(string open_position, string model_label) 
     return pair<VectorXi, VectorXd>(geometrytmp, dielinput);
 }
 
-//One Evo data generation
-list<double> generatefocus(int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym, double d) {
-    //Center
-    Vector3d center = (lower_bound + upper_bound) / 2;
-    //Number of focus
-    int num = round(((double)rand() / RAND_MAX) * (max_num - min_num)) + min_num;
-    list<double> result;
-    if (sym) {
-        //For sym=ture, 2*num is generated. Symmetric distribution.
-        for (int i = 0; i <= num - 1; i++) {
-            double point1[3];
-            double point2[3];
-            for (int j = 0; j <= 2; j++) {
-                point1[j] = ((double)rand() / RAND_MAX) * (upper_bound(j) - lower_bound(j)) + lower_bound(j);
-                point2[j] = 2 * center(j) - point1[j];
-                //Point2 wont get out of boundary.
-                if (point2[j] > upper_bound[j]) {
-                    point2[j] = upper_bound[j];
-                }
-                if (point2[j] < lower_bound[j]) {
-                    point2[j] = lower_bound[j];
-                }
-            }
-            //Push the points into the list.
-            for (int j = 0; j <= 2; j++) {
-                result.push_back(point1[j] * d);
-            }
-
-            for (int j = 0; j <= 2; j++) {
-                result.push_back(point2[j] * d);
-            }
-        }
-
-    }
-    else {
-        //When sym=false, 1*num focus is generated.
-        for (int i = 0; i <= num - 1; i++) {
-            for (int j = 0; j <= 2; j++) {
-                double tmp = ((double)rand() / RAND_MAX) * (upper_bound(j) - lower_bound(j)) + lower_bound(j);
-                result.push_back(tmp * d);
-            }
-        }
-    }
-
-    /*
-    list<double>::iterator it = result.begin();
-    cout << endl;
-    for (int i = 0; i <= result.size() - 1; i++) {
-        cout << (*it) << ",";
-        it++;
-    }
-    cout << endl;
-    */
-    return result;
-}
-
-void Evo_Focus(SpacePara* spacepara_tmp, CoreStructure* CStr, DDAModel* TestModel, string save_position, int start_num, int max_evo,
-    int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym  //Parameters for focus generation
-) {
-
-    (*CStr).UpdateStr(spacepara_tmp);
-    //(*CStr).output_to_file(save_position, start_num, "Simple");
-    (*TestModel).UpdateAlpha();
-    double d = (*CStr).get_d();
-
-    double epsilon = 100;
-    bool HavePathRecord = false;
-    bool HavePenalty = false;
-    bool HaveOriginHeritage = false;
-    bool HaveAdjointHeritage = false;
-    double PenaltyFactor = 1;
-    list<DDAModel*> ModelpointerList;
-    ModelpointerList.push_back(TestModel);
-
-    list<string> ObjectFunctionNames{ "PointEList" };
-    list<double> ObjectParameters1 = generatefocus(min_num, max_num, lower_bound, upper_bound, sym, d);
-    list<list<double>*> ObjectParameters{ &ObjectParameters1 };
-
-    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, CStr, ModelpointerList);
+pair<VectorXi, VectorXd> getInputStr(string pathCommonData, string pathPara) {
+    string name1 = pathCommonData;
+    string name2 = pathPara;
     
-    int MAX_ITERATION_DDA = 100000;
-    double MAX_ERROR = 0.00001;
-    int MAX_ITERATION_EVO = max_evo;
 
-    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam", start_num);
+    ifstream fin1(name1), fin2(name2);
+    int Nxtmp, Nytmp, Nztmp;
+    int Ntmp;
+    fin1 >> Nxtmp;
+    fin1 >> Nytmp;
+    fin1 >> Nztmp;
+    fin1 >> Ntmp;
+    cout << "Input geometry size: " << Ntmp << endl;
+    VectorXi geometrytmp = VectorXi::Zero(3 * Ntmp);
+    for (int i = 0; i <= Ntmp - 1; i++) {
+        fin1 >> geometrytmp(3 * i);
+        fin1 >> geometrytmp(3 * i + 1);
+        fin1 >> geometrytmp(3 * i + 2);
+    }
+    VectorXd dielinput = VectorXd::Zero(3 * Ntmp);
+    for (int i = 0; i <= Ntmp - 1; i++) {
+        fin2 >> dielinput(3 * i);
+        fin2 >> dielinput(3 * i + 1);
+        fin2 >> dielinput(3 * i + 2);
+    }
+    fin1.close();
+    fin2.close();
+    return pair<VectorXi, VectorXd>(geometrytmp, dielinput);
+}
 
-    return;
+tuple<int, int, int> getInputNs(string pathCommonData) {
+    string name1 = pathCommonData;
+
+
+    ifstream fin1(name1);
+    int Nxtmp, Nytmp, Nztmp;
+    int Ntmp;
+    fin1 >> Nxtmp;
+    fin1 >> Nytmp;
+    fin1 >> Nztmp;
+    fin1 >> Ntmp;
     
+    return tuple<int, int, int>(Nxtmp, Nytmp, Nztmp);
 }
 
-/*
-void Evo_single(string save_position, Vector3i bind, Vector3d l, int MAX_ITERATION_EVO, Vector3d move_focus) {
-    ofstream TotalTime;
-    TotalTime.open(save_position + "TotalTime.txt");
-    high_resolution_clock::time_point t_start = high_resolution_clock::now();
-    Vector3d center;
-    center << l(0) / 2, l(1) / 2, l(2) / 2;
-    int Nx, Ny, Nz;
-    Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);
-    cout << center << endl;
-    int N = 0;
-    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
-    list<Structure> ln;
-    Space S(&total_space, Nx, Ny, Nz, N, &ln);
-
-    Vector3i direction;
-    Structure s1(S.get_total_space(), l, center);
-    S = S + s1;
-    SpacePara spacepara(&S, bind, "ONES");
-    double d = 25;
-    double E0 = 1.0;
-    double epsilon = 10;
-    double focus = (l(2) + 2) * d;   //nm       
-    //double focus = (l(2) - 6) * d;
-    cout << focus << endl;
-    int MAX_ITERATION_DDA = 100000;
-    double MAX_ERROR = 0.00001;
-    
-    list<string> ObjectFunctionNames{ "PointE" };
-    double exponent = 2;
-    double ratio = 4;
-    //list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };
-    list<double> ObjectParameter{ center(0) * d + move_focus(0) * d,center(1) * d + move_focus(1) * d,focus + move_focus(2) * d };
-    bool HavePathRecord = false;
-    bool HavePenalty = false;
-    bool HaveOriginHeritage = true;
-    bool HaveAdjointHeritage = false;
-    double PenaltyFactor = 0.0001;
-    list<list<double>*> ObjectParameters{ &ObjectParameter };
-    Vector3d n_K;
-    Vector3d n_E0;
-    list<DDAModel> ModelList;
-    list<DDAModel*> ModelpointerList;
-    ofstream AngleInfo(save_position + "AngleInfo.txt");
-    ofstream nEInfo(save_position + "nEInfo.txt");
-    int theta_num = 1;
-    VectorXd theta(theta_num);
-    theta << 0;
-    int phi_num = 1;
-    VectorXd phi(phi_num);
-    phi << 0;
-    int lam_num = 1;
-    VectorXd lam(lam_num);
-    lam << 500;
-    CoreStructure CStr(&spacepara, d);
-    list<AProductCore> CoreList;
-    list<AProductCore*> CorePointList;
-    Vector2cd material;
-    material = Get_2_material("Air", "2.5", lam(0), "nm");
-    double nback = 1.0;
-    AProductCore Core1(&CStr, lam(0), material, nback, "LDR");
-    CorePointList.push_back(&Core1);
-    ofstream Common;
-    Common.open(save_position + "Commondata.txt");
-    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
-    Common << (spacepara.get_geometry()) << endl;
-    Common << d << endl;
-    Common << n_E0 << endl;
-    Common << n_K << endl;
-    list<AProductCore*>::iterator it = CorePointList.begin();
-    for (int k = 0; k <= lam_num - 1; k++) {
-        AProductCore* Core = (*it);
-        for (int i = 0; i <= theta_num - 1; i++) {
-            for (int j = 0; j <= phi_num - 1; j++) {
-                if (theta(i) != 0) {
-                    double theta_tmp = theta(i) * M_PI / 180;
-                    double phi_tmp = phi(j) * M_PI / 180;
-                    n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
-                    n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
-                    if (CheckPerp(n_E0, n_K) == false) {
-                        cout << "----------------------------------------theta" << theta[i] << "phi" << phi[j] << "Not perpendicular---------------------------------------" << endl;
-                    }
-                    if (k == 0) {
-                        AngleInfo << theta[i] << endl;
-                        AngleInfo << phi[j] << endl;
-                        nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
-                    }
-                    DDAModel Model(Core, n_K, E0, n_E0);
-                    ModelList.push_back(Model);
-                }
-            }
-        }
-        double theta_tmp = 0 * M_PI / 180;
-        double phi_tmp = 0 * M_PI / 180;
-        n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
-        n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
-        if (CheckPerp(n_E0, n_K) == false) {
-            cout << "----------------------------------------theta" << 0 << "phi" << 0 << "Not perpendicular---------------------------------------" << endl;
-        }
-        if (k == 0) {
-            AngleInfo << 0.0 << endl;
-            AngleInfo << 0.0 << endl;
-            nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
-        }
-        DDAModel Model(Core, n_K, E0, n_E0);
-        ModelList.push_back(Model);
-
-        it++;
-    }
-    AngleInfo.close();
-    nEInfo.close();
-    cout << "Number of DDA Model : " << ModelList.size() << endl;
-    list<DDAModel>::iterator it1 = ModelList.begin();
-    for (int i = 0; i <= ModelList.size() - 1; i++) {
-        ModelpointerList.push_back(&(*it1));
-        it1++;
-    }
-    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, &CStr, ModelpointerList);
-    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
-    high_resolution_clock::time_point t_end = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
-    TotalTime << duration / 1000 << endl;
-    TotalTime.close();
-
-    return;
-}
-*/
-
-void eval_FOM(string name, DDAModel* TestModel, list<double> theta, list<double> phi) {
-    ofstream fout(name);
-
-    list<double> ObjectParameter;
-    list<double>::iterator itheta = theta.begin();
-    
-    for (int i = 0; i <= theta.size() - 1; i++) {
-        double ttheta = (*itheta);
-        itheta++;
-        list<double>::iterator iphi = phi.begin();
-        for (int j = 0; j <= phi.size() - 1; j++) {
-            double tphi = (*iphi);
-            iphi++;
-            ObjectParameter.push_back(sin(ttheta) * cos(tphi));
-            ObjectParameter.push_back(sin(ttheta) * sin(tphi));
-            ObjectParameter.push_back(cos(ttheta));
-            //cout << "(" << sin(ttheta) * cos(tphi) << " " << sin(ttheta) * sin(tphi) << " " << cos(ttheta) << ")" << endl;
-        }
-    }
-
-    FOMscattering0D FOMcal(ObjectParameter, TestModel);
-    list<double> FOMresults = FOMcal.GetVal();
-
-    itheta = theta.begin();
-    list<double>::iterator iresult = FOMresults.begin();
-    for (int i = 0; i <= theta.size() - 1; i++) {
-        double ttheta = (*itheta);
-        itheta++;
-        list<double>::iterator iphi = phi.begin();
-        for (int j = 0; j <= phi.size() - 1; j++) {
-            double tphi = (*iphi);
-            double tresult = (*iresult);
-            iphi++;
-            iresult++;
-            fout << (ttheta * 360) / (2 * M_PI) << " " << (tphi * 360) / (2 * M_PI) << " " << tresult << endl;
-        }
-    }
-
-    fout.close();
-
-}
-
-void eval_FOM_2Dperiod(string name, DDAModel* TestModel, list<double> theta, list<double> phi) {
-    ofstream fout(name);
-
-    list<double> ObjectParameter;
-    list<double>::iterator itheta = theta.begin();
-
-    for (int i = 0; i <= theta.size() - 1; i++) {
-        double ttheta = (*itheta);
-        itheta++;
-        list<double>::iterator iphi = phi.begin();
-        for (int j = 0; j <= phi.size() - 1; j++) {
-            double tphi = (*iphi);
-            iphi++;
-            ObjectParameter.push_back(sin(ttheta) * cos(tphi));
-            ObjectParameter.push_back(sin(ttheta) * sin(tphi));
-            ObjectParameter.push_back(cos(ttheta));
-            //cout << "(" << sin(ttheta) * cos(tphi) << " " << sin(ttheta) * sin(tphi) << " " << cos(ttheta) << ")" << endl;
-        }
-    }
-
-    FOMscattering2D FOMcal(ObjectParameter, TestModel);
-    list<double> FOMresults = FOMcal.GetVal();
-
-    itheta = theta.begin();
-    list<double>::iterator iresult = FOMresults.begin();
-    for (int i = 0; i <= theta.size() - 1; i++) {
-        double ttheta = (*itheta);
-        itheta++;
-        list<double>::iterator iphi = phi.begin();
-        for (int j = 0; j <= phi.size() - 1; j++) {
-            double tphi = (*iphi);
-            double tresult = (*iresult);
-            iphi++;
-            iresult++;
-            fout << (ttheta * 360) / (2 * M_PI) << " " << (tphi * 360) / (2 * M_PI) << " " << tresult << endl;
-        }
-    }
-
-    fout.close();
-
-}
+////One Evo data generation
+//list<double> generatefocus(int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym, double d) {
+//    //Center
+//    Vector3d center = (lower_bound + upper_bound) / 2;
+//    //Number of focus
+//    int num = round(((double)rand() / RAND_MAX) * (max_num - min_num)) + min_num;
+//    list<double> result;
+//    if (sym) {
+//        //For sym=ture, 2*num is generated. Symmetric distribution.
+//        for (int i = 0; i <= num - 1; i++) {
+//            double point1[3];
+//            double point2[3];
+//            for (int j = 0; j <= 2; j++) {
+//                point1[j] = ((double)rand() / RAND_MAX) * (upper_bound(j) - lower_bound(j)) + lower_bound(j);
+//                point2[j] = 2 * center(j) - point1[j];
+//                //Point2 wont get out of boundary.
+//                if (point2[j] > upper_bound[j]) {
+//                    point2[j] = upper_bound[j];
+//                }
+//                if (point2[j] < lower_bound[j]) {
+//                    point2[j] = lower_bound[j];
+//                }
+//            }
+//            //Push the points into the list.
+//            for (int j = 0; j <= 2; j++) {
+//                result.push_back(point1[j] * d);
+//            }
+//
+//            for (int j = 0; j <= 2; j++) {
+//                result.push_back(point2[j] * d);
+//            }
+//        }
+//
+//    }
+//    else {
+//        //When sym=false, 1*num focus is generated.
+//        for (int i = 0; i <= num - 1; i++) {
+//            for (int j = 0; j <= 2; j++) {
+//                double tmp = ((double)rand() / RAND_MAX) * (upper_bound(j) - lower_bound(j)) + lower_bound(j);
+//                result.push_back(tmp * d);
+//            }
+//        }
+//    }
+//
+//    /*
+//    list<double>::iterator it = result.begin();
+//    cout << endl;
+//    for (int i = 0; i <= result.size() - 1; i++) {
+//        cout << (*it) << ",";
+//        it++;
+//    }
+//    cout << endl;
+//    */
+//    return result;
+//}
+//
+//void Evo_Focus(SpacePara* spacepara_tmp, CoreStructure* CStr, DDAModel* TestModel, string save_position, int start_num, int max_evo,
+//    int min_num, int max_num, Vector3d lower_bound, Vector3d upper_bound, bool sym  //Parameters for focus generation
+//) {
+//
+//    (*CStr).UpdateStr(spacepara_tmp);
+//    //(*CStr).output_to_file(save_position, start_num, "Simple");
+//    (*TestModel).UpdateAlpha();
+//    double d = (*CStr).get_d();
+//
+//    double epsilon = 100;
+//    bool HavePathRecord = false;
+//    bool HavePenalty = false;
+//    bool HaveOriginHeritage = false;
+//    bool HaveAdjointHeritage = false;
+//    double PenaltyFactor = 1;
+//    list<DDAModel*> ModelpointerList;
+//    ModelpointerList.push_back(TestModel);
+//
+//    list<string> ObjectFunctionNames{ "PointEList" };
+//    list<double> ObjectParameters1 = generatefocus(min_num, max_num, lower_bound, upper_bound, sym, d);
+//    list<list<double>*> ObjectParameters{ &ObjectParameters1 };
+//
+//    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, CStr, ModelpointerList);
+//    
+//    int MAX_ITERATION_DDA = 100000;
+//    double MAX_ERROR = 0.00001;
+//    int MAX_ITERATION_EVO = max_evo;
+//
+//    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam", start_num);
+//
+//    return;
+//    
+//}
+//
+///*
+//void Evo_single(string save_position, Vector3i bind, Vector3d l, int MAX_ITERATION_EVO, Vector3d move_focus) {
+//    ofstream TotalTime;
+//    TotalTime.open(save_position + "TotalTime.txt");
+//    high_resolution_clock::time_point t_start = high_resolution_clock::now();
+//    Vector3d center;
+//    center << l(0) / 2, l(1) / 2, l(2) / 2;
+//    int Nx, Ny, Nz;
+//    Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);
+//    cout << center << endl;
+//    int N = 0;
+//    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+//    list<Structure> ln;
+//    Space S(&total_space, Nx, Ny, Nz, N, &ln);
+//
+//    Vector3i direction;
+//    Structure s1(S.get_total_space(), l, center);
+//    S = S + s1;
+//    SpacePara spacepara(&S, bind, "ONES");
+//    double d = 25;
+//    double E0 = 1.0;
+//    double epsilon = 10;
+//    double focus = (l(2) + 2) * d;   //nm       
+//    //double focus = (l(2) - 6) * d;
+//    cout << focus << endl;
+//    int MAX_ITERATION_DDA = 100000;
+//    double MAX_ERROR = 0.00001;
+//    
+//    list<string> ObjectFunctionNames{ "PointE" };
+//    double exponent = 2;
+//    double ratio = 4;
+//    //list<double> ObjectParameter{ center(0) * d,center(1) * d,focus };
+//    list<double> ObjectParameter{ center(0) * d + move_focus(0) * d,center(1) * d + move_focus(1) * d,focus + move_focus(2) * d };
+//    bool HavePathRecord = false;
+//    bool HavePenalty = false;
+//    bool HaveOriginHeritage = true;
+//    bool HaveAdjointHeritage = false;
+//    double PenaltyFactor = 0.0001;
+//    list<list<double>*> ObjectParameters{ &ObjectParameter };
+//    Vector3d n_K;
+//    Vector3d n_E0;
+//    list<DDAModel> ModelList;
+//    list<DDAModel*> ModelpointerList;
+//    ofstream AngleInfo(save_position + "AngleInfo.txt");
+//    ofstream nEInfo(save_position + "nEInfo.txt");
+//    int theta_num = 1;
+//    VectorXd theta(theta_num);
+//    theta << 0;
+//    int phi_num = 1;
+//    VectorXd phi(phi_num);
+//    phi << 0;
+//    int lam_num = 1;
+//    VectorXd lam(lam_num);
+//    lam << 500;
+//    CoreStructure CStr(&spacepara, d);
+//    list<AProductCore> CoreList;
+//    list<AProductCore*> CorePointList;
+//    Vector2cd material;
+//    material = Get_2_material("Air", "2.5", lam(0), "nm");
+//    double nback = 1.0;
+//    AProductCore Core1(&CStr, lam(0), material, nback, "LDR");
+//    CorePointList.push_back(&Core1);
+//    ofstream Common;
+//    Common.open(save_position + "Commondata.txt");
+//    Common << CStr.get_Nx() << endl << CStr.get_Ny() << endl << CStr.get_Nz() << endl << CStr.get_N() << endl;
+//    Common << (spacepara.get_geometry()) << endl;
+//    Common << d << endl;
+//    Common << n_E0 << endl;
+//    Common << n_K << endl;
+//    list<AProductCore*>::iterator it = CorePointList.begin();
+//    for (int k = 0; k <= lam_num - 1; k++) {
+//        AProductCore* Core = (*it);
+//        for (int i = 0; i <= theta_num - 1; i++) {
+//            for (int j = 0; j <= phi_num - 1; j++) {
+//                if (theta(i) != 0) {
+//                    double theta_tmp = theta(i) * M_PI / 180;
+//                    double phi_tmp = phi(j) * M_PI / 180;
+//                    n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+//                    n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+//                    if (CheckPerp(n_E0, n_K) == false) {
+//                        cout << "----------------------------------------theta" << theta[i] << "phi" << phi[j] << "Not perpendicular---------------------------------------" << endl;
+//                    }
+//                    if (k == 0) {
+//                        AngleInfo << theta[i] << endl;
+//                        AngleInfo << phi[j] << endl;
+//                        nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+//                    }
+//                    DDAModel Model(Core, n_K, E0, n_E0);
+//                    ModelList.push_back(Model);
+//                }
+//            }
+//        }
+//        double theta_tmp = 0 * M_PI / 180;
+//        double phi_tmp = 0 * M_PI / 180;
+//        n_K << sin(theta_tmp) * cos(phi_tmp), sin(theta_tmp)* sin(phi_tmp), cos(theta_tmp);
+//        n_E0 = nEPerpinXZ(theta_tmp, phi_tmp);
+//        if (CheckPerp(n_E0, n_K) == false) {
+//            cout << "----------------------------------------theta" << 0 << "phi" << 0 << "Not perpendicular---------------------------------------" << endl;
+//        }
+//        if (k == 0) {
+//            AngleInfo << 0.0 << endl;
+//            AngleInfo << 0.0 << endl;
+//            nEInfo << n_E0(0) << " " << n_E0(1) << " " << n_E0(2) << endl;
+//        }
+//        DDAModel Model(Core, n_K, E0, n_E0);
+//        ModelList.push_back(Model);
+//
+//        it++;
+//    }
+//    AngleInfo.close();
+//    nEInfo.close();
+//    cout << "Number of DDA Model : " << ModelList.size() << endl;
+//    list<DDAModel>::iterator it1 = ModelList.begin();
+//    for (int i = 0; i <= ModelList.size() - 1; i++) {
+//        ModelpointerList.push_back(&(*it1));
+//        it1++;
+//    }
+//    EvoDDAModel EModel(&ObjectFunctionNames, &ObjectParameters, epsilon, HavePathRecord, HavePenalty, HaveOriginHeritage, HaveAdjointHeritage, PenaltyFactor, save_position, &CStr, ModelpointerList);
+//    EModel.EvoOptimization(MAX_ITERATION_DDA, MAX_ERROR, MAX_ITERATION_EVO, "Adam");
+//    high_resolution_clock::time_point t_end = high_resolution_clock::now();
+//    auto duration = duration_cast<milliseconds>(t_end - t_start).count();
+//    TotalTime << duration / 1000 << endl;
+//    TotalTime.close();
+//
+//    return;
+//}
+//*/
+//
+//void eval_FOM(string name, DDAModel* TestModel, list<double> theta, list<double> phi) {
+//    ofstream fout(name);
+//
+//    list<double> ObjectParameter;
+//    list<double>::iterator itheta = theta.begin();
+//    
+//    for (int i = 0; i <= theta.size() - 1; i++) {
+//        double ttheta = (*itheta);
+//        itheta++;
+//        list<double>::iterator iphi = phi.begin();
+//        for (int j = 0; j <= phi.size() - 1; j++) {
+//            double tphi = (*iphi);
+//            iphi++;
+//            ObjectParameter.push_back(sin(ttheta) * cos(tphi));
+//            ObjectParameter.push_back(sin(ttheta) * sin(tphi));
+//            ObjectParameter.push_back(cos(ttheta));
+//            //cout << "(" << sin(ttheta) * cos(tphi) << " " << sin(ttheta) * sin(tphi) << " " << cos(ttheta) << ")" << endl;
+//        }
+//    }
+//
+//    FOMscattering0D FOMcal(ObjectParameter, TestModel);
+//    list<double> FOMresults = FOMcal.GetVal();
+//
+//    itheta = theta.begin();
+//    list<double>::iterator iresult = FOMresults.begin();
+//    for (int i = 0; i <= theta.size() - 1; i++) {
+//        double ttheta = (*itheta);
+//        itheta++;
+//        list<double>::iterator iphi = phi.begin();
+//        for (int j = 0; j <= phi.size() - 1; j++) {
+//            double tphi = (*iphi);
+//            double tresult = (*iresult);
+//            iphi++;
+//            iresult++;
+//            fout << (ttheta * 360) / (2 * M_PI) << " " << (tphi * 360) / (2 * M_PI) << " " << tresult << endl;
+//        }
+//    }
+//
+//    fout.close();
+//
+//}
+//
+//void eval_FOM_2Dperiod(string name, DDAModel* TestModel, list<double> theta, list<double> phi) {
+//    ofstream fout(name);
+//
+//    list<double> ObjectParameter;
+//    list<double>::iterator itheta = theta.begin();
+//
+//    for (int i = 0; i <= theta.size() - 1; i++) {
+//        double ttheta = (*itheta);
+//        itheta++;
+//        list<double>::iterator iphi = phi.begin();
+//        for (int j = 0; j <= phi.size() - 1; j++) {
+//            double tphi = (*iphi);
+//            iphi++;
+//            ObjectParameter.push_back(sin(ttheta) * cos(tphi));
+//            ObjectParameter.push_back(sin(ttheta) * sin(tphi));
+//            ObjectParameter.push_back(cos(ttheta));
+//            //cout << "(" << sin(ttheta) * cos(tphi) << " " << sin(ttheta) * sin(tphi) << " " << cos(ttheta) << ")" << endl;
+//        }
+//    }
+//
+//    FOMscattering2D FOMcal(ObjectParameter, TestModel);
+//    list<double> FOMresults = FOMcal.GetVal();
+//
+//    itheta = theta.begin();
+//    list<double>::iterator iresult = FOMresults.begin();
+//    for (int i = 0; i <= theta.size() - 1; i++) {
+//        double ttheta = (*itheta);
+//        itheta++;
+//        list<double>::iterator iphi = phi.begin();
+//        for (int j = 0; j <= phi.size() - 1; j++) {
+//            double tphi = (*iphi);
+//            double tresult = (*iresult);
+//            iphi++;
+//            iresult++;
+//            fout << (ttheta * 360) / (2 * M_PI) << " " << (tphi * 360) / (2 * M_PI) << " " << tresult << endl;
+//        }
+//    }
+//
+//    fout.close();
+//
+//}
 //Find the Max and Min of the input geometry in each direction
 MatrixXi find_scope_3_dim(VectorXi* x) {
     int N = round(int((*x).size()) / 3);
@@ -623,10 +689,10 @@ Vector3d nEPerpinXZ(double theta, double phi) {
     return nE;
 }
 
-int makedirect(string name) {
-    const char* tmp = name.c_str();
-    return _mkdir(tmp);
-}
+//int makedirect(string name) {
+//    const char* tmp = name.c_str();
+//    return _mkdir(tmp);
+//}
 
 list<double> makelist(double start, double end, double interval) {
     list<double> result;
@@ -670,3 +736,5 @@ double piecewise_update(const double x, const double x_max, const double y_min, 
 double linear_update(const double x, const double x_max, const double y_min, const double y_max) {
     return y_min + (y_max - y_min) * x / x_max;
 }
+
+

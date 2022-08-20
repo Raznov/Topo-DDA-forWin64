@@ -1,4 +1,7 @@
-#include "definition.h"
+#include <iostream>
+
+#include "Tools.h"
+#include "filterOption.h"
 
 FilterOption::FilterOption(double beta_min_, double beta_max_, double ita_, string beta_type_, vector<filterinfo> rfilterlist_, bool fixit_, int MAX_ITERATION_FIXED_) {
 	beta_min = beta_min_;
@@ -7,7 +10,9 @@ FilterOption::FilterOption(double beta_min_, double beta_max_, double ita_, stri
 	ita = ita_;
 	beta_type = beta_type_;
 	rfilterlist = rfilterlist_;
-	rfilter = rfilterlist[0].rfilter;
+	if (rfilterlist.size() >= 1) {
+		rfilter = rfilterlist[0].rfilter;
+	}
 	fixit = fixit_;
 	MAX_ITERATION_FIXED = MAX_ITERATION_FIXED_;
 	if (fixit) {

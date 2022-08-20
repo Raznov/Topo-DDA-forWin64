@@ -1,4 +1,8 @@
-#include "definition.h"
+#include <fstream>
+
+#include "Space.h"
+
+
 VectorXi *Space::get_total_space(){
     return total_space;
 }

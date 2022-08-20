@@ -1,7 +1,13 @@
-#include "definition.h"
 #define NUM_THREADS 6
 
+#include <chrono>
+#include <iostream>
+#include <fstream>
 
+#include "DDAModel.h"
+#include "Tools.h"
+
+using namespace std::chrono;
 
 DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_) {
     
@@ -609,7 +615,6 @@ void DDAModel::output_to_file(){
 
 void DDAModel::output_to_file(string save_position, int iteration, int ModelLabel){
     
-    cout << "fuck" << endl;
     string name;
     name = save_position + "Model_results" + to_string(ModelLabel) + "it" + to_string(iteration) + ".txt";
     //name = save_position + "Model_output_verify\\" + "Model_results" + "it" + to_string(iteration) + ".txt";
@@ -665,6 +670,7 @@ void DDAModel::output_to_file(string save_position, int iteration) {
 
     }
     */
+    cout << EResult.size() << endl;
     for (int i = 0; i <= EResult.size() - 1; i++) {
         if (EResult(i).imag() < 0) {
             fout << EResult(i).real() << EResult(i).imag() << "j" << endl;

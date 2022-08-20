@@ -1,4 +1,4 @@
-#include "definition.h"
+#include "Kernel.h"
 
 __global__ void A2AsKernel(double *A, cufftDoubleComplex *A00, cufftDoubleComplex *A01, cufftDoubleComplex *A02, cufftDoubleComplex *A11, cufftDoubleComplex *A12, cufftDoubleComplex *A22, int NxFFT, int NyFFT, int NzFFT){
     int i = threadIdx.x + blockIdx.x*blockDim.x;

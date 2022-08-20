@@ -1,7 +1,13 @@
-#include "definition.h"
+#define _USE_MATH_DEFINES
 #define NUM_THREADS 6
 
+#include <chrono>
+#include <iostream>
+#include <time.h>
 
+#include "AProductCore.h"
+
+using namespace std::chrono;
 
 AProductCore::AProductCore(CoreStructure* CStr_, double lam_, VectorXcd material_, double nback_, string AMatrixMethod_){
     

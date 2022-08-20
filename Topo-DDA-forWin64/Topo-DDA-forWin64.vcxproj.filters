@@ -21,9 +21,6 @@
     <ClCompile Include="Structure.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
-    <ClCompile Include="test.cpp">
-      <Filter>资源文件</Filter>
-    </ClCompile>
     <ClCompile Include="tools.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
@@ -34,9 +31,6 @@
       <Filter>资源文件</Filter>
     </ClCompile>
     <ClCompile Include="EvoDDAModel.cpp">
-      <Filter>资源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectiveDDAModel.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
     <ClCompile Include="CoreStructure.cpp">
@@ -54,12 +48,72 @@
     <ClCompile Include="FilterOption.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
+    <ClCompile Include="filterReader.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="symReader.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjReader.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjDDAModel.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definition.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="INIReader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="filterOption.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="filterReader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="symReader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EvoDDAModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Structure.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjDDAModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Tools.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Space.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SpacePara.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SiCi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CoreStructure.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="AProductCore.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Kernel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DDAModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjReader.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

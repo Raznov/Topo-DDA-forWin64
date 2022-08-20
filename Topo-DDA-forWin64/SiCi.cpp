@@ -1,4 +1,9 @@
-#include "definition.h"
+#include <fstream>
+#include <iostream>
+
+#include "SiCi.h"
+
+using namespace std;
 
 SiCi::SiCi() {
 	ifstream SiInput;
