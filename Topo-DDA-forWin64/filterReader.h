@@ -16,6 +16,7 @@ private:
     double betaMin;
     double betaMax;
     double ita;
+    bool periodicity;
 public:
     filterReader(INIReader reader);
     vector<filterinfo> readFilterList(string input);
@@ -25,5 +26,6 @@ public:
     double getBetaMin();
     double getBetaMax();
     double getIta();
+    bool getPeriodic();
 };
 #endif

@@ -28,6 +28,9 @@ private:
     FilterOption* Filterstats;        //Only used when Filter=True
     vector<vector<WeightPara>> FreeWeight;
     vector<int> ParaDividePos;
+    bool Periodic;
+    int Lx;
+    int Ly;
 
 public:
     //SpacePara(Space* space_, string initial_diel, VectorXi geometry_, VectorXd diel_); //Can freeze part of the parameter space
@@ -37,7 +40,7 @@ public:
     //SpacePara(Space* space_, Vector3i bind_, string initial_diel1, string initial_diel2); //One constant layer at bottom. One design region on top. divide_pos is the divide in geometry array of the two parts.
 
     //SpacePara(Space* space_, Vector3i bind_, string initial_diel, VectorXi* geometryPara_);
-    //SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type);   //ONly for 2d cylinder or spheres. r is raidus/d.
+    SpacePara(Space* space_, Vector3i bind_, string initial_diel_center, string initial_diel_ring, double r, string type);   //ONly for 2d cylinder or spheres. r is raidus/d.
 
     //SpacePara(Space* space_, Vector3i bind_, string initial_diel_background, list<string>* initial_diel_list, list<double>* r_list, list<Vector2d>* center_list);
     //Build 2d cylinders with diel in the list, rest of the diel is the backgroudn diel.
@@ -51,7 +54,7 @@ public:
     SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_list, list<VectorXi*> FParaGeometry_, list<VectorXi*> BParaGeometry_, list<double> BPara_, bool Filter_, FilterOption* Filterstats_ = NULL, string symmetry = "None", vector<double> symaxis = vector<double>{ 0.0,0.0 }); //Should be exactly the same with the previous one except of Filter
 
     SpacePara(Space* space_, Vector3i bind_, vector<string> initial_diel_list, vector<double> BPara_, bool Filter_ = false, FilterOption* Filterstats_ = NULL, string symmetry = "None", vector<double> symaxis = vector<double>{ 0.0,0.0 });
-    SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd* Inputdiel, bool Filter_ = false, FilterOption* Filterstats_ = NULL, string symmetry = "None", vector<double> symaxis = vector<double>{ 0.0,0.0 });
+    SpacePara(Space* space_, Vector3i bind_, VectorXi* InputGeo, VectorXd* Inputdiel, bool Filter_ = false, FilterOption* Filterstats_ = NULL, string symmetry = "None", vector<double> symaxis = vector<double>{ 0.0,0.0 }, bool Periodic_ = false, int Lx_ = 0, int Ly_ = 0);
 
     void ChangeBind(Vector3i bind_);                                  //Change bind number
     void ChangeFilter();

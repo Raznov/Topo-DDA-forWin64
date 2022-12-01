@@ -455,7 +455,8 @@ VectorXd initial_diel_func(string initial_diel, int N) {
     }
     else {
         diel = VectorXd::Zero(N);
-        cout << "The initial type given does not match any of the built in method" << endl;
+        cout << "ERROR : VectorXd initial_diel_func(string initial_diel, int N) : The initial type given does not match any of the built in method" << endl;
+        throw 1;
     }
     return diel;
 }
@@ -476,8 +477,20 @@ double initial_diel_func(string initial_diel) {
 
     }
     else {
-        cout << "The initial type given does not match any of the built in method" << endl;
-        return 0.0;
+        cout << "ERROR : double initial_diel_func(string initial_diel) : The initial type given does not match any of the built in method" << endl;
+        throw 1;
+    }
+}
+
+double initial_diel_func(double initial_diel) {
+    VectorXd diel;
+    if (initial_diel<=1.0 && initial_diel>=0.0) {
+        return initial_diel;
+    }
+   
+    else {
+        cout << "ERROR : double initial_diel_func(double initial_diel): Value given for the para not within 0.0 and 1.0" << endl;
+        throw 1;
     }
 }
 
@@ -505,6 +518,7 @@ complex<double> Get_material(string mat, double wl, string unit){
     map<string,string> diel_dic;
     diel_dic.insert(pair<string,string>("Ag","diel/Ag (Silver) - CRC (raw)"));
     diel_dic.insert(pair<string,string>("Al","diel/Al (Aluminium) - Palik (raw)"));
+    diel_dic.insert(pair<string,string>("Al2O3", "diel/Al2O3(Malitson)"));
     diel_dic.insert(pair<string,string>("Au","diel/Au (Gold) - Johnson and Christy (raw)"));
     diel_dic.insert(pair<string,string>("Si","diel/Si (Silicon) - Palik (raw)"));
     diel_dic.insert(pair<string,string>("SiO2","diel/SiO2 (Glass) - Palik (raw)"));
@@ -712,6 +726,52 @@ list<double> makelist(double start, double end, int number) {
     }
     return result;
 }
+
+list<string> ReadMat(string input) {
+    vector<string> split1 = splitInputStr(input, "/");
+    list<string> result;
+    for (int i = 0; i < split1.size(); i++) {
+        result.push_back(split1[i]);
+    }
+    return result;
+}
+
+vector<double> ReadLam(string input) {
+    vector<string> split1 = splitInputStr(input, "/");
+    vector<double> result1;
+    for (int i = 0; i < split1.size(); i++) {
+        result1.push_back(stod(split1[i]));
+        
+    }
+    vector<double> result;
+    if (result1.size() == 1) {
+        result.push_back(result1[0]);
+    }
+    else if(result1.size() == 3) {
+        double start = result1[0];
+        double step = result1[1];
+        double end = result1[2];
+        if (end > start && step>0) {
+            int num = int(round((end - start) / step)) + 1;
+            for (int i = 0; i < num; i++) {
+                result.push_back(start + i * step);
+            }
+        }
+        else {
+            cout << "ERROR : vector<double> ReadLam(string input) : for wavelength sweep, end<=start or step<=0" << endl;
+            throw 1;
+        }
+    }
+    else {
+        cout << "ERROR : vector<double> ReadLam(string input) : wavelength sweep size or format not correct." << endl;
+        throw 1;
+    }
+
+
+    return result;
+}
+
+
 
 double exp_update(const double x, const double x_max, const double y_min, const double y_max) {
     return y_min + (y_max - y_min) * exp((x / x_max - 1.0));

@@ -8,8 +8,8 @@ using namespace std;
 SiCi::SiCi() {
 	ifstream SiInput;
 	ifstream CiInput;
-	SiInput.open("./SiCi/Si.txt");
-	CiInput.open("./SiCi/Ci.txt");
+	SiInput.open(".\\SiCi\\Si.txt");
+	CiInput.open(".\\SiCi\\Ci.txt");
 	SiInput >> numberSi;
 	CiInput >> numberCi;
 	SiInput >> disSi;

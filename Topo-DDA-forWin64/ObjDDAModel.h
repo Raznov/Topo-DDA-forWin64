@@ -38,6 +38,33 @@ public:
     void Reset();
 };
 
+class ObjIntegratedEDDAModel : public ObjDDAModel {
+private:
+    double d;
+    int N;
+    int powNum;        //Number on the exponential
+    int xMin;
+    int xMax;
+    int yMin;
+    int yMax;
+    int zMin;
+    int zMax;
+    double ita;
+    double beta;
+    VectorXd* diel_old;
+    VectorXcd* P;
+    VectorXi* R;
+    DDAModel* model;
+    VectorXcd* al;
+    double E_int;
+    
+public:
+    ObjIntegratedEDDAModel(vector<double> parameters, DDAModel* model_);
+    void SingleResponse(int idx, bool deduction);
+    double GroupResponse();
+    double GetVal();
+    void Reset();
+};
 //class ObjPointListEDDAModel : public ObjDDAModel {
 //private:
 //    VectorXd x;
@@ -81,27 +108,7 @@ public:
 //    void Reset();
 //};
 //
-//class ObjIntegratedEDDAModel : public ObjDDAModel {
-//private:
-//    double d;
-//    int N;
-//    int Nx;
-//    int Ny;
-//    int Nz;
-//    VectorXcd* P;
-//    VectorXcd* al;
-//    DDAModel* model;
-//    EvoDDAModel* evomodel;
-//    VectorXcd E;
-//    double E_int;
-//    VectorXi* R;
-//public:
-//    ObjIntegratedEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_);
-//    void SingleResponse(int idx, bool deduction);
-//    double GroupResponse();
-//    double GetVal();
-//    void Reset();
-//};
+
 //
 //class ObjMidAvgEDDAModel : public ObjDDAModel {
 //private:

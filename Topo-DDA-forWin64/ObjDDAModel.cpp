@@ -2,6 +2,20 @@
 
 #include "ObjDDAModel.h"
 
+double SmoothDensity(double input, double ita, double beta) {
+    double result = 0.0;
+    if (input <= ita && input >= 0.0) {
+        return ita * (exp(-beta * (1 - input / ita)) - (1 - input / ita) * exp(-beta));
+    }
+    else if (input > ita && input <= 1.0) {
+        return (1 - ita) * (1 - exp(-beta * (input - ita) / (1 - ita)) + (input - ita) / (1 - ita) * exp(-beta)) + ita;
+    }
+    else {
+        cout << "ERROR: FilterOption::SmoothDensity(double input)--input out of range" << endl;
+        throw 1;
+    }
+}
+
 
 ObjPointEDDAModel::ObjPointEDDAModel(vector<double> parameters, DDAModel *model_){
     VectorXd PointEParameters = VectorXd::Zero((parameters).size());
@@ -81,6 +95,160 @@ void ObjPointEDDAModel::Reset(){
     E_sum(2) = E_ext(2);
 }
 
+
+ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(vector<double> parameters, DDAModel* model_) {
+    VectorXd PointEParameters = VectorXd::Zero((parameters).size());
+    //auto it=(parameters).begin();
+    for (int i = 0; i <= int((parameters).size() - 1); i++) {
+        PointEParameters(i) = parameters[i];
+    }
+    //Have_Penalty = HavePenalty_;
+    powNum = int(round(PointEParameters(0)));
+    xMin = int(round(PointEParameters(1)));
+    xMax = int(round(PointEParameters(2)));
+    yMin = int(round(PointEParameters(3)));
+    yMax = int(round(PointEParameters(4)));
+    zMin = int(round(PointEParameters(5)));
+    zMax = int(round(PointEParameters(6)));
+    ita = PointEParameters(7);
+    beta = PointEParameters(8);
+    Have_Devx = true;
+    model = model_;
+    //evomodel = evomodel_;
+    AProductCore* Core = (*model).get_Core();
+    d = (*Core).get_d();
+    N = (*Core).get_N();
+    P = (*model).get_P();
+    R = (*Core).get_R();
+    al = (*model).get_al();
+    diel_old = (*Core).get_diel_old();
+    Vector3d n_E0 = (*model).get_nE0();
+    Vector3d n_K = (*model).get_nK();
+    double E0 = (*model).get_E0();
+    double lam = (*Core).get_lam();
+    cout << "lam" << lam << endl;
+    double K = (*Core).get_K();
+    E_int = 0.0;
+    // cout << R(3*5444+2) << "this" << endl;
+}
+
+void ObjIntegratedEDDAModel::SingleResponse(int idx, bool deduction) {
+    //VectorXcd P = model->get_P();
+    //VectorXi R = model->get_R();
+    if ((xMin <= (*R)(3 * idx) <= xMax)&&(yMin <= (*R)(3 * idx + 1) <= yMax)&&(zMin <= (*R)(3 * idx + 2) <= zMax)) {
+        double factor = SmoothDensity((*diel_old)(3 * idx), ita, beta);
+        if (deduction == false) {
+            E_int += factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum);
+            E_int += factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
+            E_int += factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+        }
+        else {
+            E_int -= factor * pow(abs((*al)(3 * idx) * (*P)(3 * idx)), powNum);
+            E_int -= factor * pow(abs((*al)(3 * idx + 1) * (*P)(3 * idx + 1)), powNum);
+            E_int -= factor * pow(abs((*al)(3 * idx + 2) * (*P)(3 * idx + 2)), powNum);
+        }
+    }
+    
+    
+    
+}
+
+double ObjIntegratedEDDAModel::GroupResponse() {
+    /*if (Have_Penalty){
+        return (E_sum).norm()-(*evomodel).L1Norm();
+    }*/
+    /*else{*/
+    return log(E_int);
+    /*}*/
+
+}
+
+double ObjIntegratedEDDAModel::GetVal() {
+    Reset();
+    for (int idx = 0; idx < N; idx++) {
+        SingleResponse(idx, false);
+        // cout << E_sum(0) << endl;
+    }
+    return GroupResponse();
+}
+
+void ObjIntegratedEDDAModel::Reset() {
+    E_int = 0.0;
+}
+
+
+
+
+
+//ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
+//    Have_Penalty = HavePenalty_;
+//    Have_Devx = false;
+//    model = model_;
+//    evomodel = evomodel_;
+//    AProductCore* Core = (*model).get_Core();
+//    N = (*Core).get_N();
+//    Nx = (*Core).get_Nx();
+//    Ny = (*Core).get_Ny();
+//    Nz = (*Core).get_Nz();
+//    d = (*Core).get_d();
+//    al = (*model).get_al();
+//    P = (*model).get_P();
+//    E = VectorXcd::Zero(N * 3);
+//    R = (*Core).get_R();
+//    E_int = 0;
+//}
+//
+//void ObjIntegratedEDDAModel::SingleResponse(int idx, bool deduction) {
+//    return;
+//}
+//
+//double ObjIntegratedEDDAModel::GroupResponse() {
+//    for (int i = 0; i < N; i++) {
+//        E(i * 3) = (*al)(i * 3) * (*P)(i * 3);
+//        E(i * 3 + 1) = (*al)(i * 3 + 1) * (*P)(i * 3 + 1);
+//        E(i * 3 + 2) = (*al)(i * 3 + 2) * (*P)(i * 3 + 2);
+//    }
+//    E_int = 0;
+//    double diel_sum = 0;
+//    
+//    for (int i = 0; i < N; i++) {
+//        if ((*R)(3*i+2) >= 27) {
+//            double E_sum_temp = 0;
+//            for (int j = 0; j < 3; j++) {
+//                E_sum_temp += pow(abs(E(3 * i + j)), 2);
+//            }
+//            diel_sum += (*((*model).get_Core()->get_diel_old()))(i * 3);
+//            E_int += pow(E_sum_temp, 2) * ((*((*model).get_Core()->get_diel_old()))(i * 3) + 0.0001) / 4.0; //prevent nan result for devp calculation.
+//        }
+//    }
+//    
+//    E_int = log(E_int);
+//
+//
+//    // E_int /= diel_sum;
+//    if (Have_Penalty) {
+//        return E_int - (*evomodel).L1Norm();
+//    }
+//    else {
+//        return E_int;
+//    }
+//
+//}
+//
+//double ObjIntegratedEDDAModel::GetVal() {
+//    Reset();
+//    for (int i = 0; i < N; i++) {
+//        E(i * 3) = (*al)(i * 3) * (*P)(i * 3);
+//        E(i * 3 + 1) = (*al)(i * 3 + 1) * (*P)(i * 3 + 1);
+//        E(i * 3 + 2) = (*al)(i * 3 + 2) * (*P)(i * 3 + 2);
+//    }
+//    return GroupResponse();
+//}
+//
+//void ObjIntegratedEDDAModel::Reset() {
+//    E_int = 0;
+//    E = VectorXcd::Zero(N * 3);
+//}
 
 
 
@@ -288,75 +456,7 @@ void ObjPointEDDAModel::Reset(){
 //
 //
 //
-//ObjIntegratedEDDAModel::ObjIntegratedEDDAModel(list<double> parameters, DDAModel* model_, EvoDDAModel* evomodel_, bool HavePenalty_) {
-//    Have_Penalty = HavePenalty_;
-//    Have_Devx = false;
-//    model = model_;
-//    evomodel = evomodel_;
-//    AProductCore* Core = (*model).get_Core();
-//    N = (*Core).get_N();
-//    Nx = (*Core).get_Nx();
-//    Ny = (*Core).get_Ny();
-//    Nz = (*Core).get_Nz();
-//    d = (*Core).get_d();
-//    al = (*model).get_al();
-//    P = (*model).get_P();
-//    E = VectorXcd::Zero(N * 3);
-//    R = (*Core).get_R();
-//    E_int = 0;
-//}
-//
-//void ObjIntegratedEDDAModel::SingleResponse(int idx, bool deduction) {
-//    return;
-//}
-//
-//double ObjIntegratedEDDAModel::GroupResponse() {
-//    for (int i = 0; i < N; i++) {
-//        E(i * 3) = (*al)(i * 3) * (*P)(i * 3);
-//        E(i * 3 + 1) = (*al)(i * 3 + 1) * (*P)(i * 3 + 1);
-//        E(i * 3 + 2) = (*al)(i * 3 + 2) * (*P)(i * 3 + 2);
-//    }
-//    E_int = 0;
-//    double diel_sum = 0;
-//    
-//    for (int i = 0; i < N; i++) {
-//        if ((*R)(3*i+2) >= 27) {
-//            double E_sum_temp = 0;
-//            for (int j = 0; j < 3; j++) {
-//                E_sum_temp += pow(abs(E(3 * i + j)), 2);
-//            }
-//            diel_sum += (*((*model).get_Core()->get_diel_old()))(i * 3);
-//            E_int += pow(E_sum_temp, 2) * ((*((*model).get_Core()->get_diel_old()))(i * 3) + 0.0001) / 4.0; //prevent nan result for devp calculation.
-//        }
-//    }
-//    
-//    E_int = log(E_int);
-//
-//
-//    // E_int /= diel_sum;
-//    if (Have_Penalty) {
-//        return E_int - (*evomodel).L1Norm();
-//    }
-//    else {
-//        return E_int;
-//    }
-//
-//}
-//
-//double ObjIntegratedEDDAModel::GetVal() {
-//    Reset();
-//    for (int i = 0; i < N; i++) {
-//        E(i * 3) = (*al)(i * 3) * (*P)(i * 3);
-//        E(i * 3 + 1) = (*al)(i * 3 + 1) * (*P)(i * 3 + 1);
-//        E(i * 3 + 2) = (*al)(i * 3 + 2) * (*P)(i * 3 + 2);
-//    }
-//    return GroupResponse();
-//}
-//
-//void ObjIntegratedEDDAModel::Reset() {
-//    E_int = 0;
-//    E = VectorXcd::Zero(N * 3);
-//}
+
 //
 //
 //

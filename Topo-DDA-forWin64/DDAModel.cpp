@@ -9,7 +9,7 @@
 
 using namespace std::chrono;
 
-DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_) {
+DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, bool verbose_) {
     
     Core = AProductCore_;
     time=0;
@@ -65,10 +65,10 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
     //cout << "al" << al(0) << endl;
 
     al_max = al;
-    verbose = true;
+    verbose = verbose_;
 }
 
-DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_) {
+DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vector3d n_E0_, VectorXi* RResult_, bool verbose_) {
     
     Core = AProductCore_;
     time = 0;
@@ -124,7 +124,7 @@ DDAModel::DDAModel(AProductCore* AProductCore_, Vector3d n_K_, double E0_, Vecto
         al(i) = 1.0 / Get_Alpha(lam, K, d, diel_tmp, n_E0, n_K);
     }
     al_max = al;
-    verbose = true;
+    verbose = verbose_;
     
 }
 
@@ -231,10 +231,11 @@ void DDAModel::bicgstab(int MAX_ITERATION,double MAX_ERROR){
 
         if (r.norm()/E.norm()<=MAX_ERROR) {
             Error = r.norm()/E.norm();
-            cout << "r.norm(): " << r.norm() << endl;
-            cout << "E.norm(): " << E.norm() << endl;
+            
             ITERATION = it+1;
             if (verbose) {
+                cout << "r.norm(): " << r.norm() << endl;
+                cout << "E.norm(): " << E.norm() << endl;
                 high_resolution_clock::time_point t_end = high_resolution_clock::now();
                 auto duration = duration_cast<milliseconds>(t_end-t_start).count();
                 time = duration_cast<milliseconds>(t_end-t_start).count();
@@ -409,18 +410,19 @@ void DDAModel::bicgstab(int MAX_ITERATION, double MAX_ERROR, int EVOITERATION) {
         r = t - zeta * At;
         
 
-        if (EVOITERATION == 88) {
-            //cout << "WE FIND 88" << endl;
-            foutnew << "-----------------r at " << "it" + to_string(it) << "---------------" << endl;
-            foutnew << r.norm() << endl;
-        }
+        //if (verbose && EVOITERATION == 88) {
+        //    //cout << "WE FIND 88" << endl;
+        //    foutnew << "-----------------r at " << "it" + to_string(it) << "---------------" << endl;
+        //    foutnew << r.norm() << endl;
+        //}
 
         if (r.norm() / E.norm() <= MAX_ERROR) {
             Error = r.norm() / E.norm();
-            cout << "r.norm(): " << r.norm() << endl;
-            cout << "E.norm(): " << E.norm() << endl;
+            
             ITERATION = it + 1;
             if (verbose) {
+                cout << "r.norm(): " << r.norm() << endl;
+                cout << "E.norm(): " << E.norm() << endl;
                 high_resolution_clock::time_point t_end = high_resolution_clock::now();
                 auto duration = duration_cast<milliseconds>(t_end - t_start).count();
                 time = duration_cast<milliseconds>(t_end - t_start).count();
@@ -670,7 +672,7 @@ void DDAModel::output_to_file(string save_position, int iteration) {
 
     }
     */
-    cout << EResult.size() << endl;
+    /*cout << EResult.size() << endl;*/
     for (int i = 0; i <= EResult.size() - 1; i++) {
         if (EResult(i).imag() < 0) {
             fout << EResult(i).real() << EResult(i).imag() << "j" << endl;
@@ -681,7 +683,7 @@ void DDAModel::output_to_file(string save_position, int iteration) {
 
     }
     
-    for (int i = 0; i <= P.size() - 1; i++) {
+    /*for (int i = 0; i <= P.size() - 1; i++) {
         if (P(i).imag() < 0) {
             fout << P(i).real() << P(i).imag() << "j" << endl;
         }
@@ -689,7 +691,7 @@ void DDAModel::output_to_file(string save_position, int iteration) {
             fout << P(i).real() << "+" << P(i).imag() << "j" << endl;
         }
 
-    }
+    }*/
     
     fout.close();
 }

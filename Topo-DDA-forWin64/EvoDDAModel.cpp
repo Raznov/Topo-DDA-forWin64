@@ -1106,39 +1106,39 @@ ObjDDAModel* EvoDDAModel::ObjFactory(string ObjectName, vector<double> ObjectPar
     if (objName == "PointE"){
         return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
     }
-    /*if (MajorObjectFunctionName == "PointEList") {
-        return new ObjPointListEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //if (MajorObjectFunctionName == "PointEList") {
+    //    return new ObjPointListEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
+    //if (MajorObjectFunctionName == "PointI") {
+    //    return new ObjPointIDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
+    if (objName == "IntegratedE") {
+        return new ObjIntegratedEDDAModel(ObjectParameters, ObjDDAModel);
     }
-    if (MajorObjectFunctionName == "PointI") {
-        return new ObjPointIDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
-    if (MajorObjectFunctionName == "IntegratedE") {
-        return new ObjIntegratedEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
-    if (MajorObjectFunctionName == "MidAvgE") {
-        return new ObjMidAvgEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
-    if (MajorObjectFunctionName == "scattering0D") {
-        return new Objscattering0D(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
-    if (MajorObjectFunctionName == "scattering2D") {
-        return new Objscattering2D(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
-    if (MajorObjectFunctionName == "Abs") {
-        return new ObjAbs(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
-    if (MajorObjectFunctionName == "AbsPartial") {
-        return new ObjAbsPartial(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
-    if (MajorObjectFunctionName == "AbsPartialzslice") {
-        return new ObjAbsPartialzslice(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
-    if (MajorObjectFunctionName == "IntegratedEPartial") {
-        return new ObjIntegrateEPartial(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }
-    if (MajorObjectFunctionName == "Absbyfar") {
-        return new ObjAbsbyfar(ObjectParameters, ObjDDAModel, this, HavePenalty);
-    }*/
+    //if (MajorObjectFunctionName == "MidAvgE") {
+    //    return new ObjMidAvgEDDAModel(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
+    //if (MajorObjectFunctionName == "scattering0D") {
+    //    return new Objscattering0D(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
+    //if (MajorObjectFunctionName == "scattering2D") {
+    //    return new Objscattering2D(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
+    //if (MajorObjectFunctionName == "Abs") {
+    //    return new ObjAbs(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
+    //if (MajorObjectFunctionName == "AbsPartial") {
+    //    return new ObjAbsPartial(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
+    //if (MajorObjectFunctionName == "AbsPartialzslice") {
+    //    return new ObjAbsPartialzslice(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
+    //if (MajorObjectFunctionName == "IntegratedEPartial") {
+    //    return new ObjIntegrateEPartial(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
+    //if (MajorObjectFunctionName == "Absbyfar") {
+    //    return new ObjAbsbyfar(ObjectParameters, ObjDDAModel, this, HavePenalty);
+    //}
 
     // NOT FINALIZED. SHOULD RAISE AN EXCEPTION HERE.
     cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;

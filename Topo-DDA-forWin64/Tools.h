@@ -27,9 +27,12 @@ Vector3d nEPerpinXZ(double theta, double phi);
 MatrixXi find_scope_3_dim(VectorXi* x);
 VectorXd initial_diel_func(string initial_diel, int N);
 double initial_diel_func(string initial_diel);
+double initial_diel_func(double initial_diel);
 list<double> makelist(double start, double end, double interval);
 list<double> makelist(double start, double end, int number);
 pair<VectorXi, VectorXd> InputInitial(string open_position, string model_label);
+list<string> ReadMat(string input);
+vector<double> ReadLam(string input);
 
 double exp_update(const double x, const double x_max, const double y_min, const double y_max);
 double piecewise_update(const double x, const double x_max, const double y_min, const double y_max);

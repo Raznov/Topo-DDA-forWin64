@@ -55,6 +55,8 @@ double FilterOption::SmoothDensity(double input) {
 	}
 	else {
 		cout << "ERROR: FilterOption::SmoothDensity(double input)--input out of range" << endl;
+		cout << input << endl;
+		cout << ita << endl;
 		throw 1;
 	}
 }

@@ -16,6 +16,13 @@ filterReader::filterReader(INIReader reader) {
         betaMin = reader.GetReal("Filter Option", "betaMin", 0.0);
         betaMax = reader.GetReal("Filter Option", "betaMax", 50.0);
         ita = reader.GetReal("Filter Option", "ita", 0.5);
+        string ttmp = reader.Get("Filter Option", "periodicity", "UNKNOWN");
+        if (ttmp == "True") {
+            periodicity = true;
+        }
+        else {
+            periodicity = false;
+        }
 	}
     
 
@@ -60,4 +67,8 @@ double filterReader::getBetaMax() {
 
 double filterReader::getIta() {
     return ita;
+}
+
+bool filterReader::getPeriodic() {
+    return periodicity;
 }

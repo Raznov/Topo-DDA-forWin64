@@ -68,8 +68,19 @@ void CoreStructure::UpdateStr(VectorXd step, int current_it, int Max_it) {
             for (int j = 0; j <= weightnum - 1; j++) {
                 numerator += ((*FreeWeight)[i][j].weight) * (*Para_origin)((*FreeWeight)[i][j].position);
                 denominator += ((*FreeWeight)[i][j].weight);
+
+                /*cout << "j: " << j << endl;
+                cout << "para pos: " << (*FreeWeight)[i][j].position << endl;
+                cout << "weight: " << (*FreeWeight)[i][j].weight << endl;*/
+
             }
             (*Para_filtered)((*Free)(i)) = numerator / denominator;
+
+            /*cout << "para pos: " << i << endl;
+            cout << "weightnum" << weightnum << endl;
+            cout << numerator << endl;
+            cout << denominator << endl;*/
+
 
             double Para_physical = (*Filterstats).SmoothDensity((*Para_filtered)((*Free)(i)));     
             (*Para)((*Free)(i)) = Para_physical;

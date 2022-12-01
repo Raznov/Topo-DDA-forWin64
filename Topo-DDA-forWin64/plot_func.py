@@ -14,7 +14,7 @@ from scipy import ndimage
 import time
 
 
-def Shape(geometry,diel,d,colormax=1,shapebarrier=0.5,plotDpi=100,iteration=-1,position="./",decimal=0,FullLattice=False):
+def Shape(geometry,diel,d,angle1,angle2,colormax=1,shapebarrier=0.5,plotDpi=100,iteration=-1,position="./",decimal=0,FullLattice=False):
     """Plot the shape of object as dot matrix.
     #Input:
     # --SC                                                         SolutionClass
@@ -75,6 +75,7 @@ def Shape(geometry,diel,d,colormax=1,shapebarrier=0.5,plotDpi=100,iteration=-1,p
     ax.set_ylabel("y[nm]")
     ax.set_zlabel("z[nm]")
     ax.grid(False)
+    ax.view_init(azim=angle1, elev=angle2)
     fig.colorbar(colorset, shrink=0.9, aspect=10)
      
     #plt.show()
@@ -263,9 +264,9 @@ def EField_slice(geometry,diel,d,k_dir,E_dir,E_tot,plotDpi=100, Elimit=False, El
             Eslice[geometry[i][slicedim-1]][geometry[i][slicedim-2]]=ele
     """
     rotated_img = ndimage.rotate(Eslice, 90)
-    
     fig1 = plt.figure(figsize=(10, 10))
     plt.imshow(rotated_img, cmap='jet', interpolation='bilinear')
+    plt.axis('off')
     if Elimit:
         plt.clim(Elimitlow, Elimithigh)
     plt.colorbar()
