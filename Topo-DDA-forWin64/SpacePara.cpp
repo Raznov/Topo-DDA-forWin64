@@ -423,7 +423,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
 
 }
 
-SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_) {
+SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_, double initial_num) {
     Filter = false;
     space = space_;
     bind = bind_;
@@ -488,7 +488,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
                     z = bind(2) * (2 * k + 1) / 2;
 
                     if ((abs(x - xcenter) <= lx) && (abs(y - ycenter) <= ly) && (abs(z - zcenter) <= lz)) {
-                        Para(pos) = initial_diel_func(1.0);
+                        Para(pos) = initial_diel_func(initial_num);
                     }
                 }
             }

@@ -574,7 +574,7 @@ void task() {
     Common << n_E0 << endl;
     Common << n_K << endl;
 
-    int num_model = 100;
+    int num_model = 300000;
 
     int start_num = 0;
 
@@ -582,8 +582,11 @@ void task() {
     TotalTime.open(save_position + "TotalTime.txt");
     high_resolution_clock::time_point t_start = high_resolution_clock::now();
     for (int i = 0; i <= num_model - 1; i++) {
+        int count = int(floor(i / 30000));
+        double currentpara = 0.1 * count + 0.1;
+        cout << "currentpara : " << currentpara << endl;
         number = round(((double)rand() / RAND_MAX) * (maxnumber - minnumber + 1)) + minnumber;
-        SpacePara spacepara_tmp(&S, bind, number, limitx1, limitx2, limity1, limity2, limitz1, limitz2, spacepara.get_geometryPara());
+        SpacePara spacepara_tmp(&S, bind, number, limitx1, limitx2, limity1, limity2, limitz1, limitz2, spacepara.get_geometryPara(), currentpara);
         CStr.UpdateStr(&spacepara_tmp);
         CStr.output_to_file(save_position + "CoreStructure\\", start_num + i + 1, "Simple");
         TestModel.UpdateAlpha();
