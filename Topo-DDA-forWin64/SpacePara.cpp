@@ -423,7 +423,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
 
 }
 
-SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_, double initial_num) {
+SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_, double paralow, double parahigh) {
     Filter = false;
     space = space_;
     bind = bind_;
@@ -431,6 +431,12 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
     int Nx, Ny, Nz, N;
     tie(Nx, Ny, Nz, N) = (*space).get_Ns();
     geometry = VectorXi::Zero(3 * N);
+
+    if (paralow < 0.0 || parahigh>1.0 || parahigh<paralow) {
+        cout << "ERROR SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, double limitx2, double limity1, double limity2, double limitz1, double limitz2, VectorXi* geometryPara_, double paralow, double parahigh)--paralow or parahigh out of 0~1 range or parahigh<paralow." << endl;
+        throw 1;
+    }
+    double pararatio = (parahigh - paralow);
 
     vector<Structure>* ln = (*space).get_ln();
 
@@ -477,7 +483,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
         //cout << "lx=" << lx << " " << "ly=" << ly << " " << "lz=" << lz << endl;
 
 
-
+        double currentpara = ((double)rand() / RAND_MAX) * pararatio + paralow;
         for (int i = 0; i <= Nparax - 1; i++) {
             for (int j = 0; j <= Nparay - 1; j++) {
                 for (int k = 0; k <= Nparaz - 1; k++) {
@@ -488,7 +494,7 @@ SpacePara::SpacePara(Space* space_, Vector3i bind_, int number, double limitx1, 
                     z = bind(2) * (2 * k + 1) / 2;
 
                     if ((abs(x - xcenter) <= lx) && (abs(y - ycenter) <= ly) && (abs(z - zcenter) <= lz)) {
-                        Para(pos) = initial_diel_func(initial_num);
+                        Para(pos) = initial_diel_func(currentpara);
                     }
                 }
             }
