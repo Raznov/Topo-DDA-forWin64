@@ -20,18 +20,18 @@
 
 using namespace std::chrono;
 
-ObjDDAModel* ObjFactoryOut(string ObjectName, vector<double> ObjectParameters, DDAModel* ObjDDAModel) {
+ObjDDAModel* ObjFactoryOut(string objectname, vector<double> objectparameters, DDAModel* objDDAmodel) {
     /*if (HavePenalty) {
         cout << "Using L1 Penalty with Penalty Factor " << PenaltyFactor << endl;
     }*/
-    if (ObjectName == "PointE") {
-        return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
+    if (objectname == "PointE") {
+        return new ObjPointEDDAModel(objectparameters, objDDAmodel);
     }
-    if (ObjectName == "IntegratedE") {
-        return new ObjIntegratedEDDAModel(ObjectParameters, ObjDDAModel);
+    if (objectname == "IntegratedE") {
+        return new ObjIntegratedEDDAModel(objectparameters, objDDAmodel);
     }
     cout << "NOT A LEGIT OBJECTIVE NAME!" << endl;
-    return new ObjPointEDDAModel(ObjectParameters, ObjDDAModel);
+    return new ObjPointEDDAModel(objectparameters, objDDAmodel);
 }
 
 void task() {
@@ -62,7 +62,7 @@ void task() {
         int Nx, Ny, Nz;
         Nx = reader2.GetInteger("Geometry", "Nx", -1); Ny = reader2.GetInteger("Geometry", "Ny", -1); Nz = reader2.GetInteger("Geometry", "Nz", -1);
         int N = 0;
-        VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+        VectorXi total_space = BuildaBulk(Nx, Ny, Nz);
         vector<Structure> ln;
         Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
@@ -80,15 +80,15 @@ void task() {
         S = S + s1;
 
         double lam = reader2.GetInteger("Input field", "lam", -1);
-        Vector3d n_K;
-        n_K(0) = 0.0;
-        n_K(1) = 0.0;
-        n_K(2) = 1.0;
+        Vector3d nk;
+        nk(0) = 0.0;
+        nk(1) = 0.0;
+        nk(2) = 1.0;
         double E0 = 1.0;
-        Vector3d n_E0;
-        n_E0(0) = 1.0;
-        n_E0(1) = 0.0;
-        n_E0(2) = 0.0;
+        Vector3d ne0;
+        ne0(0) = 1.0;
+        ne0(1) = 0.0;
+        ne0(2) = 0.0;
         list<string> mat_l{ reader2.Get("Material", "material1", "UNKNOWN"), reader2.Get("Material", "material2", "UNKNOWN") };
         VectorXcd material = Get_X_material(mat_l, lam, "nm");
 
@@ -105,48 +105,48 @@ void task() {
         vector<double> BParal{ 1.0 };
         SpacePara spacepara(&S, bind, FParaInit, BParal);
 
-        CoreStructure CStr(&spacepara, d);
+        CoreStructure cstr(&spacepara, d);
         double nback = sqrt(real(material(0)));
-        AProductCore Core(&CStr, lam, material, nback, "LDR");
-        DDAModel TestModel(&Core, n_K, E0, n_E0);
+        AProductCore core(&cstr, lam, material, nback, "LDR");
+        DDAModel testmodel(&core, nk, E0, ne0);
 
-        TestModel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
-        TestModel.update_E_in_structure();
-        TestModel.solve_E();
-        TestModel.output_to_file();
+        testmodel.bicgstab(MAX_ITERATION_DDA, MAX_ERROR);
+        testmodel.update_E_in_structure();
+        testmodel.solve_E();
+        testmodel.output_to_file();
 
         double x, y, z;
         y = center(1) * d;
         z = center(2) * d;
 
 
-        N = Core.get_N();
-        VectorXcd* P = TestModel.get_P();
-        VectorXi* R = Core.get_R();
+        N = core.get_N();
+        VectorXcd* P = testmodel.get_P();
+        VectorXi* R = core.get_R();
         double K = 2 * M_PI / lam;
-        Vector3cd E_sum = Vector3cd::Zero();
-        Vector3cd E_ext = Vector3cd::Zero();
+        Vector3cd Esum = Vector3cd::Zero();
+        Vector3cd Eext = Vector3cd::Zero();
 
         string name = "DDAModelEfieldscand=" + to_string(d) + ".txt";
         ofstream fout(name);
         for (x = center(0) * d; x <= center(0) * d + 350; x += 2) {
             cout << "x" << x - center(0) * d << endl;
-            E_ext(0) = E0 * n_E0(0) * (cos(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
-            E_ext(1) = E0 * n_E0(1) * (cos(K * (n_K(0) * y + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
-            E_ext(2) = E0 * n_E0(2) * (cos(K * (n_K(0) * z + n_K(1) * y + n_K(2) * z)) + sin(K * (n_K(0) * x + n_K(1) * y + n_K(2) * z)) * 1i);
-            E_sum(0) = E_ext(0);
-            E_sum(1) = E_ext(1);
-            E_sum(2) = E_ext(2);
+            Eext(0) = E0 * ne0(0) * (cos(K * (nk(0) * x + nk(1) * y + nk(2) * z)) + sin(K * (nk(0) * x + nk(1) * y + nk(2) * z)) * 1i);
+            Eext(1) = E0 * ne0(1) * (cos(K * (nk(0) * y + nk(1) * y + nk(2) * z)) + sin(K * (nk(0) * x + nk(1) * y + nk(2) * z)) * 1i);
+            Eext(2) = E0 * ne0(2) * (cos(K * (nk(0) * z + nk(1) * y + nk(2) * z)) + sin(K * (nk(0) * x + nk(1) * y + nk(2) * z)) * 1i);
+            Esum(0) = Eext(0);
+            Esum(1) = Eext(1);
+            Esum(2) = Eext(2);
             for (int i = 0; i <= N - 1; i++) {
                 double rx = x - d * (*R)(3 * i);                  //R has no d in it, so needs to time d
                 double ry = y - d * (*R)(3 * i + 1);
                 double rz = z - d * (*R)(3 * i + 2);
-                Matrix3cd A = Core.A_dic_generator(rx, ry, rz);
-                E_sum(0) -= (A(0, 0) * (*P)(3 * i) + A(0, 1) * (*P)(3 * i + 1) + A(0, 2) * (*P)(3 * i + 2));
-                E_sum(1) -= (A(1, 0) * (*P)(3 * i) + A(1, 1) * (*P)(3 * i + 1) + A(1, 2) * (*P)(3 * i + 2));
-                E_sum(2) -= (A(2, 0) * (*P)(3 * i) + A(2, 1) * (*P)(3 * i + 1) + A(2, 2) * (*P)(3 * i + 2));
+                Matrix3cd A = core.A_dic_generator(rx, ry, rz);
+                Esum(0) -= (A(0, 0) * (*P)(3 * i) + A(0, 1) * (*P)(3 * i + 1) + A(0, 2) * (*P)(3 * i + 2));
+                Esum(1) -= (A(1, 0) * (*P)(3 * i) + A(1, 1) * (*P)(3 * i + 1) + A(1, 2) * (*P)(3 * i + 2));
+                Esum(2) -= (A(2, 0) * (*P)(3 * i) + A(2, 1) * (*P)(3 * i + 1) + A(2, 2) * (*P)(3 * i + 2));
             }
-            double normE = E_sum.norm();
+            double normE = Esum.norm();
             cout << "E" << normE << endl;
             fout << x - center(0) * d << " " << normE << endl;
         }
@@ -181,7 +181,7 @@ void task() {
         Nz = scope(2, 1) - scope(2, 0) + 1;*/
         tie(Nx, Ny, Nz) = getInputNs(pathCommonData);
         int N = 0;
-        VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+        VectorXi total_space = BuildaBulk(Nx, Ny, Nz);
         vector<Structure> ln;
         Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
@@ -303,7 +303,7 @@ void task() {
         int Nx, Ny, Nz;
         tie(Nx, Ny, Nz) = getInputNs(pathCommonData);
         int N = 0;
-        VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+        VectorXi total_space = BuildaBulk(Nx, Ny, Nz);
         vector<Structure> ln;
         Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
@@ -401,7 +401,7 @@ void task() {
     int Nx, Ny, Nz;
     tie(Nx, Ny, Nz) = getInputNs(pathCommonData);
     int N = 0;
-    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    VectorXi total_space = BuildaBulk(Nx, Ny, Nz);
     vector<Structure> ln;
     Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
@@ -502,7 +502,7 @@ void task() {
     Nx = 32; Ny = 32; Nz = 8;
 
     int N = 0;
-    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    VectorXi total_space = BuildaBulk(Nx, Ny, Nz);
     vector<Structure> ln;
     Space S(&total_space, Nx, Ny, Nz, N, &ln);
 
@@ -648,7 +648,7 @@ void task() {
     Nx = 32; Ny = 32; Nz = 8;
 
     int N = 0;
-    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+    VectorXi total_space = BuildaBulk(Nx, Ny, Nz);
     vector<Structure> ln;
     Space S(&total_space, Nx, Ny, Nz, N, &ln);
 

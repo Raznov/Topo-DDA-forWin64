@@ -198,7 +198,7 @@ tuple<int, int, int> getInputNs(string pathCommonData) {
 //    Nx = round(l(0) + 3); Ny = round(l(1) + 3); Nz = round(l(2) + 1);
 //    cout << center << endl;
 //    int N = 0;
-//    VectorXi total_space = build_a_bulk(Nx, Ny, Nz);
+//    VectorXi total_space = BuildaBulk(Nx, Ny, Nz);
 //    list<Structure> ln;
 //    Space S(&total_space, Nx, Ny, Nz, N, &ln);
 //
@@ -494,7 +494,7 @@ double initial_diel_func(double initial_diel) {
     }
 }
 
-VectorXi build_a_bulk(int Nx, int Ny, int Nz){
+VectorXi BuildaBulk(int Nx, int Ny, int Nz){
     VectorXi result=VectorXi::Zero(3*Nx*Ny*Nz);
     for(int x=0;x<=Nx-1;x++){
         for(int y=0;y<=Ny-1;y++){
